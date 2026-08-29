@@ -1,9 +1,39 @@
 import hashlib
+import ipaddress
 import json
 import os
 import shutil
+import socket
 import subprocess
 import time
+from urllib.parse import urlparse
+
+
+def validate_video_url(url):
+    """只允许 https 且目标 IP 非内网/回环/保留地址，
+    防止 SSRF 与 ffmpeg 本地文件读取（file://、concat: 等协议）。"""
+    parsed = urlparse(url)
+    if parsed.scheme != "https":
+        raise ValueError("VIDEO_URL 仅允许 https 协议，收到: %r" % parsed.scheme)
+    host = parsed.hostname
+    if not host:
+        raise ValueError("VIDEO_URL 缺少主机名")
+    try:
+        addrinfos = socket.getaddrinfo(host, None)
+    except socket.gaierror:
+        raise ValueError("VIDEO_URL 无法解析域名: %s" % host)
+    for info in addrinfos:
+        ip = ipaddress.ip_address(info[4][0])
+        if (
+            ip.is_private
+            or ip.is_loopback
+            or ip.is_link_local
+            or ip.is_multicast
+            or ip.is_reserved
+            or ip.is_unspecified
+        ):
+            raise ValueError("VIDEO_URL 不允许访问内网/保留地址: %s (%s)" % (host, ip))
+    return url
 
 
 def md5_of_file(path):
@@ -17,6 +47,12 @@ def main():
     url = os.environ.get('VIDEO_URL', '')
     if not url:
         url = 'https://www.w3schools.com/html/mov_bbb.mp4'
+    try:
+        url = validate_video_url(url)
+    except ValueError as e:
+        print('video_status: blocked')
+        print('note:', e)
+        return
 
     video_status = 'no_tool'
     tool = 'none'

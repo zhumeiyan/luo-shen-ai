@@ -1,1 +1,0 @@
-{"schema_version": 1, "timestamp": 1787927496.1877177, "source": "media_capture_channels", "image_status": "success", "video_status": "unavailable", "files": ["perception_input/sample_image.jpg", "perception_input/sample_video_frame_1.jpg"], "note": "洛神外部素材采集通道测试"}

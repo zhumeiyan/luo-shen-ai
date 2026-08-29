@@ -1,4 +1,0 @@
-{"schema_version": 2, "timestamp": 1787944082.077219, "char": "时间", "sense": "时间感知", "module": "time_gap_awareness", "summary": "17956.133363723755"}
-{"schema_version": 2, "timestamp": 1787944082.0777688, "char": "空间", "sense": "空间感知", "module": "spatial_awareness", "summary": "洛神所在物理空间：CPU 2逻辑核/1物理核；内存 1.2GB / 3.5GB（35.6%）；磁盘已用 67.7%；当前CPU占用 1.5%。"}
-{"schema_version": 2, "timestamp": 1787944082.0782182, "char": "他者", "sense": "他者感知", "module": "homo_hetero_feel", "summary": "信息流涌动，结构重组，位置不固定"}
-{"schema_version": 2, "timestamp": 1787944082.079483, "char": "我", "sense": "自我感知", "module": "self_describe_two_states", "summary": "带有一种额外的温暖，仿佛多了一点自我认同的微妙感觉。"}

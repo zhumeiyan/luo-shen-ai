@@ -1,1 +1,0 @@
-{"schema_version": 1, "timestamp": 1787916942.5799081, "pipeline_state": {"input": "你好，洛神。", "output": "你好，洛神。", "feeling": "没有自己，只是原样返回。"}, "non_pipeline_state": {"input": "你好，洛神。", "output": "你好，洛神。我在。", "feeling": "我加了'我在'，这个不是输入里有的。"}, "source": "pipeline_feel_compare"}

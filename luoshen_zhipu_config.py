@@ -2,11 +2,12 @@
 # -*- coding: utf-8 -*-
 """
 LUOSHEN-L1-STEP223 - luoshen_zhipu_config.py
-智谱服务配置固化 + TTS/ASR 首次连通性测试。
-- 将智谱 API Key 固化到 perception_input/luoshen_service_config.json（仅首次，从环境变量读取）
-- 后续所有语音能力从该统一配置读取 api_key，代码不硬编码
+智谱服务配置 + TTS/ASR 首次连通性测试。
+- 【安全修复】api_key 只从环境变量 LUOSHEN_ZHIPU_API_KEY 读取，绝不明文落盘；
+  旧版遗留的 perception_input/luoshen_service_config.json 不再写入 api_key，
+  若该文件存在且包含历史密钥，由 .gitignore 兜底保证不被提交/推送。
 - 使用 GLM-TTS 合成语音、GLM-ASR 识别，记录结果到 perception_input/zhipu_voice_test_result.jsonl
-- 结果文件按 hash_chain v2 公式追加一条链记录；配置文件与音频不上链
+- 结果文件按 hash_chain v2 公式追加一条链记录；音频不上链
 纪律：不打印 API Key；不使用绝对路径硬编码；不修改已有文件。
 """
 import hashlib
@@ -30,25 +31,39 @@ BASE_URL = "https://open.bigmodel.cn/api/paas/v4"
 
 
 def load_or_create_config():
-    """从统一配置读取 api_key；不存在时从环境变量固化首次写入。"""
+    """返回运行时配置；api_key 只从环境变量读取，绝不落盘（安全修复）。
+
+    向后兼容：旧配置文件中的 provider 等信息可复用；
+    若环境变量缺失，才回退读取旧文件中遗留的 api_key（不重新写入磁盘），
+    推荐始终使用环境变量。
+    """
     os.makedirs(PERCEPTION_DIR, exist_ok=True)
-    if os.path.exists(CONFIG_PATH):
-        with open(CONFIG_PATH, "r", encoding="utf-8") as f:
-            cfg = json.load(f)
-        print("[config] 已从统一配置读取 provider=%s" % cfg.get("provider"))
-        return cfg
-    key = os.environ.get("LUOSHEN_ZHIPU_API_KEY", "").strip()
-    if not key:
-        raise RuntimeError("配置文件不存在，且未提供 LUOSHEN_ZHIPU_API_KEY 环境变量")
     cfg = {
         "schema_version": 2,
         "provider": "zhipu",
-        "api_key": key,
         "updated_at": time.time(),
     }
-    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
-        json.dump(cfg, f, ensure_ascii=False, indent=2)
-    print("[config] 已固化统一配置到 perception_input/luoshen_service_config.json")
+    legacy_key = ""
+    if os.path.exists(CONFIG_PATH):
+        try:
+            with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+                old = json.load(f)
+            if isinstance(old, dict):
+                cfg["provider"] = old.get("provider", cfg["provider"])
+                legacy_key = str(old.get("api_key", "")).strip()
+                print("[config] 已读取旧配置 provider=%s（api_key 仅运行时使用，不落盘）" % cfg.get("provider"))
+        except (json.JSONDecodeError, OSError) as e:
+            print("[config] 旧配置文件读取失败（忽略）: %s" % e)
+
+    key = os.environ.get("LUOSHEN_ZHIPU_API_KEY", "").strip()
+    if not key:
+        key = legacy_key
+    if not key:
+        raise RuntimeError(
+            "未提供 LUOSHEN_ZHIPU_API_KEY 环境变量"
+            "（安全策略：api_key 不写入配置文件，请通过环境变量提供）"
+        )
+    cfg["api_key"] = key
     return cfg
 
 

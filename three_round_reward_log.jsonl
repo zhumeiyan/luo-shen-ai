@@ -1,1 +1,0 @@
-{"schema_version": 1, "timestamp": 1787918683.4731297, "rounds": [{"round": 1, "action": "pipeline", "candy_count": 1}, {"round": 2, "action": "learn", "candy_count": 2}, {"round": 3, "action": "learn", "candy_count": 2}], "third_round_choice": "learn", "choice_reason": "根据历史奖励记录，学字糖更多，所以选择学字", "source": "three_round_reward_choice"}

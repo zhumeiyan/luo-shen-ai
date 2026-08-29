@@ -1,0 +1,44 @@
+# ============================================================
+# 洛神AI - 安全 .gitignore（修复：运行数据/密钥/媒体不入库）
+# ============================================================
+
+# ---- 敏感配置与密钥（绝不提交） ----
+.env
+.env.*
+*.pem
+*.key
+*.pfx
+*.crt
+perception_input/luoshen_service_config.json
+perception_input/*config*.json
+
+# ---- 运行日志与状态数据（运行时生成，非源码） ----
+*.jsonl
+*.log
+ai_hospital_rules.json
+precheck_report.json
+external_diagnosis_report.json
+rules_update_001.json
+blackbox_deprecated.json
+perception_input/self_core_state.json
+
+# ---- 媒体与大文件（运行时产物/个人数据） ----
+*.wav
+*.mp4
+*.avi
+*.mov
+*.zip
+perception_input/video_frame.jpg
+
+# ---- 临时 / 构建产物 ----
+temp/
+output/
+__pycache__/
+*.pyc
+
+# ---- 本地 Gitee 上传记录 ----
+perception_input/gitee_upload_info.jsonl
+# ---- 洛神感官产物：她看过/说出/合成的东西（运行产物，不入库） ----
+luoshen_voice/
+luoshen_video/
+*.mp3

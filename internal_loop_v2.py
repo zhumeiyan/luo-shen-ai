@@ -3,6 +3,7 @@
 """洛神系统 内部闭环总控模块（自动指纹同步版） internal_loop_v2.py"""
 import hashlib
 import json
+import sys
 import time
 import subprocess
 import os
@@ -52,10 +53,14 @@ def load_chain():
     if not os.path.exists('hash_chain_v2.log'):
         return records
     with open('hash_chain_v2.log', 'r', encoding='utf-8') as f:
-        for line in f:
+        for line_no, line in enumerate(f, start=1):
             line = line.strip()
-            if line:
+            if not line:
+                continue
+            try:
                 records.append(json.loads(line))
+            except json.JSONDecodeError as e:
+                raise RuntimeError("hash_chain_v2.log 第 %d 行损坏：%s" % (line_no, e))
     return records
 
 
@@ -153,16 +158,23 @@ def main():
         # 2.2 读取哈希链
         records = load_chain()
 
-        # 2.3 对24个受保护文件自动指纹同步补链
+        # 2.3 对受保护文件自动指纹同步补链
+        # 【安全修复】仅对从未上链的文件建立基线；
+        # 已上链但哈希不一致的文件视为篡改，绝不自动重新上链赦免。
         sync_records = []
+        tampered_files = []
         for fname in PROTECTED_FILES:
             if not os.path.exists(fname):
                 continue
             current_hash = md5_of(fname)
             expected = last_expected(records, fname)
-            if expected is None or current_hash != expected:
+            if expected is None:
+                # 首次出现：建立基线
                 chain_record = append_chain(records, fname, current_hash)
                 sync_records.append(chain_record)
+            elif current_hash != expected:
+                # 与链上基线不一致：标记篡改，不自动赦免
+                tampered_files.append(fname)
 
         # 2.4 读取内部病历本文件最新状态
         diag_last = read_last_jsonl('diagnosis_results.jsonl')
@@ -199,6 +211,12 @@ def main():
                 safety_status = "unknown"
 
         # 2.5 生成内部闭环报告（v2）
+        if tampered_files:
+            chain_state = "tampered"
+        elif verify_chain(records):
+            chain_state = "ok"
+        else:
+            chain_state = "broken"
         report = {
             "schema_version": 2,
             "timestamp": time.time(),
@@ -210,7 +228,8 @@ def main():
                 "grade": grade,
                 "safety_status": safety_status,
             },
-            "chain_status": verify_chain(records),
+            "chain_status": chain_state,
+            "tampered_files": tampered_files,
             "sync_count": len(sync_records),
             "synced_files": [r.get("file") for r in sync_records],
         }
@@ -228,8 +247,14 @@ def main():
         print(json.dumps(report, ensure_ascii=False))
         print()
         print(json.dumps(report_chain, ensure_ascii=False))
+        # fail-closed：检测到篡改/断链/模块失败时以非零退出码告警
+        if tampered_files or chain_state != "ok" or any(
+            s != "ok" for s in mod_results.values()
+        ):
+            sys.exit(1)
     except Exception as e:
         print(json.dumps({"error": str(e)}))
+        sys.exit(1)
 
 
 if __name__ == "__main__":

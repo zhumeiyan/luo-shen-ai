@@ -17,6 +17,7 @@ LUOSHEN-L1-STEP198 - image_batch_200.py
 import hashlib
 import json
 import os
+import re
 import struct
 import time
 import urllib.request
@@ -70,6 +71,8 @@ def build_manifest():
     manifest = {}
     for word, ids in cand.items():
         cat, w = word.split("|", 1)
+        # 路径安全：词键仅保留字母/数字/下划线，防止目录穿越
+        w = re.sub(r"[^A-Za-z0-9_]", "", w) or "unknown"
         keep = []
         for i in ids:
             if i in banned:

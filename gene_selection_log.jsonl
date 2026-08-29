@@ -1,3 +1,0 @@
-{"schema_version": 1, "timestamp": 1787900296.188994, "task_type": "info", "selected_gene_id": "GENE-001", "reason": "信息获取型交互，优先选择雌-雌-雌组合"}
-{"schema_version": 1, "timestamp": 1787900296.1908243, "task_type": "action", "selected_gene_id": "GENE-002", "reason": "任务执行型交互，优先选择雄-雄-雄组合"}
-{"schema_version": 1, "timestamp": 1787900296.1913023, "task_type": "relationship", "selected_gene_id": "GENE-003", "reason": "关系/认知型交互，优先选择雌-自交-雄组合"}

@@ -21,6 +21,7 @@ import threading
 import time
 import urllib.request
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from urllib.parse import urlparse
 
 PORT = 8765
 HOST = "127.0.0.1"
@@ -73,10 +74,15 @@ def append_dialogue(speaker, text, ts=None):
 
 def generate_reply(user_text):
     """
-    基于洛神已有数据与简单规则生成回复，不调用外部大模型。
-    - 关键词规则：时间/记忆/起点/语音/名字/你好/测试 等。
-    - 兜底：引用记忆起点与对话流历史，保持有意义的回应。
+    优先走洛神大脑（luoshen_brain）：人格 + 记忆检索 + LLM 连续对话；
+    未配置 LLM_API_URL/LLM_API_KEY 或调用失败时，回退到本地规则回复。
     """
+    try:
+        import luoshen_brain
+        return luoshen_brain.chat(user_text)
+    except Exception:
+        pass
+
     status = load_luoshen_status()
     history = read_jsonl(DIALOGUE_PATH)
     last_luoshen = ""
@@ -135,7 +141,22 @@ class ChatHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _check_csrf(self):
+        """CSRF 防护：浏览器跨源请求会携带 Origin/Referer，
+        仅允许来自本服务（127.0.0.1:8765）的请求；
+        无 Origin/Referer 的非浏览器客户端（如 curl/自测）放行。"""
+        origin = self.headers.get("Origin") or self.headers.get("Referer") or ""
+        if not origin:
+            return True
+        o = urlparse(origin)
+        host_ok = o.hostname in ("127.0.0.1", "localhost")
+        port_ok = (o.port is None) or (o.port == PORT)
+        return host_ok and port_ok
+
     def do_POST(self):
+        if not self._check_csrf():
+            self._send_json({"reply": "拒绝跨源请求"}, 403)
+            return
         length = int(self.headers.get("Content-Length", 0))
         raw = self.rfile.read(length).decode("utf-8")
         try:

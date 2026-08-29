@@ -1,1 +1,0 @@
-{"schema_version": 1, "timestamp": 1787918212.267099, "pipeline_experience": {"action": "pipeline", "output": "你好", "new_info": 0, "candy": "pipeline_candy", "reward": 1.0}, "learn_experience": {"action": "learn", "output": "你好，我学了一个新字：糖", "new_info": 1, "candy": "learn_candy", "reward": 1.0}, "both_rewarded": true, "source": "both_candy_experience"}

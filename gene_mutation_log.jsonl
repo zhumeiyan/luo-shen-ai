@@ -1,1 +1,0 @@
-{"schema_version": 1, "timestamp": 1787901996.6136663, "mutation_id": "MUT-001", "parent_gene_id": "GENE-003", "child_gene_id": "GENE-004", "change": "thought_mode: self -> male", "reason": "测试基因变异机制"}

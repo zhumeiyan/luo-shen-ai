@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""洛神系统 完整性监测扩展模块 integrity_monitor_v2.py"""
+"""洛神系统 完整性监测扩展模块 integrity_monitor_v2.py
+【安全修复】解析/校验失败以非零退出码结束（fail-closed）。"""
 import hashlib
 import json
+import sys
 import time
 
 
@@ -10,8 +12,11 @@ def load_chain_records(chain_file):
     with open(chain_file, 'r', encoding='utf-8') as f:
         lines = [ln.strip() for ln in f.readlines() if ln.strip()]
     records = []
-    for line in lines:
-        records.append(json.loads(line))
+    for line_no, line in enumerate(lines, start=1):
+        try:
+            records.append(json.loads(line))
+        except json.JSONDecodeError as e:
+            raise RuntimeError("%s 第 %d 行损坏：%s" % (chain_file, line_no, e))
     return records
 
 
@@ -122,8 +127,8 @@ def main():
         # 2.5 为 integrity_monitor_v2.py 计算 md5 并追加哈希链
         with open('integrity_monitor_v2.py', 'rb') as f:
             script_hash = hashlib.md5(f.read()).hexdigest()
-        last_record = records[-1]
-        prev_hash = last_record.get("record_hash") if records else None
+        last_record = records[-1] if records else None
+        prev_hash = last_record.get("record_hash") if last_record else None
         timestamp = time.time()
         join_prev = prev_hash if prev_hash else ""
         record_hash = hashlib.md5(
@@ -144,8 +149,13 @@ def main():
         print(json.dumps(result, indent=2))
         print()
         print(json.dumps(chain_record, ensure_ascii=False))
+        # fail-closed：链断或任一受监测文件哈希不一致时以非零退出码告警
+        mismatch = not chain_ok or status_phys == "mismatch" \
+            or status_rules == "mismatch" or status_evt == "mismatch"
+        sys.exit(1 if mismatch else 0)
     except Exception as e:
         print(json.dumps({"error": str(e)}))
+        sys.exit(1)
 
 
 if __name__ == "__main__":
