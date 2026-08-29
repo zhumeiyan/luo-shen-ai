@@ -1,0 +1,19 @@
+{"schema_version": 2, "timestamp": 1787980118.8937624, "group_id": 1, "members": ["arrow"], "source": "luoshen_image_clustering"}
+{"schema_version": 2, "timestamp": 1787980118.8937624, "group_id": 2, "members": ["ball", "circle", "cotton"], "source": "luoshen_image_clustering"}
+{"schema_version": 2, "timestamp": 1787980118.8937624, "group_id": 3, "members": ["bee"], "source": "luoshen_image_clustering"}
+{"schema_version": 2, "timestamp": 1787980118.8937624, "group_id": 4, "members": ["bird"], "source": "luoshen_image_clustering"}
+{"schema_version": 2, "timestamp": 1787980118.8937624, "group_id": 5, "members": ["brick"], "source": "luoshen_image_clustering"}
+{"schema_version": 2, "timestamp": 1787980118.8937624, "group_id": 6, "members": ["butterfly", "leaf", "moon", "snow", "spiral", "stick", "tree", "water"], "source": "luoshen_image_clustering"}
+{"schema_version": 2, "timestamp": 1787980118.8937624, "group_id": 7, "members": ["cat", "square", "star", "stone"], "source": "luoshen_image_clustering"}
+{"schema_version": 2, "timestamp": 1787980118.8937624, "group_id": 8, "members": ["cloth", "wood"], "source": "luoshen_image_clustering"}
+{"schema_version": 2, "timestamp": 1787980118.8937624, "group_id": 9, "members": ["cloud", "cup", "diamond", "fire", "fish", "flower", "glass", "iron", "key", "spoon"], "source": "luoshen_image_clustering"}
+{"schema_version": 2, "timestamp": 1787980118.8937624, "group_id": 10, "members": ["cross"], "source": "luoshen_image_clustering"}
+{"schema_version": 2, "timestamp": 1787980118.8937624, "group_id": 11, "members": ["dog"], "source": "luoshen_image_clustering"}
+{"schema_version": 2, "timestamp": 1787980118.8937624, "group_id": 12, "members": ["duck"], "source": "luoshen_image_clustering"}
+{"schema_version": 2, "timestamp": 1787980118.8937624, "group_id": 13, "members": ["feather"], "source": "luoshen_image_clustering"}
+{"schema_version": 2, "timestamp": 1787980118.8937624, "group_id": 14, "members": ["frog"], "source": "luoshen_image_clustering"}
+{"schema_version": 2, "timestamp": 1787980118.8937624, "group_id": 15, "members": ["heart"], "source": "luoshen_image_clustering"}
+{"schema_version": 2, "timestamp": 1787980118.8937624, "group_id": 16, "members": ["horse", "small_ball"], "source": "luoshen_image_clustering"}
+{"schema_version": 2, "timestamp": 1787980118.8937624, "group_id": 17, "members": ["mouse"], "source": "luoshen_image_clustering"}
+{"schema_version": 2, "timestamp": 1787980118.8937624, "group_id": 18, "members": ["paper"], "source": "luoshen_image_clustering"}
+{"schema_version": 2, "timestamp": 1787980118.8937624, "group_id": 19, "members": ["triangle"], "source": "luoshen_image_clustering"}

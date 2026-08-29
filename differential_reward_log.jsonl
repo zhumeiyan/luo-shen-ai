@@ -1,0 +1,1 @@
+{"schema_version": 1, "timestamp": 1787918541.2438853, "pipeline_action": {"action": "pipeline", "output": "你好", "new_info": 0, "candy_count": 1}, "learn_action": {"action": "learn", "output": "你好，我学了一个新字：糖", "new_info": 1, "candy_count": 2}, "reward_difference": "学字比流水线多一颗糖", "source": "differential_reward_experience"}

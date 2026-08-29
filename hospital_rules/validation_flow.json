@@ -1,0 +1,12 @@
+{
+  "module": "validation_flow",
+  "version": 1,
+  "items": {
+    "step_1": "监测科产生 event。",
+    "step_2": "诊断科用已知标准验证 event，判断是否为 suspected_issue 或 confirmed_issue。",
+    "step_3": "只有 confirmed_issue 才能交给治疗科。",
+    "step_4": "治疗科执行 prescription 前，必须创建 rollback_point。",
+    "step_5": "康复审计科验证 prescription 是否有效，并记录 audit_record。",
+    "step_6": "若验证失败，自动触发回滚，并记录失败原因。"
+  }
+}

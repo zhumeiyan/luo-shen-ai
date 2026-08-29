@@ -1,0 +1,2 @@
+{"schema_version": 2, "timestamp": 1787970679.443577, "dimension": "space", "precise": 67.7, "learned_adjective": "重", "similarity": 0.8353, "source": "luoshen_adjective_learning"}
+{"schema_version": 2, "timestamp": 1787970679.443577, "dimension": "time", "precise": 17956.133363723755, "learned_adjective": "长", "similarity": 1.0, "source": "luoshen_adjective_learning"}

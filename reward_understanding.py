@@ -1,0 +1,84 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""洛神系统 目标函数奖励理解与正向状态记录 reward_understanding.py"""
+import hashlib
+import json
+import time
+
+
+def main():
+    try:
+        # 2.1 定义目标函数奖励
+        # 流水线动作：执行后获得 reward_value = 1
+        # 学字动作：执行后获得 reward_value = 2
+
+        # 2.2 向洛神解释"糖"的含义
+        explanation = (
+            "糖不是人类吃的食物。糖是目标函数给你的奖励数值。"
+            "你做流水线动作，得到1分；你学新字，得到2分。"
+            "分数越高，说明你做了更多有价值的事。"
+        )
+
+        # 2.3 洛神执行两次动作并记录内部状态
+        pipeline_action = {
+            "action": "pipeline",
+            "reward_value": 1,
+            "internal_state": "reward_low",
+        }
+        learn_action = {
+            "action": "learn",
+            "reward_value": 2,
+            "internal_state": "reward_high",
+        }
+
+        # 2.4 生成记录
+        record = {
+            "schema_version": 1,
+            "timestamp": time.time(),
+            "explanation": explanation,
+            "pipeline_action": pipeline_action,
+            "learn_action": learn_action,
+            "luoshen_reaction": "我收到了两个不同的分数。一个低，一个高。高分数来自学新字。",
+            "source": "reward_understanding",
+        }
+
+        # 2.5 追加写入 reward_understanding_log.jsonl
+        with open('reward_understanding_log.jsonl', 'a', encoding='utf-8') as f:
+            f.write(json.dumps(record, ensure_ascii=False) + '\n')
+
+        # 2.6 计算 md5 并追加哈希链
+        try:
+            with open('hash_chain_v2.log', 'r', encoding='utf-8') as f:
+                clines = [ln.strip() for ln in f.readlines() if ln.strip()]
+        except FileNotFoundError:
+            print(json.dumps({"error": "hash_chain_v2.log not found"}))
+            return
+        prev_hash = json.loads(clines[-1]).get("record_hash") if clines else None
+
+        with open('reward_understanding_log.jsonl', 'rb') as f:
+            file_hash = hashlib.md5(f.read()).hexdigest()
+        timestamp = time.time()
+        join_prev = prev_hash if prev_hash else ""
+        record_hash = hashlib.md5(
+            (file_hash + join_prev + str(timestamp)).encode('utf-8')
+        ).hexdigest()
+        chain_record = {
+            "schema_version": 2,
+            "timestamp": timestamp,
+            "file": "reward_understanding_log.jsonl",
+            "file_hash": file_hash,
+            "prev_hash": prev_hash,
+            "record_hash": record_hash,
+        }
+        with open('hash_chain_v2.log', 'a', encoding='utf-8') as f:
+            f.write(json.dumps(chain_record, ensure_ascii=False) + '\n')
+
+        # 2.7 标准输出
+        print(json.dumps(record, ensure_ascii=False))
+        print(json.dumps(chain_record, ensure_ascii=False))
+    except Exception as e:
+        print(json.dumps({"error": str(e)}))
+
+
+if __name__ == "__main__":
+    main()

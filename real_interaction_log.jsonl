@@ -1,0 +1,3 @@
+{"schema_version": 1, "timestamp": 1787900842.7561076, "user_input": "帮我查一下今天的天气", "detected_task_type": "info", "selected_gene_id": "GENE-001", "reason": "信息获取型交互，优先选择雌-雌-雌组合"}
+{"schema_version": 1, "timestamp": 1787900843.3501368, "user_input": "帮我把这个文件移动到另一个目录", "detected_task_type": "action", "selected_gene_id": "GENE-002", "reason": "任务执行型交互，优先选择雄-雄-雄组合"}
+{"schema_version": 1, "timestamp": 1787900843.7170322, "user_input": "我觉得最近很累，想找个人说说话", "detected_task_type": "relationship", "selected_gene_id": "GENE-003", "reason": "关系/认知型交互，优先选择雌-自交-雄组合"}

@@ -1,0 +1,11 @@
+{"schema_version": 2, "timestamp": 1787996732.8385444, "round": 1, "best_char": "千", "best_similarity": 0.996094, "population_size": 50, "source": "luoshen_auto_learner"}
+{"schema_version": 2, "timestamp": 1787996732.840815, "round": 2, "best_char": "千", "best_similarity": 0.992188, "population_size": 50, "source": "luoshen_auto_learner"}
+{"schema_version": 2, "timestamp": 1787996732.8430636, "round": 3, "best_char": "晚", "best_similarity": 0.988281, "population_size": 50, "source": "luoshen_auto_learner"}
+{"schema_version": 2, "timestamp": 1787996732.8458662, "round": 4, "best_char": "晚", "best_similarity": 0.984375, "population_size": 50, "source": "luoshen_auto_learner"}
+{"schema_version": 2, "timestamp": 1787996732.8481107, "round": 5, "best_char": "千", "best_similarity": 0.984375, "population_size": 50, "source": "luoshen_auto_learner"}
+{"schema_version": 2, "timestamp": 1787996732.8503184, "round": 6, "best_char": "千", "best_similarity": 0.988281, "population_size": 50, "source": "luoshen_auto_learner"}
+{"schema_version": 2, "timestamp": 1787996732.8525074, "round": 7, "best_char": "千", "best_similarity": 0.984375, "population_size": 50, "source": "luoshen_auto_learner"}
+{"schema_version": 2, "timestamp": 1787996732.8547091, "round": 8, "best_char": "千", "best_similarity": 0.972656, "population_size": 50, "source": "luoshen_auto_learner"}
+{"schema_version": 2, "timestamp": 1787996732.8569577, "round": 9, "best_char": "千", "best_similarity": 0.972656, "population_size": 50, "source": "luoshen_auto_learner"}
+{"schema_version": 2, "timestamp": 1787996732.8591728, "round": 10, "best_char": "千", "best_similarity": 0.96875, "population_size": 50, "source": "luoshen_auto_learner"}
+{"schema_version": 2, "timestamp": 1787996732.859176, "round": 11, "final_chars": ["千", "千", "千", "千", "千", "千", "春", "千", "晚", "晚", "千", "千", "千", "春", "千", "早", "晚", "晚", "千", "千", "千", "千", "早", "千", "早"], "population_size": 50, "source": "luoshen_auto_learner"}

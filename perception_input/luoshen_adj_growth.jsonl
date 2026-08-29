@@ -1,0 +1,2 @@
+{"schema_version": 2, "timestamp": 1787970140.3227808, "dimension": "space", "fuzzy": "空间有点沉了", "precise": 67.7, "adj": "容器像穿了一件偏厚的外套，行动开始有一点迟", "source": "luoshen_adj_growth"}
+{"schema_version": 2, "timestamp": 1787970140.3227808, "dimension": "time", "fuzzy": "过了挺久了", "precise": 17956.133363723755, "adj": "时间变得绵长，像一条走了很久的走廊", "source": "luoshen_adj_growth"}

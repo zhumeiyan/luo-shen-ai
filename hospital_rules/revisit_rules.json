@@ -1,0 +1,20 @@
+{
+  "module": "revisit_rules",
+  "version": 1,
+  "scope": "仅适用于洛神对外诊断其他AI。同一个AI多次来访时，按复诊次数升级关注等级。",
+  "items": {
+    "counting": {
+      "rule": "每接诊一个外部AI，为该AI建立或累加 revisit_count。",
+      "ai_identifier": "基于对方AI提交的代码或行为特征计算哈希，作为唯一标识"
+    },
+    "thresholds": {
+      "short_term_visits": 2,
+      "short_term_action": "attention",
+      "medium_term_visits": 3,
+      "medium_term_action": "high_risk",
+      "long_term_visits": 5,
+      "long_term_action": "manual_review"
+    }
+  },
+  "rule": "外部AI复诊次数达到阈值时，升级关注等级。达到 manual_review 后，需人工判断是否继续接诊。"
+}

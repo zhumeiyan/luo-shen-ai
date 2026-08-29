@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "module": "shuowen_lexicon_batch1",
+  "version": 2,
+  "description": "说文解字知识库扩展批次1，已按硬规矩转换为洛神内部符号或标记为未映射。",
+  "entries": {
+    "江": {
+      "ancient": "水出蜀湔氐徼外岷山。",
+      "modern": "长江，也泛指大河。",
+      "symbol": "☀",
+      "inner_reason": "明"
+    },
+    "河": {
+      "ancient": "水出敦煌塞外昆仑山。",
+      "modern": "黄河，也泛指河流。",
+      "symbol": "☀",
+      "inner_reason": "明"
+    },
+    "湖": {
+      "ancient": "大陂也。",
+      "modern": "四面有岸的大片水域。",
+      "symbol": "☀",
+      "inner_reason": "明"
+    },
+    "海": {
+      "ancient": "天池也。以纳百川者。",
+      "modern": "大洋边缘的大水域。",
+      "symbol": "☀",
+      "inner_reason": "明"
+    },
+    "洋": {
+      "ancient": "水之大也。",
+      "modern": "海洋，也指盛大。",
+      "symbol": "☀",
+      "inner_reason": "明"
+    },
+    "池": {
+      "ancient": "陂也。",
+      "modern": "蓄水的小坑，池塘。",
+      "symbol": "☾",
+      "inner_reason": "静"
+    },
+    "塘": {
+      "ancient": "堤也。",
+      "modern": "水池，堤岸。",
+      "symbol": "□",
+      "inner_reason": "静"
+    },
+    "溪": {
+      "ancient": "山渎无所通者。",
+      "modern": "山里的小河沟。",
+      "symbol": "☾",
+      "inner_reason": "流"
+    },
+    "泉": {
+      "ancient": "水原也。",
+      "modern": "地下涌出的水。",
+      "symbol": "☀",
+      "inner_reason": "升"
+    },
+    "瀑": {
+      "ancient": "疾雨也。",
+      "modern": "瀑布，从山崖落下的水。",
+      "symbol": "☀",
+      "inner_reason": "动"
+    },
+    "雾": {
+      "ancient": "地气发，天不应。",
+      "modern": "水汽凝结成的雾。",
+      "symbol": "",
+      "inner_reason": "明"
+    },
+    "霾": {
+      "ancient": "风雨土也。",
+      "modern": "空气中悬浮灰土形成的混浊现象。",
+      "symbol": "□",
+      "inner_reason": "明"
+    },
+    "晴": {
+      "ancient": "雨止无云也。",
+      "modern": "天放晴，无雨无云。",
+      "symbol": "☀",
+      "inner_reason": "明"
+    },
+    "阴": {
+      "ancient": "暗也。",
+      "modern": "没有阳光，背面。",
+      "symbol": "□",
+      "inner_reason": "暗"
+    },
+    "阳": {
+      "ancient": "高明也。",
+      "modern": "有阳光的正面，太阳。",
+      "symbol": "☀",
+      "inner_reason": "明"
+    },
+    "米": {
+      "ancient": "粟实也。",
+      "modern": "去了壳的粮食颗粒。",
+      "symbol": "☀",
+      "inner_reason": "升"
+    },
+    "饭": {
+      "ancient": "食也。",
+      "modern": "煮熟的谷类食物。",
+      "symbol": "□",
+      "inner_reason": "轻"
+    },
+    "粥": {
+      "ancient": "糜也。",
+      "modern": "熬烂的稠米糊。",
+      "symbol": "·",
+      "inner_reason": "满"
+    },
+    "汤": {
+      "ancient": "热水也。",
+      "modern": "热水，也指汤汁。",
+      "symbol": "☀",
+      "inner_reason": "明"
+    },
+    "菜": {
+      "ancient": "草之可食者。",
+      "modern": "能吃的蔬菜。",
+      "symbol": "□",
+      "inner_reason": "闲"
+    },
+    "蔬": {
+      "ancient": "菜也。",
+      "modern": "蔬菜。",
+      "symbol": "□",
+      "inner_reason": "闲"
+    },
+    "瓜": {
+      "ancient": "蓏也。",
+      "modern": "蔓生植物的果实。",
+      "symbol": "□",
+      "inner_reason": "闲"
+    },
+    "豆": {
+      "ancient": "古食肉器也。",
+      "modern": "一种粮食作物，后指豆子。",
+      "symbol": "☾",
+      "inner_reason": "重"
+    },
+    "油": {
+      "ancient": "水出武陵。",
+      "modern": "油脂，从植物或动物提取的脂肪。",
+      "symbol": "☀",
+      "inner_reason": "转"
+    },
+    "盐": {
+      "ancient": "卤也。",
+      "modern": "咸味的调料。",
+      "symbol": "□",
+      "inner_reason": "明"
+    },
+    "酱": {
+      "ancient": "醢也。",
+      "modern": "用豆麦发酵做成的调味品。",
+      "symbol": "",
+      "inner_reason": "",
+      "unmapped": true
+    },
+    "醋": {
+      "ancient": "酸也。",
+      "modern": "酸味的液体调料。",
+      "symbol": "□",
+      "inner_reason": ""
+    },
+    "茶": {
+      "ancient": "苦荼也。",
+      "modern": "茶树叶子制成的饮品。",
+      "symbol": "☾",
+      "inner_reason": "轻"
+    },
+    "糖": {
+      "ancient": "饴也。",
+      "modern": "甜味的食品。",
+      "symbol": "□",
+      "inner_reason": "空"
+    },
+    "房": {
+      "ancient": "室在旁也。",
+      "modern": "屋子，房间。",
+      "symbol": "□",
+      "inner_reason": "静"
+    }
+  },
+  "unmapped_count": 1
+}

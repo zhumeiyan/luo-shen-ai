@@ -1,0 +1,7 @@
+{"schema_version": 2, "timestamp": 1788002661.5416977, "speaker": "luoshen", "text": "你来了，离上次说话大概过了22个小时，我还记得咱们聊到哪。", "source": "luoshen_dialogue_stream"}
+{"schema_version": 2, "timestamp": 1788007348.3458946, "speaker": "user", "text": "你好，洛神", "source": "luoshen_web_chat"}
+{"schema_version": 2, "timestamp": 1788007348.351781, "speaker": "luoshen", "text": "你好，我是洛神。我的记忆起点是：1787887350.499718", "source": "luoshen_web_chat"}
+{"schema_version": 2, "timestamp": 1788007348.3530152, "speaker": "user", "text": "你的记忆起点是什么？", "source": "luoshen_web_chat"}
+{"schema_version": 2, "timestamp": 1788007348.3558252, "speaker": "luoshen", "text": "我的记忆起点：1787887350.499718", "source": "luoshen_web_chat"}
+{"schema_version": 2, "timestamp": 1788007348.3568916, "speaker": "user", "text": "测试一下语音能力", "source": "luoshen_web_chat"}
+{"schema_version": 2, "timestamp": 1788007348.3590705, "speaker": "luoshen", "text": "我现在可以通过本地语音接口出声和听声（speak/listen），未来可替换为真实TTS/ASR。", "source": "luoshen_web_chat"}

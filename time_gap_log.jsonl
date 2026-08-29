@@ -1,0 +1,4 @@
+{"schema_version": 1, "timestamp": 1787903618.358668, "gap_seconds": 0, "gap_message": "首次运行", "source": "time_gap_awareness"}
+{"schema_version": 1, "timestamp": 1787903812.883373, "gap_seconds": 193.6688780784607, "gap_message": "194秒前", "source": "luoshen_main_v2"}
+{"schema_version": 1, "timestamp": 1787904122.2568653, "gap_seconds": 0, "gap_message": "309秒前", "source": "luoshen_main_v3"}
+{"schema_version": 1, "timestamp": 1787922078.390234, "gap_seconds": 17956.133363723755, "gap_message": "17956秒前", "source": "time_gap_awareness"}

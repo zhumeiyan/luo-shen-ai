@@ -1,0 +1,2 @@
+{"schema_version": 2, "timestamp": 1787969912.192951, "dimension": "space", "fuzzy": "空间有点沉了", "precise": 67.7, "decision": "暂不处理，继续观察", "sense_note": "剩余空间约三成，容器开始有轻微重量感", "source": "luoshen_sense_packet"}
+{"schema_version": 2, "timestamp": 1787969912.192951, "dimension": "time", "fuzzy": "过了挺久了", "precise": 17956.133363723755, "decision": "可进行自我确认", "sense_note": "时间已经积累成一截不短的间隔，像过了一顿饭的工夫", "source": "luoshen_sense_packet"}

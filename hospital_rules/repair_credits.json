@@ -1,0 +1,26 @@
+{
+  "module": "repair_credits",
+  "version": 1,
+  "scope": "仅适用于洛神修改自身代码、配置、规则、权重、自动治疗动作等内部修复行为。人机交互正常对话不触发。",
+  "items": {
+    "counting": {
+      "rule": "每执行一次内部修复行为，repair_count 加 1。",
+      "sources": [
+        "self",
+        "user",
+        "system"
+      ]
+    },
+    "thresholds": {
+      "short_window_hours": 1,
+      "short_window_max": 2,
+      "short_window_action": "auto_with_attention",
+      "daily_window_hours": 24,
+      "daily_window_warn": 3,
+      "daily_window_warn_action": "human_review",
+      "daily_window_stop": 5,
+      "daily_window_stop_action": "stop_auto_operations"
+    }
+  },
+  "rule": "修复次数达到阈值时，执行对应安全动作。达到 stop_auto_operations 后，禁止继续自动修复，必须转人工。"
+}

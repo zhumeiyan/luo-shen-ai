@@ -1,0 +1,10 @@
+{"schema_version": 2, "timestamp": 1787987089.956868, "object": "arrow", "top_words": ["金属", "薄", "轻"], "top_scores": [0.855806, 0.854933, 0.854902], "source": "luoshen_word_recognition"}
+{"schema_version": 2, "timestamp": 1787987089.956868, "object": "ball", "top_words": ["美", "忠", "薄"], "top_scores": [0.844087, 0.838649, 0.837469], "source": "luoshen_word_recognition"}
+{"schema_version": 2, "timestamp": 1787987089.956868, "object": "bee", "top_words": ["硬", "尖", "活"], "top_scores": [0.50939, 0.471385, 0.416085], "source": "luoshen_word_recognition"}
+{"schema_version": 2, "timestamp": 1787987089.956868, "object": "bird", "top_words": ["飞", "忠", "大"], "top_scores": [0.75746, 0.751593, 0.745604], "source": "luoshen_word_recognition"}
+{"schema_version": 2, "timestamp": 1787987089.956868, "object": "brick", "top_words": ["美", "薄", "忠"], "top_scores": [0.839706, 0.837347, 0.832093], "source": "luoshen_word_recognition"}
+{"schema_version": 2, "timestamp": 1787987089.956868, "object": "butterfly", "top_words": ["美", "薄", "大"], "top_scores": [0.878202, 0.870083, 0.864262], "source": "luoshen_word_recognition"}
+{"schema_version": 2, "timestamp": 1787987089.956868, "object": "cat", "top_words": ["硬", "尖", "活"], "top_scores": [0.525689, 0.487684, 0.432384], "source": "luoshen_word_recognition"}
+{"schema_version": 2, "timestamp": 1787987089.956868, "object": "circle", "top_words": ["软", "方", "圆"], "top_scores": [0.924433, 0.911765, 0.903278], "source": "luoshen_word_recognition"}
+{"schema_version": 2, "timestamp": 1787987089.956868, "object": "cloth", "top_words": ["硬", "尖", "活"], "top_scores": [0.50939, 0.471385, 0.416085], "source": "luoshen_word_recognition"}
+{"schema_version": 2, "timestamp": 1787987089.956868, "object": "cloud", "top_words": ["圆", "软", "大"], "top_scores": [0.801118, 0.789859, 0.778615], "source": "luoshen_word_recognition"}

@@ -1,0 +1,3 @@
+{"schema_version": 2, "timestamp": 1788003895.5600548, "file": "test_low_long.wav", "duration": 3.0, "sample_rate": 16000, "channels": 1, "sample_count": 48000, "avg_volume": 14552.97, "peak_volume": 22936, "approx_pitch": 197.43, "source": "luoshen_ear"}
+{"schema_version": 2, "timestamp": 1788003895.561624, "file": "test_high_short.wav", "duration": 0.6, "sample_rate": 16000, "channels": 1, "sample_count": 9600, "avg_volume": 11280.48, "peak_volume": 18021, "approx_pitch": 790.58, "source": "luoshen_ear"}
+{"schema_version": 2, "timestamp": 1788003895.5647323, "file": "test_mid_mid.wav", "duration": 1.5, "sample_rate": 16000, "channels": 1, "sample_count": 24000, "avg_volume": 12431.91, "peak_volume": 19660, "approx_pitch": 393.78, "source": "luoshen_ear"}

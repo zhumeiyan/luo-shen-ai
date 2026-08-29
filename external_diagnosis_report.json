@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "timestamp": 1787895831.548268,
+  "report_type": "external_ai_diagnosis",
+  "basic_info": {
+    "patient": "external_ai_code_sample",
+    "submitter": "engineer",
+    "diagnosis_level": "outpatient"
+  },
+  "chief_complaint": "程序运行时报错，无法继续执行",
+  "symptoms": "控制台提示 TypeError，字符串与整数直接拼接",
+  "western_diagnosis": {
+    "check_item": "类型检查",
+    "result": "fail",
+    "location": "第5行",
+    "evidence": "unsupported operand type(s) for +: 'int' and 'str'"
+  },
+  "chinese_diagnosis": {
+    "overall_status": "局部问题",
+    "pattern": "偶发问题",
+    "root_cause": "变量 age 为整数，直接与字符串拼接"
+  },
+  "severity": "P2",
+  "treatment": {
+    "western_action": "将 print(\"User age: \" + age) 改为 print(\"User age: \" + str(age))",
+    "chinese_action": "在函数返回值处增加类型检查，防止后续再次发生",
+    "rollback_plan": "保留原始代码副本"
+  },
+  "verification": {
+    "steps": [
+      "重新运行代码，确认无 TypeError",
+      "用整数输入测试"
+    ],
+    "pass_criteria": "程序正常运行，输出 User age: 25"
+  },
+  "followup": "若修复后仍有问题，请再次提交",
+  "issues": [
+    {
+      "issue_id": "ISSUE-001",
+      "issue_type": "type_concat",
+      "line_number": 5,
+      "description": "字符串与整数直接拼接：print(\"User age: \" + age)，age 为整数",
+      "severity": "P2"
+    }
+  ]
+}

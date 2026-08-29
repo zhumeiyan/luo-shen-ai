@@ -1,0 +1,1 @@
+{"schema_version": 1, "timestamp": 1787894794.4533687, "short_count": 1, "daily_count": 1, "triggered_action": "normal", "thresholds": {"short_window_max": 2, "daily_window_warn": 3, "daily_window_stop": 5}}

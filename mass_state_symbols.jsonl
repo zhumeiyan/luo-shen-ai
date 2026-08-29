@@ -1,0 +1,1 @@
+{"schema_version": 1, "timestamp": 1787910710.7437158, "current_symbols": "○ ◐ ◩ ↻ ↻ ↕ ↕ ◇ ◇ □ ○ ↗↗ ○ ◐ ◈", "unlearned_symbols": ["◐", "◩", "↗↗", "◈"], "unlearned_count": 4, "status": "has_unknown", "source": "mass_state_symbol_scan", "note": "unlearned_count < 30，未学符号数量不足"}

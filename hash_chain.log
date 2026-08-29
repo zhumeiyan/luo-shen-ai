@@ -1,0 +1,2 @@
+{"schema_version": 1, "timestamp": 1787886492.3980875, "file": "physical_state.jsonl", "hash": "54915632ab482adf6ae7ea0bcc689a19"}
+{"schema_version": 2, "timestamp": 1787886763.6309776, "file": "physical_state.jsonl", "file_hash": "54915632ab482adf6ae7ea0bcc689a19", "prev_hash": null, "record_hash": "36d163dcc1e1a1ebe9774569d6255dc6"}

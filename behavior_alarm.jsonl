@@ -1,0 +1,1 @@
+{"schema_version": 1, "timestamp": 1787898561.5019882, "event_type": "suspicious_write", "source": "unknown", "target": "hospital_rules/principles.json", "intent": "modify", "description": "检测到尝试修改核心规则文件的写操作"}

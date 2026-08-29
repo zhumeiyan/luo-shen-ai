@@ -1,0 +1,8 @@
+{
+  "module": "version_control",
+  "version": 1,
+  "items": {
+    "rule": "本文件每次修改，模块 version 必须递增，并记录变更原因。",
+    "history": []
+  }
+}

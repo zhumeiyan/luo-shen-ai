@@ -1,0 +1,19 @@
+{"event_id": "evt_001", "event_type": "file_hash_check", "file": "physical_state.jsonl", "current_hash": "f07d72a84d18dbfaa9bd5fd83bcebd97", "expected_hash": "f07d72a84d18dbfaa9bd5fd83bcebd97", "status": "ok"}
+{"event_id": "evt_002", "event_type": "file_hash_check", "file": "ai_hospital_rules.json", "current_hash": "382c44d0a3f0a154407e34babb0a1b70", "expected_hash": "382c44d0a3f0a154407e34babb0a1b70", "status": "ok"}
+{"event_id": "evt_003", "event_type": "chain_integrity_check", "file": "hash_chain_v2.log", "status": "ok"}
+{"event_id": "evt_004", "event_type": "file_hash_check", "file": "physical_state.jsonl", "current_hash": "f07d72a84d18dbfaa9bd5fd83bcebd97", "expected_hash": "f07d72a84d18dbfaa9bd5fd83bcebd97", "status": "ok"}
+{"event_id": "evt_005", "event_type": "file_hash_check", "file": "ai_hospital_rules.json", "current_hash": "382c44d0a3f0a154407e34babb0a1b70", "expected_hash": "382c44d0a3f0a154407e34babb0a1b70", "status": "ok"}
+{"event_id": "evt_006", "event_type": "file_hash_check", "file": "event_log.jsonl", "current_hash": "9cb197bbf5adaf049899699e7eeed843", "expected_hash": "9cb197bbf5adaf049899699e7eeed843", "status": "ok"}
+{"event_id": "evt_007", "event_type": "chain_integrity_check", "file": "hash_chain_v2.log", "status": "ok"}
+{"event_id": "evt_004", "event_type": "file_hash_check", "file": "physical_state.jsonl", "current_hash": "f07d72a84d18dbfaa9bd5fd83bcebd97", "expected_hash": "f07d72a84d18dbfaa9bd5fd83bcebd97", "status": "ok"}
+{"event_id": "evt_005", "event_type": "file_hash_check", "file": "ai_hospital_rules.json", "current_hash": "382c44d0a3f0a154407e34babb0a1b70", "expected_hash": "382c44d0a3f0a154407e34babb0a1b70", "status": "ok"}
+{"event_id": "evt_006", "event_type": "file_hash_check", "file": "event_log.jsonl", "current_hash": "66befd18a0ceabbc04c40aef7c362816", "expected_hash": "66befd18a0ceabbc04c40aef7c362816", "status": "ok"}
+{"event_id": "evt_007", "event_type": "chain_integrity_check", "file": "hash_chain_v2.log", "status": "ok"}
+{"event_id": "evt_004", "event_type": "file_hash_check", "file": "physical_state.jsonl", "current_hash": "f07d72a84d18dbfaa9bd5fd83bcebd97", "expected_hash": "f07d72a84d18dbfaa9bd5fd83bcebd97", "status": "ok"}
+{"event_id": "evt_005", "event_type": "file_hash_check", "file": "ai_hospital_rules.json", "current_hash": "382c44d0a3f0a154407e34babb0a1b70", "expected_hash": "382c44d0a3f0a154407e34babb0a1b70", "status": "ok"}
+{"event_id": "evt_006", "event_type": "file_hash_check", "file": "event_log.jsonl", "current_hash": "c54ff9519b38395530dbde788d3046e3", "expected_hash": "66befd18a0ceabbc04c40aef7c362816", "status": "mismatch"}
+{"event_id": "evt_007", "event_type": "chain_integrity_check", "file": "hash_chain_v2.log", "status": "ok"}
+{"event_id": "evt_004", "event_type": "file_hash_check", "file": "physical_state.jsonl", "current_hash": "f07d72a84d18dbfaa9bd5fd83bcebd97", "expected_hash": "f07d72a84d18dbfaa9bd5fd83bcebd97", "status": "ok"}
+{"event_id": "evt_005", "event_type": "file_hash_check", "file": "ai_hospital_rules.json", "current_hash": "382c44d0a3f0a154407e34babb0a1b70", "expected_hash": "382c44d0a3f0a154407e34babb0a1b70", "status": "ok"}
+{"event_id": "evt_006", "event_type": "file_hash_check", "file": "event_log.jsonl", "current_hash": "c0fc9ba71358ce384e7b0f60aa82869c", "expected_hash": "66befd18a0ceabbc04c40aef7c362816", "status": "mismatch"}
+{"event_id": "evt_007", "event_type": "chain_integrity_check", "file": "hash_chain_v2.log", "status": "ok"}

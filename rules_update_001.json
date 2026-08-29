@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "update_id": "rules_update_001",
+  "update_time": 1787889500,
+  "reason": "设计者朱美岩确认修改 P8 表述，新增 P9 全员检测原则，新增 P10 废弃旧规则文件",
+  "changes": [
+    {
+      "item": "P8",
+      "old_text": "AI医院规则修改权限属于人类设计者，AI无权修改。",
+      "new_text": "AI医院规则修改权限属于洛神系统设计者本人朱美岩，AI无权修改。"
+    },
+    {
+      "item": "P9",
+      "old_text": null,
+      "new_text": "所有角色在洛神系统内行动前，必须通过 AI 医院检测。未通过检测，不得行动。"
+    },
+    {
+      "item": "P10",
+      "old_text": null,
+      "new_text": "旧规则文件 ai_hospital_rules.json 已废弃，不得再作为有效规则使用。"
+    }
+  ],
+  "confirmed_by": "朱美岩"
+}
