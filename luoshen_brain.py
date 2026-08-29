@@ -161,6 +161,7 @@ def retrieve_memories(query, k=RETRIEVE_K):
         (LONGTERM, "longterm"),
         (os.path.join(DLG_DIR, "luoshen_observation_log.jsonl"), "observe"),
         (os.path.join(DLG_DIR, "luoshen_watch_log.jsonl"), "watch"),
+        (os.path.join(DLG_DIR, "luoshen_episodic_memory.jsonl"), "episodic"),
     ):
         for rec in read_jsonl(path):
             if source == "longterm":
@@ -172,6 +173,10 @@ def retrieve_memories(query, k=RETRIEVE_K):
                     for s in ss)
             elif source == "watch":
                 text = str(rec.get("summary", ""))
+            elif source == "episodic":
+                text = "%s %s 注意力=%s" % (
+                    rec.get("content", ""), rec.get("scene", ""),
+                    rec.get("attention", ""))
             else:
                 text = str(rec.get("luoshen_reply", ""))
             if text and text not in seen:
