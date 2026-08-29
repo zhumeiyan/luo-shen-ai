@@ -108,7 +108,7 @@ def main():
 
         report = {
             "schema_version": 1,
-            "timestamp": 1724832000,
+            "timestamp": time.time(),
             "files": files,
             "chain_status": chain_status,
         }
