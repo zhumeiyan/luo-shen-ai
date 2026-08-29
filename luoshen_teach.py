@@ -166,6 +166,18 @@ def teach(word, matrix=None, source="lesson"):
     if matrix is None:
         return {"error": "没有『%s』的画像可教（先给一张图）" % word}
     sig = matrix_sig(matrix)
+    # 记忆点：画面（外部）必须和内部感觉一起沉，才不是死记硬背。
+    # 感觉来自 luoshen_feel 的确定性计算（同一输入必得同一输出），不编造。
+    feel = {}
+    try:
+        from luoshen_feel import compute_feel
+        f = compute_feel()
+        feel = {
+            "dims": {d["name"]: d["value"] for d in f["dims"]},
+            "summary": f.get("summary", ""),
+        }
+    except Exception:
+        pass  # 感觉引擎不可用时不阻塞教学，但正常情况都会采到
     rec = {
         "schema_version": 1,
         "timestamp": time.time(),
@@ -173,10 +185,11 @@ def teach(word, matrix=None, source="lesson"):
         "word": str(word)[:8],
         "sig": sig,
         "source": source,
+        "feel": feel,
     }
     _write_log(rec)
     make_point("learn", "我学会了『%s』这个符号的样子。" % word,
-               source="teach")
+               source="teach", feel=feel)
     return rec
 
 

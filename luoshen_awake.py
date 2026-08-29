@@ -188,6 +188,27 @@ def collect_senses():
     else:
         parts.append("【最近发生的事】（还没有事件记录）")
 
+    # 5) 远方来信（世界语协议信箱：另一个 AI / 设备刚刚寄来的报文）
+    try:
+        import luoshen_bridge as _bridge
+        inbox = _bridge.read_mailbox(_bridge.INBOX)
+        freshest = [m for m in inbox[-4:]
+                    if (time.time() - float(m.get("timestamp", time.time()))) / 60.0 <= 120]
+        if freshest:
+            lines = []
+            for m in reversed(freshest):
+                payload = m.get("payload") or {}
+                text = str(payload.get("text") or
+                           payload.get("note") or "（无文字内容）")[:120]
+                age = max(0, int((time.time() - float(m.get("timestamp", time.time()))) / 60.0))
+                lines.append("%s %d 分钟前（%s）：%s" % (
+                    m.get("sender", "?"), age, m.get("type", "?"), text))
+            parts.append("【远方来信】%s" % "；".join(lines))
+        else:
+            parts.append("【远方来信】（很久没有新来信了）")
+    except Exception:
+        parts.append("【远方来信】（信箱读取失败）")
+
     return "\n".join(parts), room, contact_age, self_age
 
 
