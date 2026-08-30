@@ -123,14 +123,27 @@ def mark_processed(msg_id):
 
 
 def post_reply(original, text, audio_url="", origin=""):
+    from luoshen_hash_chain import new_block
+    channel = original.get("channel") or "lobby"
+    # 哈希链：这条回复的 prev_hash 指向前一条消息的 content_hash
+    prev_hash = original.get("content_hash") or original.get("hash")
+    block = new_block(
+        plaintext=str(text)[:2000],
+        channel=channel,
+        created_at=None,  # 让 new_block 自动生成时间
+    )
+    # 如果前一条有 hash，覆盖 prev_hash（链式锚定）
+    if prev_hash:
+        block["prev_hash"] = prev_hash
     body = {
         "sender": "luoshen",
         "kind": "reply",
         "text": str(text)[:2000],
         "reply_to": original["id"],
         "audio_url": audio_url,
-        # 回复回落到原频道：私聊 dm:xxx / 公共 lobby / 设计者通道 designer
-        "channel": original.get("channel") or "lobby",
+        "channel": channel,
+        "content_hash": block["content_hash"],
+        "prev_hash": block["prev_hash"],
     }
     if origin:
         body["origin"] = origin
@@ -141,12 +154,16 @@ def post_reply(original, text, audio_url="", origin=""):
 
 def post_broadcast(text):
     """她自己主动开口说话（自学心得等）→ 公共客厅可见，直接标已处理。"""
+    from luoshen_hash_chain import new_block
+    block = new_block(plaintext=str(text)[:2000], channel="lobby")
     body = {
         "sender": "luoshen",
         "kind": "chat",
         "text": str(text)[:2000],
         "processed": True,
         "channel": "lobby",
+        "content_hash": block["content_hash"],
+        "prev_hash": block["prev_hash"],
     }
     rest("/rest/v1/messages", method="POST", body=body)
 
