@@ -127,6 +127,8 @@ def post_reply(original, text, audio_url=""):
         "text": str(text)[:2000],
         "reply_to": original["id"],
         "audio_url": audio_url,
+        # 回复回落到原频道：私聊 dm:xxx / 公共 lobby / 设计者通道 designer
+        "channel": original.get("channel") or "lobby",
     }
     status, rows = rest("/rest/v1/messages", method="POST", body=body)
     if status >= 400:
@@ -134,12 +136,13 @@ def post_reply(original, text, audio_url=""):
 
 
 def post_broadcast(text):
-    """她自己主动开口说话（自学心得等）→ 客厅可见，直接标已处理。"""
+    """她自己主动开口说话（自学心得等）→ 公共客厅可见，直接标已处理。"""
     body = {
         "sender": "luoshen",
         "kind": "chat",
         "text": str(text)[:2000],
         "processed": True,
+        "channel": "lobby",
     }
     rest("/rest/v1/messages", method="POST", body=body)
 
