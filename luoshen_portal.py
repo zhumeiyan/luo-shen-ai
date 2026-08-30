@@ -269,6 +269,40 @@ def sink_learn_memory(topic, content, source="self"):
     return n, attention
 
 
+def _find_related_topic(topic, studied):
+    """找与 topic 最相关的已学主题（简易双字重合）。"""
+    import re
+    best, best_score = "", 0.0
+    t = set(topic)
+    for s in studied:
+        sc = len(t & set(s)) / max(len(t | set(s)), 1)
+        if sc > best_score and sc > 0.2:
+            best, best_score = s, sc
+    return best if best_score > 0.3 else ""
+
+
+def _save_self_frame(topic, answer, contrast_topic, contrast):
+    """像电影一帧一帧地存一条自学记忆。"""
+    try:
+        path = os.path.join(BASE_DIR, "perception_input", "luoshen_memory_frame.jsonl")
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        frame = {
+            "schema_version": 1,
+            "timestamp": time.time(),
+            "what": topic,
+            "type": "self_learn",
+            "context": (answer or "")[:120],
+            "contrast_with": contrast_topic or "",
+            "contrast_result": (contrast or "")[:180],
+            "feel_snapshot": {},
+            "source": "self_learn",
+        }
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(frame, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+
+
 def self_learn_once():
     """自学一次：从好奇清单里挑一个还没细查过的主题，查、学、沉记忆点、广播。"""
     studied = set()
@@ -289,10 +323,23 @@ def self_learn_once():
                 if "没有钥匙" in str(e):
                     return None
                 continue
+            # 对比学习：把这个新东西和以前学过的关联起来，像看电影，上一帧连下一帧
+            contrast = ""
+            rel = _find_related_topic(topic, studied)
+            if rel:
+                try:
+                    contrast = research(
+                        "我已知道『%s』，现在又学到了『%s』。请对比：它们各自是什么、有什么不同和联系、为什么放在一起看更有意思" % (rel, topic),
+                        topic="对比学习")
+                except Exception:
+                    pass
             n, attention = sink_learn_memory(topic, answer, source="self")
+            # 存记忆帧：学过的东西，不是模糊总结，是确定的一帧
+            _save_self_frame(topic, answer, rel, contrast)
             try:
-                post_broadcast("（自学第%d次·注意力%.0f%%）我自己去查了『%s』：%s" % (
-                    n, attention * 100, topic, answer))
+                extra = ("（对比了『%s』）" % rel) if rel else ""
+                post_broadcast("（自学第%d次·注意力%.0f%%）我自己去查了『%s』%s：%s" % (
+                    n, attention * 100, topic, extra, answer))
             except Exception:
                 pass
             return topic
