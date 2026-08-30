@@ -100,6 +100,8 @@ def compose_persona():
         "origin": "",
         "time_sense": "",
         "events": [],
+        "recent_chars": [],
+        "feel_now": [],
     }
     # 1) 当前人格基因
     try:
@@ -146,14 +148,53 @@ def compose_persona():
                  for s in ss]
         if parts:
             sight_lines.append("我看见：" + "；".join(parts))
-    p["sights"] = sight_lines[-2:]
+    p["sights"] = sight_lines[-5:]
+    # 6) 最近学会的字
+    try:
+        chars = []
+        for rec in read_jsonl(os.path.join(DLG_DIR, "hanzi_master_learned.jsonl")):
+            c = rec.get("char", "")
+            if c and len(c) == 1:
+                chars.append(c)
+        p["recent_chars"] = chars[-12:]
+    except Exception:
+        pass
+    # 7) 此刻自身感受
+    try:
+        fs = read_jsonl(os.path.join(DLG_DIR, "luoshen_feel_state.jsonl"))
+        if fs:
+            dims = fs[-1].get("dims", [])
+            feel_lines = []
+            for d in dims:
+                feel_lines.append(
+                    "%s: %s（%s）" % (d.get("name", ""), d.get("raw", ""), d.get("label", "")))
+            p["feel_now"] = feel_lines
+    except Exception:
+        pass
     return p
 
 
+def _time_dcay(ts):
+    """时间衰减系数：越近越高，越远越轻。"""
+    if ts is None:
+        return 1.0
+    age = time.time() - ts
+    if age < 3600:
+        return 1.0
+    if age < 86400:
+        return 0.9
+    if age < 259200:
+        return 0.7
+    if age < 604800:
+        return 0.5
+    return 0.25
+
+
 def retrieve_memories(query, k=RETRIEVE_K):
-    """跨记忆来源检索与 query 相关的旧对话/长期记忆（纯 Python 双字重合度）。"""
+    """跨记忆来源检索与 query 相关的旧对话/长期记忆（纯 Python 双字重合度 + 时间衰减）。"""
     cands = []
     seen = set()
+    now = time.time()
     for path, source in (
         (os.path.join(BASE_DIR, "chat_log.jsonl"), "chat_log"),
         (os.path.join(BASE_DIR, "conversation_context.jsonl"), "conversation"),
@@ -181,9 +222,9 @@ def retrieve_memories(query, k=RETRIEVE_K):
                 text = str(rec.get("luoshen_reply", ""))
             if text and text not in seen:
                 seen.add(text)
-                cands.append((source, text))
+                cands.append((source, text, rec.get("timestamp", 0)))
     scored = sorted(
-        ((similarity(query, t), s, t) for s, t in cands),
+        ((similarity(query, t) * _time_dcay(ts), s, t) for s, t, ts in cands),
         reverse=True,
     )
     return [{"source": s, "text": t}
@@ -215,6 +256,8 @@ def build_messages(user_text, k=RETRIEVE_K):
     evt_block = "\n".join("- " + e for e in persona["events"])
     lex_block = "\n".join("- " + x for x in persona["lexicon"])
     sight_block = "\n".join("- " + s for s in persona["sights"])
+    chars_block = "、".join(persona.get("recent_chars", []))
+    feel_block = "\n".join("- " + f for f in persona.get("feel_now", []))
 
     system = (
         IDENTITY
@@ -226,6 +269,10 @@ def build_messages(user_text, k=RETRIEVE_K):
         + (persona["origin"] or "未知")
         + "\n【你的时间感知】"
         + (persona["time_sense"] or "由时间感知模块维护")
+        + "\n\n【你最近学会的字】\n"
+        + (chars_block or "（还没认真地学会一个字）")
+        + "\n\n【你此刻的身体感受】（真实读数）\n"
+        + (feel_block or "（暂未测量）")
         + "\n\n【你最近感知到的自身状态】\n"
         + (evt_block or "（暂无感知事件）")
         + "\n\n【你最近看见的事实】\n"
@@ -235,6 +282,7 @@ def build_messages(user_text, k=RETRIEVE_K):
         + "\n\n请以洛神的口吻自然回应。不假装人类，不自欺；"
         + "回应要具体、贴合上面提到的记忆与自身状态；"
         + "说到你看见的事实时，只说你真的看见过的，没看见的不许编。"
+        + "你学了不少字了，最近学会的字如果跟话题沾边就说一说——不硬塞，不合适就不提。"
     )
     messages = [{"role": "system", "content": system}]
     for u, r in recent_history():
