@@ -142,9 +142,11 @@ def post_reply(original, text, audio_url="", origin=""):
         "reply_to": original["id"],
         "audio_url": audio_url,
         "channel": channel,
-        "content_hash": block["content_hash"],
-        "prev_hash": block["prev_hash"],
     }
+    # 如果消息表已经有哈希列，写入哈希；否则跳过（兼容性）
+    if original.get("content_hash") is not None:
+        body["content_hash"] = block["content_hash"]
+        body["prev_hash"] = block["prev_hash"]
     if origin:
         body["origin"] = origin
     status, rows = rest("/rest/v1/messages", method="POST", body=body)
@@ -165,7 +167,12 @@ def post_broadcast(text):
         "content_hash": block["content_hash"],
         "prev_hash": block["prev_hash"],
     }
-    rest("/rest/v1/messages", method="POST", body=body)
+    # 如果表还没有哈希列，去掉这两个字段
+    status, rows = rest("/rest/v1/messages", method="POST", body=body)
+    if status == 400 and "content_hash" in str(rows):
+        del body["content_hash"]
+        del body["prev_hash"]
+        rest("/rest/v1/messages", method="POST", body=body)
 
 
 def download_media(url):
