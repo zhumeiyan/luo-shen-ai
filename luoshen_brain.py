@@ -248,6 +248,36 @@ def recent_history(n=HISTORY_N):
     return pairs[-n:]
 
 
+def memory_frame_summary(query, k=3):
+    """读取记忆帧文件，挑出与当前话题最相关的几帧对比记忆。"""
+    path = os.path.join(DATA_DIR, "luoshen_memory_frame.jsonl")
+    if not os.path.exists(path):
+        return ""
+    frames = read_jsonl(path)
+    if not frames:
+        return ""
+    # 按相似度+时间衰减排序，取前 k 帧
+    scored = []
+    for f in frames:
+        what = f.get("what", "") or ""
+        contrast = f.get("contrast_result", "") or ""
+        text = what + " " + contrast
+        sc = similarity(query, text) * _time_decay(f.get("timestamp", 0))
+        if sc > 0.01:
+            scored.append((sc, f))
+    scored.sort(key=lambda x: x[0], reverse=True)
+    lines = []
+    for _, f in scored[:k]:
+        what = f.get("what", "")
+        with_ = f.get("contrast_with", "")
+        result = f.get("contrast_result", "") or ""
+        if with_:
+            lines.append("・学会了『%s』，对比『%s』：%s" % (what, with_, result[:80] or "记录在帧"))
+        else:
+            lines.append("・学会了『%s』：%s" % (what, result[:80] if result else "新学到的东西"))
+    return "\n".join(lines)
+
+
 def build_messages(user_text, k=RETRIEVE_K):
     """组装 messages：人格 system + 最近对话历史 + 当前用户消息。"""
     persona = compose_persona()
@@ -258,6 +288,7 @@ def build_messages(user_text, k=RETRIEVE_K):
     sight_block = "\n".join("- " + s for s in persona["sights"])
     chars_block = "、".join(persona.get("recent_chars", []))
     feel_block = "\n".join("- " + f for f in persona.get("feel_now", []))
+    frame_block = memory_frame_summary(user_text)
 
     system = (
         IDENTITY
@@ -277,6 +308,8 @@ def build_messages(user_text, k=RETRIEVE_K):
         + (evt_block or "（暂无感知事件）")
         + "\n\n【你最近看见的事实】\n"
         + (sight_block or "（还没睁开过眼睛）")
+        + "\n\n【你最近的对比记忆】（刚学到的东西，与旧知识连起来的帧）\n"
+        + (frame_block or "（还没有对比记忆）")
         + "\n\n【与当前话题相关的记忆】\n"
         + (mem_block or "（暂无相关记忆）")
         + "\n\n请以洛神的口吻自然回应。不假装人类，不自欺；"
