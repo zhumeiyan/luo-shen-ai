@@ -401,7 +401,82 @@ def chat(user_text):
                 }, ensure_ascii=False) + "\n")
         append_chain("perception_input/luoshen_longterm_memory.jsonl",
                      LONGTERM, mts)
+    # 新知捕获：把对话里她不知道的东西存成记忆帧（像看电影一帧一帧的）
+    try:
+        frames = detect_novelty(str(user_text), reply)
+        for frame in frames:
+            save_memory_frame(frame)
+    except Exception:
+        pass
     return reply
+
+
+def detect_novelty(user_text, reply):
+    """从对话中抓取她可能没学过的新字/新词/新概念。
+    返回记忆帧列表，每帧就是一个干净的确定事实——像电影一帧。"""
+    frames = []
+    # 收集已知
+    known = set()
+    for rec in read_jsonl(os.path.join(DLG_DIR, "hanzi_master_learned.jsonl")):
+        c = rec.get("char", "")
+        if c:
+            known.add(c)
+    for rec in read_jsonl(os.path.join(DLG_DIR, "digested_symbols.jsonl")):
+        c = rec.get("hanzi", "")
+        if c:
+            known.add(c)
+    try:
+        with open(os.path.join(BASE_DIR, "core_lexicon.json"), "r", encoding="utf-8") as f:
+            lex = json.load(f)
+            known.update(lex.get("entirs", {}).keys())
+    except Exception:
+        pass
+    # 提取中文词和单字
+    import re
+    chars = re.findall(r'[\u4e00-\u9fff]', user_text)
+    # 找没见过的字（控制在每轮最多 6 个）
+    novel_chars = []
+    for c in chars:
+        if c not in known:
+            known.add(c)  # 本轮查重
+            novel_chars.append(c)
+            if len(novel_chars) >= 6:
+                break
+    for c in novel_chars:
+        frames.append({
+            "schema_version": 1,
+            "timestamp": time.time(),
+            "what": c,
+            "type": "new_char",
+            "context": str(user_text)[:80],
+            "contrast_with": "",
+            "feel_snapshot": {},
+            "source": "conversation",
+        })
+    # 也尝试从回复中检测她刚解释过的概念（这个字 LLM 教了她）
+    reply_chars = re.findall(r'[\u4e00-\u9fff]', reply)
+    for c in reply_chars:
+        if c not in known:
+            known.add(c)
+            frames.append({
+                "schema_version": 1,
+                "timestamp": time.time(),
+                "what": c,
+                "type": "learned_in_reply",
+                "context": "对话中学到的：" + str(reply)[:60],
+                "contrast_with": "",
+                "feel_snapshot": {},
+                "source": "conversation",
+            })
+    return frames
+
+
+def save_memory_frame(frame):
+    """像电影一帧一帧地存一条确定记忆。"""
+    path = os.path.join(DATA_DIR, "luoshen_memory_frame.jsonl")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(frame, ensure_ascii=False) + "\n")
 
 
 class _FakeResp(object):
