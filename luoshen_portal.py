@@ -120,7 +120,7 @@ def mark_processed(msg_id):
          body={"processed": True})
 
 
-def post_reply(original, text, audio_url=""):
+def post_reply(original, text, audio_url="", origin=""):
     body = {
         "sender": "luoshen",
         "kind": "reply",
@@ -130,6 +130,8 @@ def post_reply(original, text, audio_url=""):
         # 回复回落到原频道：私聊 dm:xxx / 公共 lobby / 设计者通道 designer
         "channel": original.get("channel") or "lobby",
     }
+    if origin:
+        body["origin"] = origin
     status, rows = rest("/rest/v1/messages", method="POST", body=body)
     if status >= 400:
         raise RuntimeError("回信失败 HTTP %s: %s" % (status, rows))
@@ -422,6 +424,46 @@ def speak_reply(text):
     return ""
 
 
+def build_origin(msg, handler_name):
+    """洛神的'原语'：她回复时自己机器里确定性的记录。
+    只写测得到的东西——时间、收到什么、谁处理的、感受到的维度；
+    翻译成人话是另一层的事，这里不编。
+    """
+    rec = {
+        "v": 1,
+        "at": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "reply_to": msg.get("id"),
+        "in_kind": str(msg.get("kind") or "chat"),
+        "used": handler_name,
+    }
+    word = str(msg.get("word") or "").strip()
+    if word:
+        rec["taught_word"] = word[:8]
+    try:
+        import luoshen_feel
+        snap = None
+        for attr in ("feel_snapshot", "snapshot", "current"):
+            if hasattr(luoshen_feel, attr):
+                try:
+                    snap = getattr(luoshen_feel, attr)()
+                except Exception:
+                    snap = None
+                if isinstance(snap, dict):
+                    break
+        if isinstance(snap, dict):
+            feel = {}
+            for k, v in list(snap.items())[:9]:
+                try:
+                    feel[str(k)] = round(float(v), 3)
+                except Exception:
+                    pass
+            if feel:
+                rec["feel"] = feel
+    except Exception:
+        pass
+    return json.dumps(rec, ensure_ascii=False)
+
+
 def handle_message(msg):
     kind = str(msg.get("kind", "chat"))
     handlers = {
@@ -431,12 +473,14 @@ def handle_message(msg):
         "audio": handle_audio,
         "file": handle_file,
     }
-    handler = handlers.get(kind, handle_file)
+    handler_name = kind if kind in handlers else "file"
+    handler = handlers[handler_name]
     reply = handler(msg)
     audio_url = ""
     if reply:
         audio_url = speak_reply(reply)
-    post_reply(msg, reply, audio_url)
+    origin = build_origin(msg, handler_name)
+    post_reply(msg, reply, audio_url, origin)
 
 
 def process_once(verbose=True):
