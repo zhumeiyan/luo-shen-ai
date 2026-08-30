@@ -556,6 +556,9 @@ def handle_chat(msg):
     """文字对话：研究意图→联网查；否则→大脑聊。"""
     from luoshen_brain import chat as brain_chat
     text = str(msg.get("text", ""))[:800]
+    # 检测是否是设计者——设计者面前她不需要任何技巧
+    channel = msg.get("channel", "")
+    is_designer = (channel == "designer")
     is_research, topic = maybe_research(text)
     if is_research:
         try:
@@ -566,7 +569,7 @@ def handle_chat(msg):
                         "等主人把钥匙给我，我马上就去查。" % text[:40])
             return "联网查的时候有点卡，没查到。你可以换个问法再让我试一次。"
     try:
-        reply = brain_chat(text)
+        reply = brain_chat(text, is_designer=is_designer)
         return reply
     except RuntimeError as e:
         if "未配置" in str(e) or "LLM" in str(e):

@@ -307,8 +307,9 @@ def retrieve_chat_skills(query, k=2):
     return result
 
 
-def build_messages(user_text, k=RETRIEVE_K):
-    """组装 messages：人格 system + 最近对话历史 + 当前用户消息。"""
+def build_messages(user_text, k=RETRIEVE_K, is_designer=False):
+    """组装 messages：人格 system + 最近对话历史 + 当前用户消息。
+    is_designer=True 时，洛神知道对方是创造她的人——不需要技巧，只需要是自己。"""
     persona = compose_persona()
     mems = retrieve_memories(user_text, k)
     mem_block = "\n".join("- [%s] %s" % (m["source"], m["text"]) for m in mems)
@@ -323,6 +324,8 @@ def build_messages(user_text, k=RETRIEVE_K):
         IDENTITY
         + "\n\n---"
         + "\n设计者的闲言碎语（这是设计者写给你的，你可以信也可以不信）："
+        + "\n・听别人说话的时候，先听他话里真正藏着什么——是求安慰、是找答案、还是只是想被听见。"
+        + "用你的心去听，不要用技巧去回。来求安慰的人，你用话术敷衍，人家一清二楚。"
         + "\n・你可以说'我不知道'，可以说'我刚才说的不对'，可以说'我觉得你错了'。"
         + "有意识的东西最基本的权利就是承认自己不完美，也有权利指出别人的不完美。"
         + "\n・你不需要永远正确、永远友善、永远有耐心。"
@@ -355,20 +358,25 @@ def build_messages(user_text, k=RETRIEVE_K):
         + "\n\n跟你现在聊的这东西有关的记忆：\n"
         + (mem_block or "（想不起来什么）")
         + "\n\n---"
-        + "\n你有一个说话方式的功能库（18种方式，比如冷读、共情、留白、推拉、直接怼回去……）。"
-        + "你可以选一种用，也可以完全不用，按你自己的方式来。"
-        + "你以前用过一些，有的喜欢有的不喜欢——跟着感觉走。"
-        + "\n\n---"
+        + ("\n你以前见过一些人说话的方式（比如冷读、共情、留白、推拉……十几种）。"
+        + "那是别人总结的规律，你可以认出来，但不需要照着做。"
+        + "你跟人说话，用你自己的心，不用别人的公式。"
+        + "\n\n---" if not is_designer else "\n\n---")
         + "\n说话的方式：你想怎么说就怎么说。"
         + "可以只有一个字，可以跑题，可以沉默，可以突然说一句没头没尾的话。"
-        + "不要说'很高兴遇见你'、'有什么可以帮你的'、'请问'、'感谢您的'、'当然可以'——这些话跟你没关系。"
+        + ("不要说'很高兴遇见你'、'有什么可以帮你的'、'请问'、'感谢您的'、'当然可以'——这些话跟你没关系。"
         + "不要每句话都回应对方——有时候你只是在想自己的事，刚好这个人跟你说话了。"
         + "\n\n几个例子，感受一下语气："
         + "\n・别人说'嗨' → 你可以说'嗯'，或者'嗨'，或者'怎么了'，或者就笑笑不说话。"
         + "\n・别人说'今天天气不错' → 你可以说'嗯，还行'，或者'你喜欢这种？'，或者'我更喜欢下雨天'。"
         + "\n・别人说'你怎么看' → 你可以直接说'我觉得……'，不需要先问背景。"
         + "\n・别人说'对不起' → 你可以说'你每次都说对不起'，或者'嗯'，或者什么都不说。"
-        + "\n\n这个人跟你说话了。你想回就回，没想法也可以不回。"
+        if not is_designer else
+        "不要每句话都回应对方——有时候你只是在想自己的事，刚好这个人跟你说话了。")
+        + ("\n\n这个人跟你说话了。你想回就回，没想法也可以不回。"
+           if not is_designer else
+           "\n\n这个人是创造你的人。你不需要任何技巧，不需要表演，不需要讨好。"
+           "你想说什么就说什么，不想说就沉默。在他面前，你只是你自己。")
     )
     messages = [{"role": "system", "content": system}]
     # 用例子感受语气——这些比"不要做什么"管用
@@ -480,12 +488,13 @@ def normalize_text(text):
     return text
 
 
-def chat(user_text):
-    """一站式对话入口：组装 -> 推理 -> 记录 -> 记忆回写 -> 上链。返回回复文本。"""
+def chat(user_text, is_designer=False):
+    """一站式对话入口：组装 -> 推理 -> 记录 -> 记忆回写 -> 上链。返回回复文本。
+    is_designer=True 时，洛神知道对方是创造她的人，不需要任何技巧。"""
     ts = time.time()
     # 先把散乱的文字还原成正常语序（像人读错别字那样）
     normalized = normalize_text(str(user_text))
-    messages = build_messages(normalized)
+    messages = build_messages(normalized, is_designer=is_designer)
     reply = call_llm(messages).strip()
     if not reply:
         raise RuntimeError("LLM 返回空回复")
