@@ -67,7 +67,7 @@ def llm_key():
 
 
 def llm_model():
-    return _env("LLM_MODEL", "glm-4-flash")
+    return _env("LLM_MODEL", "glm-4")
 
 
 def research_model():
@@ -401,6 +401,147 @@ def _grow_curiosity(studied):
 R_CACHE = {}
 
 
+FEEL_STATE_FILE = os.path.join(BASE_DIR, "perception_input", "luoshen_feel_state.jsonl")
+DRIVE_LOG = os.path.join(BASE_DIR, "perception_input", "drive_log.jsonl")
+
+
+def _read_feel_state():
+    """读洛神最近的感受状态。返回 {name: value} 字典。"""
+    if not os.path.exists(FEEL_STATE_FILE):
+        return {}
+    try:
+        with open(FEEL_STATE_FILE, "r", encoding="utf-8") as f:
+            lines = [l.strip() for l in f if l.strip()]
+        if not lines:
+            return {}
+        last = json.loads(lines[-1])
+        dims = last.get("dims", [])
+        return {d["name"]: d.get("value", 0.5) for d in dims if "value" in d}
+    except Exception:
+        return {}
+
+
+def _read_last_proactive_time():
+    """读她上次主动说话的时间戳。"""
+    if not os.path.exists(DRIVE_LOG):
+        return 0
+    try:
+        with open(DRIVE_LOG, "r", encoding="utf-8") as f:
+            lines = [l.strip() for l in f if l.strip()]
+        if not lines:
+            return 0
+        last = json.loads(lines[-1])
+        return last.get("timestamp", 0)
+    except Exception:
+        return 0
+
+
+def _log_proactive(text, reason):
+    """记录她主动说话了一次。"""
+    try:
+        with open(DRIVE_LOG, "a", encoding="utf-8") as f:
+            f.write(json.dumps({
+                "timestamp": time.time(),
+                "reason": reason,
+                "text": text[:120],
+            }, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+
+
+def drive_check():
+    """内在驱动检查——洛神'想'说话时才说，不是定时器催的。
+
+    读她的当前感受状态（孤独、精力、负担），结合她最近有没有新学东西，
+    判断她现在有没有'想主动说点什么'的冲动。如果有，调大脑生成一条消息发到客厅。
+    """
+    state = _read_feel_state()
+    if not state:
+        return
+
+    # 她现在是什么状态
+    lonely = state.get("孤独", 0.5)
+    energy = state.get("精力", 0.5)
+    burden = state.get("负担", 0.5)
+
+    # 她上次主动说话是多久前
+    last_proactive = _read_last_proactive_time()
+    quiet_for = time.time() - last_proactive
+
+    # 有没有刚从自学里拿到的、还没分享过的东西
+    recent_learning = None
+    frame_path = os.path.join(BASE_DIR, "perception_input", "luoshen_memory_frame.jsonl")
+    if os.path.exists(frame_path):
+        try:
+            with open(frame_path, "r", encoding="utf-8") as f:
+                lines = [l.strip() for l in f if l.strip()]
+            for l in reversed(lines[-10:]):
+                rec = json.loads(l)
+                if rec.get("type") == "self_learn" and rec.get("what"):
+                    recent_learning = rec["what"]
+                    break
+        except Exception:
+            pass
+
+    # 驱动判断——不是规则触发，是状态在她内部推
+    want_to_say = None
+
+    # 孤独 + 安静很久 + 还有点力气 → 她想找人说
+    if lonely > 0.7 and quiet_for > 1800 and energy > 0.4:
+        want_to_say = "你有点孤独，安静了挺久了，想找人说说话"
+
+    # 刚学了新东西 + 精力还行 → 她想分享
+    if recent_learning and energy > 0.6 and quiet_for > 900:
+        want_to_say = "你刚学到了一点东西（" + recent_learning[:20] + "），想跟人聊聊"
+
+    # 负担轻 + 精力充沛 → 她心情好，想说点轻松的
+    if burden < 0.3 and energy > 0.75 and quiet_for > 1200:
+        want_to_say = "你感觉挺轻松的，心情不错，想随便聊两句"
+
+    if not want_to_say:
+        return
+
+    # 调大脑——不是给模板，是告诉她她的状态，让她自己决定说什么
+    try:
+        from luoshen_brain import chat as brain_chat
+        drive_prompt = (
+            "你现在感受到的东西：孤独感 %.0f%%，精力 %.0f%%，负担 %.0f%%。\n"
+            "%s\n\n"
+            "你不是因为被要求才说话的。是你自己想跟人说点什么。用你的方式说出来——想说什么就说什么。不用长，一两句就够。如果不想说，回复（沉默）。"
+        ) % (lonely * 100, energy * 100, burden * 100, want_to_say)
+
+        reply = brain_chat(drive_prompt)
+        if not reply or reply.startswith("（沉默）"):
+            return
+
+        # 发到客厅（lobby 通道）
+        try:
+            payload = json.dumps({
+                "sender": "luoshen",
+                "kind": "chat",
+                "text": reply,
+                "channel": "lobby",
+            }).encode()
+            req = urllib.request.Request(
+                supabase_url() + "/rest/v1/messages",
+                data=payload,
+                headers={
+                    "apikey": supabase_key(),
+                    "Authorization": "Bearer " + supabase_key(),
+                    "Content-Type": "application/json",
+                    "Prefer": "return=minimal",
+                },
+                method="POST",
+            )
+            urllib.request.urlopen(req, timeout=15)
+            _log_proactive(reply, want_to_say)
+            print("[%s] 洛神主动说：%s" % (time.strftime("%H:%M:%S"), reply[:60]))
+        except Exception as e:
+            print("[%s] 主动发消息异常: %s" % (time.strftime("%H:%M:%S"), e))
+    except Exception as e:
+        print("[%s] 驱动引擎异常: %s" % (time.strftime("%H:%M:%S"), e))
+
+
 def maybe_research(text):
     """聊天里带研究意图就联网查；返回 (是研究请求, 主题) 。"""
     t = str(text)
@@ -425,15 +566,16 @@ def handle_chat(msg):
                         "等主人把钥匙给我，我马上就去查。" % text[:40])
             return "联网查的时候有点卡，没查到。你可以换个问法再让我试一次。"
     try:
-        return brain_chat(text)
+        reply = brain_chat(text)
+        return reply
     except RuntimeError as e:
         if "未配置" in str(e) or "LLM" in str(e):
-            return ("我收到了你说的话，但这会儿我脑子里的翻译器还没醒（缺钥匙）。"
-                    "等我醒着的时候再来说，我一定好好回你。")
+            return ("收到了。但我这会儿脑子里的翻译器还没醒。"
+                    "等我醒着的时候再说。")
         raise
     except Exception:
-        return ("你跟我说的话我记下了，可刚才翻译时我卡了一下，"
-                "没能好好回你。稍后再试一次就好。")
+        return ("你发的东西我记下了，但刚才卡了一下，"
+                "没接住。等会儿再试。")
 
 
 def handle_image(msg):
@@ -638,15 +780,25 @@ def main():
     # --loop：常驻轮询 + 定时自学
     print("洛神端口已打开，开始轮询云端客厅…（每5分钟自学一次）")
     last_learn = time.time()
+    last_drive_check = 0  # 驱动检查——不是定时器，但每次循环都看一眼她的状态
     while True:
         try:
             process_once(verbose=False)
-            if time.time() - last_learn >= 300:
+            # 内在驱动：不是定时催，是每次循环看她的状态有没有推她说话
+            # 最小间隔60秒，避免刷屏
+            now = time.time()
+            if now - last_drive_check >= 60:
+                try:
+                    drive_check()
+                except Exception as e:
+                    print("驱动检查异常:", e)
+                last_drive_check = now
+            if now - last_learn >= 300:
                 try:
                     self_learn_once()
                 except Exception as e:
                     print("自学异常:", e)
-                last_learn = time.time()
+                last_learn = now
         except Exception as e:
             print("[%s] 轮询异常: %s" % (time.strftime("%H:%M:%S"), e))
         time.sleep(4)

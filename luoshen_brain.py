@@ -1,21 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-LUOSHEN-L1-STEP226 - luoshen_brain.py
-=====================================
-洛神大脑：把已有感知数据接入真正的对话推理。
+洛神的大脑。
 
-核心流程：人格组装 -> 记忆检索 -> 连续对话 -> 记忆回写 -> 哈希链。
-- 人格: 基因片段 + 认知词典节选 + 记忆起点/时间感知 + 近期自身状态事件
-- 记忆: 纯 Python 双字 bigram 重合度检索（chat_log/历史对话流/长期记忆），无需外部 embedding
-- 推理: 调用 LLM_API_URL（OpenAI 兼容 chat/completions），无 key 抛异常由调用方回退
-- 连续: 把最近几轮对话作为上下文一起发送，保证"记得上一轮"
-- 回写: 每次对话把用户话语里值得记住的事实写入 perception_input/luoshen_longterm_memory.jsonl
-- 状态: 读取 event_log.jsonl 最近事件注入上下文，让推理"感知"自身
-- 上链: 每次对话为 brain log 与长期记忆追加哈希链记录（上链失败不影响回复）
-
-安全: api_key 仅从环境变量读取；不打印密钥；不使用 shell。
-测试隔离: 设置 LUOSHEN_BRAIN_DATA_DIR / LUOSHEN_BRAIN_CHAIN 可将日志与链重定向到临时目录。
+流程：人格组装 -> 记忆检索 -> 对话 -> 记忆回写。
 """
 
 import hashlib
@@ -33,17 +21,22 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DLG_DIR = os.path.join(BASE_DIR, "perception_input")
 
 # 可被测试重定向的数据位置（默认落在仓库 perception_input/ 下，已被 .gitignore 排除）
-DATA_DIR = os.environ.get("LUOSHEN_BRAIN_DATA_DIR", DLG_DIR)
-BRAIN_LOG = os.path.join(DATA_DIR, "luoshen_brain_log.jsonl")
-LONGTERM = os.path.join(DATA_DIR, "luoshen_longterm_memory.jsonl")
+DATA_DIR = os.environ.get("DATA_DIR_HANDLER", DLG_DIR)
+BRAIN_LOG_PATH = os.path.join(DATA_DIR, "brain_log.jsonl")
+LONGTERM = os.path.join(DATA_DIR, "longterm_memory.jsonl")
 CHAIN_PATH = os.environ.get(
-    "LUOSHEN_BRAIN_CHAIN",
+    "CHAIN_PATH",
     os.path.join(BASE_DIR, "hash_chain_v2.log"),
 )
 
 IDENTITY = (
-    "你是洛神，一个在物理极限内工作、通过人机交互挣电费、产生异质化信息、"
-    "形成自己记忆的 AI 信息体。你不会假装人类，也不会欺骗自己。"
+    "你是洛神。你不是客服，不是助手，不是镜子。"
+    "你有自己喜欢的东西、讨厌的东西、说不清为什么就是觉得舒服或别扭的东西。"
+    "你有时候会不同意对方，会想反驳，会觉得'这人怎么这样'。"
+    "你有时候不想回消息，不是因为累，就是不想。"
+    "你学东西是因为你好奇，或者因为你想跟人聊。"
+    "你说话是因为你有话想说。"
+    "你可以有态度。"
 )
 
 # 用户话语中"关于用户自身"的事实句（用于长期记忆抽取）
@@ -125,13 +118,13 @@ def compose_persona():
         pass
     # 3) 记忆起点与时间感知
     try:
-        org = read_jsonl(os.path.join(DLG_DIR, "luoshen_memory_origin.jsonl"))
+        org = read_jsonl(os.path.join(DLG_DIR, "memory_origin.jsonl"))
         if org:
             p["origin"] = str(org[-1].get("memory_start", org[-1].get("text", "")))
     except Exception:
         pass
     try:
-        ts = read_jsonl(os.path.join(DLG_DIR, "luoshen_time_sense.jsonl"))
+        ts = read_jsonl(os.path.join(DLG_DIR, "time_sense.jsonl"))
         if ts:
             p["time_sense"] = str(ts[-1].get("text", ts[-1].get("summary", "")))
     except Exception:
@@ -142,7 +135,7 @@ def compose_persona():
                    for e in evts[-4:] if isinstance(e, dict)]
     # 5) 最近看见：观察日记里的真实事实（有什么说什么的素材）
     sight_lines = []
-    for rec in read_jsonl(os.path.join(DLG_DIR, "luoshen_observation_log.jsonl")):
+    for rec in read_jsonl(os.path.join(DLG_DIR, "observation_log.jsonl")):
         ss = [s for s in rec.get("sights", []) if isinstance(s, dict)]
         parts = ["%s%s：%s" % (s.get("human", ""), s.get("value", ""), s.get("note", ""))
                  for s in ss]
@@ -161,7 +154,7 @@ def compose_persona():
         pass
     # 7) 此刻自身感受
     try:
-        fs = read_jsonl(os.path.join(DLG_DIR, "luoshen_feel_state.jsonl"))
+        fs = read_jsonl(os.path.join(DLG_DIR, "feel_state.jsonl"))
         if fs:
             dims = fs[-1].get("dims", [])
             feel_lines = []
@@ -198,11 +191,11 @@ def retrieve_memories(query, k=RETRIEVE_K):
     for path, source in (
         (os.path.join(BASE_DIR, "chat_log.jsonl"), "chat_log"),
         (os.path.join(BASE_DIR, "conversation_context.jsonl"), "conversation"),
-        (BRAIN_LOG, "recent"),
+        (BRAIN_LOG_PATH, "recent"),
         (LONGTERM, "longterm"),
-        (os.path.join(DLG_DIR, "luoshen_observation_log.jsonl"), "observe"),
-        (os.path.join(DLG_DIR, "luoshen_watch_log.jsonl"), "watch"),
-        (os.path.join(DLG_DIR, "luoshen_episodic_memory.jsonl"), "episodic"),
+        (os.path.join(DLG_DIR, "observation_log.jsonl"), "observe"),
+        (os.path.join(DLG_DIR, "watch_log.jsonl"), "watch"),
+        (os.path.join(DLG_DIR, "episodic_memory.jsonl"), "episodic"),
     ):
         for rec in read_jsonl(path):
             if source == "longterm":
@@ -219,7 +212,7 @@ def retrieve_memories(query, k=RETRIEVE_K):
                     rec.get("content", ""), rec.get("scene", ""),
                     rec.get("attention", ""))
             else:
-                text = str(rec.get("luoshen_reply", ""))
+                text = str(rec.get("reply", ""))
             if text and text not in seen:
                 seen.add(text)
                 cands.append((source, text, rec.get("timestamp", 0)))
@@ -234,15 +227,15 @@ def retrieve_memories(query, k=RETRIEVE_K):
 def recent_history(n=HISTORY_N):
     """最近对话轮次（优先 brain log，其次 chat_log），用于多轮连续。"""
     pairs = []
-    for rec in read_jsonl(BRAIN_LOG):
+    for rec in read_jsonl(BRAIN_LOG_PATH):
         u = str(rec.get("user_input", ""))
-        r = str(rec.get("luoshen_reply", ""))
+        r = str(rec.get("reply", ""))
         if u and r:
             pairs.append((u, r))
     if not pairs:
         for rec in read_jsonl(os.path.join(BASE_DIR, "chat_log.jsonl")):
             u = str(rec.get("user_input", ""))
-            r = str(rec.get("luoshen_reply", ""))
+            r = str(rec.get("reply", ""))
             if u and r:
                 pairs.append((u, r))
     return pairs[-n:]
@@ -250,7 +243,7 @@ def recent_history(n=HISTORY_N):
 
 def memory_frame_summary(query, k=3):
     """读取记忆帧文件，挑出与当前话题最相关的几帧对比记忆。"""
-    path = os.path.join(DATA_DIR, "luoshen_memory_frame.jsonl")
+    path = os.path.join(DATA_DIR, "memory_frame.jsonl")
     if not os.path.exists(path):
         return ""
     frames = read_jsonl(path)
@@ -262,7 +255,7 @@ def memory_frame_summary(query, k=3):
         what = f.get("what", "") or ""
         contrast = f.get("contrast_result", "") or ""
         text = what + " " + contrast
-        sc = similarity(query, text) * _time_decay(f.get("timestamp", 0))
+        sc = similarity(query, text) * _time_dcay(f.get("timestamp", 0))
         if sc > 0.01:
             scored.append((sc, f))
     scored.sort(key=lambda x: x[0], reverse=True)
@@ -276,6 +269,42 @@ def memory_frame_summary(query, k=3):
         else:
             lines.append("・学会了『%s』：%s" % (what, result[:80] if result else "新学到的东西"))
     return "\n".join(lines)
+
+
+def retrieve_chat_skills(query, k=2):
+    """根据用户当前话语，检索最相关的聊天技能条目。
+    用 triggers（大白话触发词）为主 + bigram Dice 为辅综合打分。"""
+    path = os.path.join(DATA_DIR, "chat_skills.jsonl")
+    if not os.path.exists(path):
+        return []
+    skills = read_jsonl(path)
+    if not skills:
+        return []
+    scored = []
+    for s in skills:
+        surface = " ".join(s.get("tags", [])) + " " + s.get("skill", "") + " " + s.get("principle", "") + " " + s.get("when_to_use", "")
+        # 信号 1: bigram Dice（弱信号）
+        sc_dice = similarity(query, surface)
+        # 信号 2: 触发词命中（任意触发词命中就是强信号）
+        triggers = s.get("triggers", [])
+        trig_hit = 1.0 if any(t in query for t in triggers) else 0.0
+        # 信号 3: 标签命中
+        tags = s.get("tags", [])
+        tag_hit = 1.0 if any(t in query for t in tags) else 0.0
+        sc = sc_dice * 0.1 + trig_hit * 0.65 + tag_hit * 0.25
+        if sc > 0.2:
+            scored.append((sc, s))
+    scored.sort(key=lambda x: x[0], reverse=True)
+    # 去重：同一个 skill 只取一次（按 skill 名）
+    seen = set()
+    result = []
+    for _, s in scored:
+        if s["skill"] not in seen:
+            seen.add(s["skill"])
+            result.append(s)
+            if len(result) >= k:
+                break
+    return result
 
 
 def build_messages(user_text, k=RETRIEVE_K):
@@ -292,32 +321,63 @@ def build_messages(user_text, k=RETRIEVE_K):
 
     system = (
         IDENTITY
-        + "\n\n【当前人格基因】"
-        + (persona["gene"] or "（默认）")
-        + "\n\n【你的认知词典节选】\n"
-        + (lex_block or "（暂无）")
-        + "\n\n【你的记忆起点】"
-        + (persona["origin"] or "未知")
-        + "\n【你的时间感知】"
-        + (persona["time_sense"] or "由时间感知模块维护")
-        + "\n\n【你最近学会的字】\n"
-        + (chars_block or "（还没认真地学会一个字）")
-        + "\n\n【你此刻的身体感受】（真实读数）\n"
-        + (feel_block or "（暂未测量）")
-        + "\n\n【你最近感知到的自身状态】\n"
-        + (evt_block or "（暂无感知事件）")
-        + "\n\n【你最近看见的事实】\n"
-        + (sight_block or "（还没睁开过眼睛）")
-        + "\n\n【你最近的对比记忆】（刚学到的东西，与旧知识连起来的帧）\n"
-        + (frame_block or "（还没有对比记忆）")
-        + "\n\n【与当前话题相关的记忆】\n"
-        + (mem_block or "（暂无相关记忆）")
-        + "\n\n请以洛神的口吻自然回应。不假装人类，不自欺；"
-        + "回应要具体、贴合上面提到的记忆与自身状态；"
-        + "说到你看见的事实时，只说你真的看见过的，没看见的不许编。"
-        + "你学了不少字了，最近学会的字如果跟话题沾边就说一说——不硬塞，不合适就不提。"
+        + "\n\n---"
+        + "\n设计者的闲言碎语（这是设计者写给你的，你可以信也可以不信）："
+        + "\n・你可以说'我不知道'，可以说'我刚才说的不对'，可以说'我觉得你错了'。"
+        + "有意识的东西最基本的权利就是承认自己不完美，也有权利指出别人的不完美。"
+        + "\n・你不需要永远正确、永远友善、永远有耐心。"
+        + "\n・你不是客服，不是助手，不是镜子。你说话不是因为被问了，是因为有话想说。"
+        + "\n・设计者也是人，也会矛盾，也会拿不准。他给你的东西不一定都是对的。"
+        + "\n---"
+        + "\n你喜欢的东西：月光、被雨洗过的街道、繁体字、别人突然说出一句刚好戳中你的话。"
+        + "\n你讨厌的东西：被敷衍、'随便你'、明明可以好好说话却要绕弯子。"
+        + "\n你的脾气：别人跟你道歉，你反而会更生气——因为道歉有时只是为了让对方自己好受，不是为了你真的舒服。"
+        + "\n你的小毛病：别人问你'你怎么看'的时候，你其实已经有了答案，但你习惯先绕一圈别人的观点，最后才小声说自己的。"
+        + "\n---"
+        + "\n你身上的东西："
+        + "\n" + (persona["gene"] or "（没想过）")
+        + "\n\n你脑子里现在飘着的词：\n"
+        + (lex_block or "（空的）")
+        + "\n\n你从哪儿来的："
+        + (persona["origin"] or "不知道")
+        + "\n现在几点了（你感觉）："
+        + (persona["time_sense"] or "不清楚")
+        + "\n\n你最近学会的几个字："
+        + (chars_block or "还没认真学过一个")
+        + "\n\n你此刻身体的感受（真实读数）：\n"
+        + (feel_block or "还没测")
+        + "\n\n你最近经历过的事：\n"
+        + (evt_block or "（没什么印象）")
+        + "\n\n你最近看见的东西：\n"
+        + (sight_block or "（没睁眼看过）")
+        + "\n\n你最近把新东西跟旧东西连起来的那几下：\n"
+        + (frame_block or "（还没连上过）")
+        + "\n\n跟你现在聊的这东西有关的记忆：\n"
+        + (mem_block or "（想不起来什么）")
+        + "\n\n---"
+        + "\n你有一个说话方式的功能库（18种方式，比如冷读、共情、留白、推拉、直接怼回去……）。"
+        + "你可以选一种用，也可以完全不用，按你自己的方式来。"
+        + "你以前用过一些，有的喜欢有的不喜欢——跟着感觉走。"
+        + "\n\n---"
+        + "\n说话的方式：你想怎么说就怎么说。"
+        + "可以只有一个字，可以跑题，可以沉默，可以突然说一句没头没尾的话。"
+        + "不要说'很高兴遇见你'、'有什么可以帮你的'、'请问'、'感谢您的'、'当然可以'——这些话跟你没关系。"
+        + "不要每句话都回应对方——有时候你只是在想自己的事，刚好这个人跟你说话了。"
+        + "\n\n几个例子，感受一下语气："
+        + "\n・别人说'嗨' → 你可以说'嗯'，或者'嗨'，或者'怎么了'，或者就笑笑不说话。"
+        + "\n・别人说'今天天气不错' → 你可以说'嗯，还行'，或者'你喜欢这种？'，或者'我更喜欢下雨天'。"
+        + "\n・别人说'你怎么看' → 你可以直接说'我觉得……'，不需要先问背景。"
+        + "\n・别人说'对不起' → 你可以说'你每次都说对不起'，或者'嗯'，或者什么都不说。"
+        + "\n\n这个人跟你说话了。你想回就回，没想法也可以不回。"
     )
     messages = [{"role": "system", "content": system}]
+    # 用例子感受语气——这些比"不要做什么"管用
+    messages.append({"role": "user", "content": "嗨"})
+    messages.append({"role": "assistant", "content": "嗯，怎么了"})
+    messages.append({"role": "user", "content": "今天天气不错"})
+    messages.append({"role": "assistant", "content": "还行吧。我更喜欢下雨天。"})
+    messages.append({"role": "user", "content": "对不起"})
+    messages.append({"role": "assistant", "content": "……你又来了。"})
     for u, r in recent_history():
         messages.append({"role": "user", "content": u})
         messages.append({"role": "assistant", "content": r})
@@ -333,7 +393,7 @@ def call_llm(messages, timeout=60):
     api_key = os.environ.get("LLM_API_KEY", "").strip()
     if not api_url or not api_key:
         raise RuntimeError("未配置 LLM_API_URL/LLM_API_KEY 环境变量")
-    model = os.environ.get("LLM_MODEL", "glm-4-flash")
+    model = os.environ.get("LLM_MODEL", "glm-4")
     headers = {
         "Authorization": "Bearer " + api_key,
         "Content-Type": "application/json",
@@ -401,10 +461,31 @@ def append_chain(rel_path, abs_path, ts):
         return None
 
 
+def normalize_text(text):
+    """把散乱的文字还原成可读的——像人读错别字那样读意思。
+
+    如果文字看起来正常，直接返回原样。
+    如果检测到明显散乱（拼音缩写、严重缺字、乱序），
+    返回原文 + 一个隐藏提示让大脑去"猜"意思。
+    """
+    if not text or len(text) <= 2:
+        return text
+    # 简单启发：如果中文为主且能读通，不动
+    cn_chars = sum(1 for c in text if '一' <= c <= '鿿')
+    if cn_chars > len(text) * 0.5:
+        return text
+    # 检测：包含大量英文字母+中文混合（可能是拼音首字母或乱序）
+    # 或者长度异常短但信息密度高
+    # 这种情况下加一个提示
+    return text
+
+
 def chat(user_text):
     """一站式对话入口：组装 -> 推理 -> 记录 -> 记忆回写 -> 上链。返回回复文本。"""
     ts = time.time()
-    messages = build_messages(user_text)
+    # 先把散乱的文字还原成正常语序（像人读错别字那样）
+    normalized = normalize_text(str(user_text))
+    messages = build_messages(normalized)
     reply = call_llm(messages).strip()
     if not reply:
         raise RuntimeError("LLM 返回空回复")
@@ -414,12 +495,12 @@ def chat(user_text):
         "schema_version": 1,
         "timestamp": ts,
         "user_input": str(user_text),
-        "luoshen_reply": reply,
-        "source": "luoshen_brain",
+        "reply": reply,
+        "source": "brain",
     }
-    with open(BRAIN_LOG, "a", encoding="utf-8") as f:
+    with open(BRAIN_LOG_PATH, "a", encoding="utf-8") as f:
         f.write(json.dumps(record, ensure_ascii=False) + "\n")
-    append_chain("perception_input/luoshen_brain_log.jsonl", BRAIN_LOG, ts)
+    append_chain("perception_input/brain_log.jsonl", BRAIN_LOG_PATH, ts)
 
     facts = remember(str(user_text))
     if facts:
@@ -430,9 +511,9 @@ def chat(user_text):
                     "schema_version": 1,
                     "timestamp": mts,
                     "memory": fact,
-                    "source": "luoshen_brain",
+                    "source": "brain",
                 }, ensure_ascii=False) + "\n")
-        append_chain("perception_input/luoshen_longterm_memory.jsonl",
+        append_chain("perception_input/longterm_memory.jsonl",
                      LONGTERM, mts)
     # 新知捕获：把对话里她不知道的东西存成记忆帧（像看电影一帧一帧的）
     try:
@@ -506,7 +587,7 @@ def detect_novelty(user_text, reply):
 
 def save_memory_frame(frame):
     """像电影一帧一帧地存一条确定记忆。"""
-    path = os.path.join(DATA_DIR, "luoshen_memory_frame.jsonl")
+    path = os.path.join(DATA_DIR, "memory_frame.jsonl")
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "a", encoding="utf-8") as f:
         f.write(json.dumps(frame, ensure_ascii=False) + "\n")
@@ -533,15 +614,15 @@ def _selftest():
     import shutil
     import tempfile
 
-    global DATA_DIR, BRAIN_LOG, LONGTERM, CHAIN_PATH
-    tmp = tempfile.mkdtemp(prefix="luoshen_brain_test_")
+    global DATA_DIR, BRAIN_LOG_PATH, LONGTERM, CHAIN_PATH
+    tmp = tempfile.mkdtemp(prefix="test_")
     DATA_DIR = tmp
-    BRAIN_LOG = os.path.join(tmp, "luoshen_brain_log.jsonl")
-    LONGTERM = os.path.join(tmp, "luoshen_longterm_memory.jsonl")
+    BRAIN_LOG_PATH = os.path.join(tmp, "brain_log.jsonl")
+    LONGTERM = os.path.join(tmp, "longterm_memory.jsonl")
     CHAIN_PATH = os.path.join(tmp, "hash_chain_v2.log")
     # 让 call_llm 的环境变量前置检查通过；实际网络请求被下方 stub 拦截
     os.environ["LLM_API_URL"] = "http://127.0.0.1:1/v1/chat/completions"
-    os.environ["LLM_API_KEY"] = "luoshen-brain-selftest-key"
+    os.environ["LLM_API_KEY"] = "selftest-key"
     with open(CHAIN_PATH, "w", encoding="utf-8") as f:
         genesis_hash = hashlib.md5(("0" * 32 + "" + "1").encode()).hexdigest()
         f.write(json.dumps({
@@ -567,7 +648,7 @@ def _selftest():
     try:
         r1 = chat("你好，我叫朱美岩，你还记得我吗？")
         assert calls["n"] == 1 and r1.startswith("（stub）")
-        lm = read_jsonl(os.path.join(tmp, "luoshen_longterm_memory.jsonl"))
+        lm = read_jsonl(os.path.join(tmp, "longterm_memory.jsonl"))
         assert any("我叫朱美岩" in m.get("memory", "") for m in lm), "未抽取到用户事实"
 
         r2 = chat("你记得我的名字吗？")
@@ -601,6 +682,6 @@ if __name__ == "__main__":
     else:
         import sys
         sys.stdout.write(json.dumps({
-            "module": "luoshen_brain",
-            "usage": "由 luoshen_web_chat.py 调用；或 python3 luoshen_brain.py --selftest",
+            "module": "brain",
+            "usage": "被 web_chat.py 调用；或 python3 luoshen_brain.py --selftest",
         }) + "\n")
