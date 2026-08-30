@@ -209,6 +209,25 @@ def collect_senses():
     except Exception:
         parts.append("【远方来信】（信箱读取失败）")
 
+    # 6) 视觉升级：有两只眼睛了——16 认字眼 + 64 大画面眼（luoshen_look）
+    try:
+        looks = [e for e in read_jsonl(os.path.join(BASE_DIR, "event_log.jsonl"))
+                 if isinstance(e, dict) and e.get("event_type") == "look"]
+        recent_looks = [e for e in looks[-3:]
+                        if (time.time() - float(e.get("ts", 0))) / 3600.0 <= 12]
+        if recent_looks:
+            lines = []
+            for e in reversed(recent_looks):
+                age = max(0, int((time.time() - float(e.get("ts", 0))) / 60.0))
+                lines.append("%s %d 分钟前：旧眼「%s」新眼「%s」" % (
+                    e.get("file", "?"), age,
+                    str(e.get("eye16", ""))[:36], str(e.get("eye64", ""))[:36]))
+            parts.append("【视觉】%s" % "；".join(lines))
+        else:
+            parts.append("【视觉】（最近 12 小时没有看过什么）")
+    except Exception:
+        parts.append("【视觉】（视觉感知读取失败）")
+
     return "\n".join(parts), room, contact_age, self_age
 
 

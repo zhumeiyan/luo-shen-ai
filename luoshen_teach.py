@@ -45,6 +45,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DLG_DIR = os.path.join(BASE_DIR, "perception_input")
 TEACH_LOG = os.path.join(DLG_DIR, "luoshen_teach_log.jsonl")
 TAUGHT_WORDS = os.path.join(DLG_DIR, "luoshen_taught_words.jsonl")
+REAL_PAIRS = os.path.join(DLG_DIR, "luoshen_real_pairs.jsonl")  # 字形↔实物 对照账本
 SIG_SIZE = 16  # 画面签名：16x16 灰度
 
 # 距离→把握度的换算常数（16x16 归一化灰度向量的典型欧氏距离范围）
@@ -155,8 +156,10 @@ def _write_log(rec):
     append_chain(os.path.relpath(TEACH_LOG, BASE_DIR), TEACH_LOG, rec["timestamp"])
 
 
-def teach(word, matrix=None, source="lesson"):
-    """教一个字：画面特征 ↔ 人类符号 对照，沉记忆点，上链。"""
+def teach(word, matrix=None, source="lesson", real_path=None):
+    """教一个字：画面特征 ↔ 人类符号 对照，沉记忆点，上链。
+
+    real_path：可选的实物画面（照片/视频）——字形和实物配对才算认识。"""
     if matrix is None:
         hanzi, objs = load_word_maps()
         for w, mats in list(hanzi.items()) + list(objs.items()):
@@ -190,7 +193,57 @@ def teach(word, matrix=None, source="lesson"):
     _write_log(rec)
     make_point("learn", "我学会了『%s』这个符号的样子。" % word,
                source="teach", feel=feel)
+    if real_path:
+        _real_pair(word, real_path, feel)
     return rec
+
+
+def _real_pair(word, real_path, feel=None):
+    """字形 ↔ 实物对照：人拿真实世界画面（照片/视频）指认这个符号。
+
+    实物签名来自真实画面的确定性测量，绝不编造；没有实物画面的字，
+    永远只算"认得字形"，不算"认识这个东西"。"""
+    m = matrix_from_file(real_path)
+    if m is None:
+        return None
+    sig = matrix_sig(m)
+    rec = {
+        "schema_version": 1,
+        "timestamp": time.time(),
+        "kind": "real_pair",
+        "word": str(word)[:8],
+        "sig": sig,
+        "file": os.path.basename(real_path),
+        "feel": feel or {},
+    }
+    os.makedirs(os.path.dirname(REAL_PAIRS), exist_ok=True)
+    with open(REAL_PAIRS, "a", encoding="utf-8") as f:
+        f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    append_chain(os.path.relpath(REAL_PAIRS, BASE_DIR), REAL_PAIRS, rec["timestamp"])
+    make_point("learn", "我看到过『%s』的实物画面（%s），和字形对上了。" % (
+        word, os.path.basename(real_path)), source="teach", feel=feel)
+    return rec
+
+
+def real_matches(sig):
+    """拿画面签名对照实物账本：像哪个字的实物画面？没把握就诚实。"""
+    pairs = {}
+    for r in read_jsonl(REAL_PAIRS):
+        w, s = r.get("word"), r.get("sig")
+        if w and s:
+            pairs.setdefault(w, []).append(s)
+    if not pairs:
+        return {"word": None, "confidence": 0.0}
+    best, bd = None, None
+    for w, sigs in pairs.items():
+        proto = [sum(c[i] for c in sigs) / len(sigs)
+                 for i in range(len(sigs[0]))]
+        d = dist_sig(sig, proto)
+        if bd is None or d < bd:
+            best, bd = w, d
+    conf = round(max(0.0, 1.0 - bd / CONF_D0), 3)
+    return {"word": best, "confidence": conf} if conf >= 0.4 \
+        else {"word": None, "confidence": 0.0}
 
 
 def guess_from_sig(sig):
@@ -205,8 +258,10 @@ def guess_from_sig(sig):
         if bsim is None or sim > bsim:
             best, bd, bsim = w, d, sim
     confidence = round(max(0.0, 1.0 - bd / CONF_D0), 3)
+    real = real_matches(sig)
     return {"word": best, "distance": round(bd, 3),
             "confidence": confidence,
+            "real": real,
             "reason": ("我觉得像『%s』" % best if confidence >= 0.4
                        else "画面太陌生了，我还没见过这样的符号")}
 
@@ -358,7 +413,7 @@ def main():
         idx = args.index("--teach")
         word = args[idx + 1] if idx + 1 < len(args) else ""
         if not word:
-            print("用法：--teach 字 [--source user_correct|lesson] [--video 画面路径]")
+            print("用法：--teach 字 [--source user_correct|lesson] [--video 字形画面] [--real 实物画面]")
             return
         source = "lesson"
         if "--source" in args:
@@ -372,13 +427,24 @@ def main():
             if matrix is None:
                 print("画面读取失败：%s" % vpath)
                 return
-        r = teach(word, matrix=matrix, source=source)
+        real_path = None
+        if "--real" in args:
+            ri = args.index("--real")
+            real_path = args[ri + 1] if ri + 1 < len(args) else ""
+            if not real_path or not os.path.exists(real_path):
+                print("实物画面不存在：%s" % real_path)
+                return
+        r = teach(word, matrix=matrix, source=source, real_path=real_path)
         if "error" in r:
             print(r["error"])
         else:
             tag = "人对准过的画面" if source == "user_correct" else "字形画像"
             print("教完了：『%s』↔ %s 对照已记住。" % (word, tag))
-            print("现在拿别的画面问她，她就认得这个符号了。")
+            if real_path:
+                print("实物对照：『%s』↔ %s 的真实画面也对上了（签名已上链）。" %
+                      (word, os.path.basename(real_path)))
+            else:
+                print("注意：这次没有实物画面，只算认得字形。")
         return
     if "--guess" in args:
         idx = args.index("--guess")
