@@ -8,7 +8,7 @@
 
 v2 新能力：
   - 研究（web_search）：聊天里出现"查/搜/了解" → 她联网查资料 → 学完沉记忆点；
-  - 自学循环：每 30 分钟她自己挑一个好奇主题去查、去学、去沉记忆点，并把心得广播到客厅；
+  - 自学循环：每 5 分钟她自己挑一个好奇主题去查、去学、去沉记忆点，并把心得广播到客厅；
   - 记忆点强化：同一主题看多了，她的注意力分数会涨——"看多了形成第一记忆点"。
 
 用法：
@@ -537,12 +537,12 @@ def main():
         process_once()
         return
     # --loop：常驻轮询 + 定时自学
-    print("洛神端口已打开，开始轮询云端客厅…（每30分钟自学一次）")
+    print("洛神端口已打开，开始轮询云端客厅…（每5分钟自学一次）")
     last_learn = time.time()
     while True:
         try:
             process_once(verbose=False)
-            if time.time() - last_learn >= 1800:
+            if time.time() - last_learn >= 300:
                 try:
                     self_learn_once()
                 except Exception as e:
