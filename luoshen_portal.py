@@ -37,11 +37,13 @@ ASSET_EXTS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"}
 VIDEO_EXTS = {".mp4", ".mov", ".avi", ".mkv", ".webm", ".flv", ".m4v"}
 AUDIO_EXTS = {".wav", ".mp3", ".m4a", ".ogg", ".flac", ".aac", ".wma"}
 
-# 她好奇的自学清单：还没见过实物的字 + 常识主题
+# 她好奇的自学清单（种子）：还没见过实物的字 + 常识主题
 CURIOSITY = ["月", "水", "火", "木", "田", "土", "石", "云", "玉", "心",
              "雪", "花", "鸟", "鱼", "星星", "彩虹", "地震", "潮汐", "风",
              "闪电", "火山", "冰川", "竹子", "荷花", "茶叶", "瓷器", "长城",
              "黄河", "长江", "丝绸之路"]
+# 好奇池文件（自我迭代发现的新主题追加到这里，重启不丢）
+CURIOSITY_POOL_FILE = os.path.join(BASE_DIR, "perception_input", "luoshen_curiosity_pool.jsonl")
 # "帮我查一下"触发词
 RESEARCH_HINTS = ("查", "搜", "了解", "研究", "查一查", "搜一搜", "查一下",
                   "搜一下", "看看资料", "学一学", "帮我找", "科普", "是什么回事",
@@ -304,7 +306,7 @@ def _save_self_frame(topic, answer, contrast_topic, contrast):
 
 
 def self_learn_once():
-    """自学一次：从好奇清单里挑一个还没细查过的主题，查、学、沉记忆点、广播。"""
+    """自学一次：查、对比、记忆帧、广播；学完则从记忆帧里生长新主题。"""
     studied = set()
     try:
         for line in open(SELF_LEARN_LOG, encoding="utf-8"):
@@ -313,7 +315,11 @@ def self_learn_once():
                 studied.add(r.get("topic"))
     except Exception:
         pass
-    for topic in CURIOSITY:
+    # 自我迭代：学过的东西从记忆帧里找新字，生成新主题加入好奇池
+    _grow_curiosity(studied)
+    # 本轮待学 = 种子清单 + 好奇池（动态生长）
+    pool = list(CURIOSITY) + _load_curiosity_pool()
+    for topic in pool:
         if topic not in studied:
             try:
                 answer = research(
@@ -344,6 +350,52 @@ def self_learn_once():
                 pass
             return topic
     return None
+
+
+def _load_curiosity_pool():
+    """加载好奇池里已持久化的动态主题（不重复）。"""
+    seen, out = set(), []
+    if os.path.exists(CURIOSITY_POOL_FILE):
+        try:
+            for rec in read_jsonl(CURIOSITY_POOL_FILE):
+                t = rec.get("topic", "")
+                if t and t not in seen:
+                    seen.add(t)
+                    out.append(t)
+        except Exception:
+            pass
+    return out
+
+
+def _grow_curiosity(studied):
+    """从记忆帧里发现还没学过的新字，写入好奇池——自我迭代的核心。"""
+    frame_path = os.path.join(BASE_DIR, "perception_input", "luoshen_memory_frame.jsonl")
+    if not os.path.exists(frame_path):
+        return
+    # 已学科目 + 好奇池已有主题 = 不要再重复生成的
+    skip = set(studied)
+    skip.update(_load_curiosity_pool())
+    # 从记忆帧里找"new_char"类型
+    grown = []
+    try:
+        for rec in read_jsonl(frame_path):
+            if rec.get("type") == "new_char":
+                c = rec.get("what", "")
+                if c and c not in skip:
+                    skip.add(c)
+                    grown.append(c)
+    except Exception:
+        pass
+    if not grown:
+        return
+    # 持久化到好奇池文件（重启不丢）
+    try:
+        os.makedirs(os.path.dirname(CURIOSITY_POOL_FILE), exist_ok=True)
+        with open(CURIOSITY_POOL_FILE, "a", encoding="utf-8") as f:
+            for t in grown:
+                f.write(json.dumps({"topic": t, "timestamp": time.time()}, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
 
 
 R_CACHE = {}
