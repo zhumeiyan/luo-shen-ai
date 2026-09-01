@@ -99,37 +99,11 @@ def _read_chain_tail(chain_file):
     return tail.get("record_hash")
 
 
-_gateway_imported = False
+from hash_chain_gateway import append_only_append
+
 
 def append_hash_chain(chain_file, target_file, extra_entry=None):
     """按哈希链 v2 公式追加一条记录（委托给 hash_chain_gateway 网关）"""
-    global _gateway_imported
-    try:
-        from hash_chain_gateway import append_only_append
-    except ImportError:
-        # 降级：仅在网关不可用时使用本地实现
-        if not _gateway_imported:
-            print("[living_engine] WARNING: hash_chain_gateway not found, using fallback")
-            _gateway_imported = True
-        ts = _now()
-        file_hash = _md5_of_file(target_file)
-        prev_hash = _read_chain_tail(chain_file)
-        join_prev = prev_hash if prev_hash else ""
-        raw = "{}{}{}".format(file_hash, join_prev, str(ts))
-        record_hash = hashlib.md5(raw.encode("utf-8")).hexdigest()
-        entry = {
-            "schema_version": 2,
-            "timestamp": ts,
-            "file": target_file,
-            "file_hash": file_hash,
-            "prev_hash": prev_hash,
-            "record_hash": record_hash,
-        }
-        if extra_entry:
-            entry["extra"] = extra_entry
-        _append_jsonl(chain_file, entry)
-        return entry
-
     extra = {"extra": extra_entry} if extra_entry else None
     return append_only_append(chain_file, target_file, extra_fields=extra)
 

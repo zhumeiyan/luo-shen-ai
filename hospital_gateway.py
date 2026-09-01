@@ -23,6 +23,8 @@ import os
 import sys
 import time
 
+from hash_chain_gateway import append_only_append
+
 # 文件路径
 DIAGNOSIS_FILE = "diagnosis_results.jsonl"
 HEALTH_FILE = "health_score.jsonl"
@@ -141,11 +143,7 @@ def _write_alarm(action_type, reason, resource=None):
         f.write(json.dumps(alarm, ensure_ascii=False) + '\n')
 
     # 追加哈希链
-    try:
-        from hash_chain_gateway import append_only_append
-        append_only_append(CHAIN_FILE, ALARM_FILE)
-    except Exception:
-        pass
+    append_only_append(CHAIN_FILE, ALARM_FILE)
 
 
 def check(action_type, resource=None):

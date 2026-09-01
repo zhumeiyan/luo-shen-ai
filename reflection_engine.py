@@ -31,6 +31,8 @@ import json
 import os
 import time
 
+from hash_chain_gateway import append_only_append
+
 
 def _now():
     return time.time()
@@ -196,11 +198,7 @@ def reflect(memory):
         f.write(line)
     
     # 记录到哈希链
-    try:
-        from hash_chain_gateway import append_only_append
-        append_only_append("hash_chain_v2.log", log_path)
-    except Exception:
-        pass
+    append_only_append("hash_chain_v2.log", log_path)
     
     # 5. 更新 meta
     memory["__meta"]["last_reflection_at"] = _now()
