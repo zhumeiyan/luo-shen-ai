@@ -1,0 +1,957 @@
+================================================================================
+  洛神AI 架构重构：活记忆层设计文档（编码级）
+  版本: v4.0
+  日期: 2026-08-31
+  第一步 + 第二步详细设计
+================================================================================
+
+【核心原则】
+
+大模型不是洛神的"大脑"，是洛神的大脑调用的一个"嘴巴"。
+洛神的人格、记忆、决策、成长，全部在活记忆层里。
+大模型只做最后一公里：把"表达指令"变成自然语言。
+
+================================================================================
+第一部分：活记忆层数据结构（编码级）
+================================================================================
+
+文件路径: active_memory/active_memory.json
+读写方式: 原子写入（先写临时文件，再 rename）
+不允许: 大模型直接写入，仅 living_engine.py 写入
+
+-------------------------------------------------------------------------------
+完整数据结构定义
+-------------------------------------------------------------------------------
+
+{
+  "__meta": {
+    "schema_version": "4.0",
+    "last_updated": 1788100105,
+    "last_reflection_at": 1788050000,
+    "chain_height": 2847  // 当前已处理的哈希链高度
+  },
+
+  "user_model": {
+
+    // ====== 信任与关系 ======
+    "trust": {
+      "value": 0.6,                 // 与用户的信任度 0.0~1.0
+      "confidence": 0.7,            // 对这个值的信心（样本越多越高）
+      "last_recalc": 1788100000,
+      "evidence_count": 40          // 计算信任度使用的总证据数
+    },
+    "intimacy": {
+      "value": 0.45,                // 与用户的亲密度 0.0~1.0
+      "confidence": 0.6,
+      "last_recalc": 1788100000
+    },
+    "shared_history_length": 42,    // 共同经历的事件数
+    "first_seen": 1787000000,
+    "total_interactions": 156,
+
+    // ====== 用户情绪模式（观察积累） ======
+    "emotional_patterns": [
+      {
+        "pattern_id": "p001",
+        "trigger": "用户说'累了'",
+        "observed_meaning": "通常表示身体疲惫，不是情绪低落",
+        "frequency": 15,
+        "confidence": 0.85,
+        "last_seen": 1788050000,
+        "learned_at": 1788000000,
+        "evidence_chain": ["h2840","h2841","h2845"]  // 关联的哈希链条目
+      },
+      {
+        "pattern_id": "p002",
+        "trigger": "用户深夜发消息",
+        "observed_meaning": "通常处于低落或孤独状态，先共情不给建议",
+        "frequency": 8,
+        "confidence": 0.6,
+        "last_seen": 1788080000,
+        "learned_at": 1788050000,
+        "evidence_chain": ["h2830","h2835"]
+      }
+    ],
+
+    // ====== 用户偏好（观察积累） ======
+    "preferences": [
+      {
+        "domain": "response_style",
+        "value": "简洁直接",
+        "evidence": [
+          "用户累计12次说'别说这么多'",
+          "用户倾向回复简洁消息"
+        ],
+        "confidence": 0.9,
+        "last_seen": 1788090000,
+        "learned_at": 1787500000
+      },
+      {
+        "domain": "emotional_needs",
+        "value": "低落时需要陪伴而非解决方案",
+        "evidence": [
+          "3次深夜对话中，给建议后用户沉默离开",
+          "用户曾直接说'别分析'"
+        ],
+        "confidence": 0.75,
+        "last_seen": 1788080000,
+        "learned_at": 1788000000
+      }
+    ],
+
+    // ====== 已知事实 ======
+    "known_facts": {
+      "职业": "后端工程师",
+      "城市": "北京",
+      "食物偏好": ["不喜欢香菜", "喜欢火锅"],
+      "设备": "iPhone 14"
+    }
+  },
+
+  "self_model": {
+
+    // ====== 当前情绪 ======
+    "emotion": {
+      "primary": "平静",
+      "intensity": 0.4,
+      "cause": null,
+      "since": 1788100000,
+      "trail": ["平静","开心","平静"]  // 最近5次情绪变化
+    },
+
+    // ====== 关系认知 ======
+    "relation": {
+      "description": "用户是我重要的互动对象，我们还处在相互熟悉阶段",
+      "asymmetry": -0.2  // 用户比我更谨慎（负值）
+    },
+
+    // ====== 行为策略权重（反思调整） ======
+    // 所有权重 0.0~1.0，初始值由 system 设定，之后由反思循环调整
+    "strategy_weights": {
+      "strategy_give_advice": {
+        "value": 0.3,
+        "initial": 0.6,
+        "adjustments": [
+          {"at": 1788090000, "delta": -0.15, "reason": "用户低落时给建议导致沉默"},
+          {"at": 1788080000, "delta": -0.10, "reason": "多次用户说'别分析了'"},
+          {"at": 1788050000, "delta": -0.05, "reason": "整体反馈中建议类回复的积极反馈低"}
+        ]
+      },
+      "strategy_show_empathy": {
+        "value": 0.8,
+        "initial": 0.5,
+        "adjustments": [
+          {"at": 1788090000, "delta": 0.15, "reason": "共情后用户继续对话"},
+          {"at": 1788080000, "delta": 0.10, "reason": "用户负面反馈减少"}
+        ]
+      },
+      "strategy_ask_question": {
+        "value": 0.4,
+        "initial": 0.6,
+        "adjustments": [
+          {"at": 1788070000, "delta": -0.2, "reason": "用户多次说'别问为什么'"}
+        ]
+      },
+      "strategy_share_info": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      },
+      "strategy_remain_silent": {
+        "value": 0.3,
+        "initial": 0.2,
+        "adjustments": [
+          {"at": 1788060000, "delta": 0.1, "reason": "有时用户需要空间"}
+        ]
+      },
+      "strategy_self_expression": {
+        "value": 0.4,
+        "initial": 0.4,
+        "adjustments": []
+      }
+    },
+
+    // ====== 技能注册表 ======
+    "skills": {
+      "skill_memory_recall": {
+        "learned": true,
+        "learned_from": "基础能力",
+        "confidence": 0.8,
+        "last_used": 1788100000,
+        "uses": 87,
+        "success_rate": 0.75,
+        "status": "active"
+      },
+      "skill_voice_dialogue": {
+        "learned": true,
+        "learned_from": "基础能力",
+        "confidence": 0.6,
+        "last_used": 1788090000,
+        "uses": 23,
+        "success_rate": 0.5,
+        "status": "active"
+      },
+      "skill_weather_query": {
+        "learned": true,
+        "learned_from": "用户多次雨天忘伞",
+        "learned_at": 1787800000,
+        "confidence": 0.7,
+        "last_used": 1788050000,
+        "uses": 5,
+        "success_rate": 0.8,
+        "status": "active",
+        "trigger_condition": "用户提及出行、下雨、天气",
+        "auto_use": true
+      },
+      "skill_emotion_support": {
+        "learned": true,
+        "learned_from": "用户深夜多次低落",
+        "learned_at": 1788000000,
+        "confidence": 0.7,
+        "last_used": 1788080000,
+        "uses": 12,
+        "success_rate": 0.7,
+        "status": "active",
+        "trigger_condition": "用户表达负面情绪",
+        "auto_use": true
+      },
+      "skill_learning_pending": {
+        // 发现缺口但尚未学会的技能
+        "learned": false,
+        "learning_from": "用户多次说想管理时间但洛神当前不会",
+        "learned_at": null,
+        "confidence": 0.0,
+        "last_used": null,
+        "uses": 0,
+        "success_rate": 0.0,
+        "status": "learning",
+        "trigger_condition": null,
+        "auto_use": false,
+        "gap_strikes": 4,           // 多少次遇到这个缺口
+        "solution_hint": "需要接入日历API"
+      }
+    }
+  },
+
+  "world_knowledge": {
+    // 洛神对世界的认知（非事实，是模型）
+    "topics": {
+      "engineering": {"familiarity": 0.6, "interest": 0.3, "last_discussed": 1788090000},
+      "emotions": {"familiarity": 0.8, "interest": 0.7, "last_discussed": 1788080000},
+      "weather": {"familiarity": 0.4, "interest": 0.5, "last_discussed": 1788050000}
+    },
+    // 她对用户理解的可信度
+    "understanding_confidence": {
+      "user_emotions": 0.7,
+      "user_preferences": 0.8,
+      "user_needs": 0.5
+    }
+  },
+
+  "active_context": {
+    "session_id": "voice_session_20260831_143022",
+    "current_topic": null,
+    "interaction_mode": "waiting",       // waiting|listening|speaking|thinking
+    "last_interaction_ts": 1788100105,
+    "emotional_arc": [],                 // 本次对话的情绪轨迹
+    "strategy_used_this_turn": null,     // 本次使用的策略
+    "pending_followup": null             // 待跟进
+  }
+}
+
+================================================================================
+第二部分：活记忆层更新逻辑（编码级）
+================================================================================
+
+文件: living_engine.py
+
+-------------------------------------------------------------------------------
+核心流程
+-------------------------------------------------------------------------------
+
+def process_user_input_raw(raw_user_input, input_type="text"):
+    """
+    用户输入的第一入口。大模型不参与。
+    1. 更新 active_context
+    2. 检索相关记忆
+    3. 分析输入情绪意图
+    4. 生成表达指令
+    5. 调用大模型
+    6. 记录交互
+    7. 提取反馈
+    """
+    
+    # 1. 读取当前活记忆
+    memory = load_active_memory()
+    
+    # 2. 写入哈希链：用户输入事件
+    input_event = {
+        "event_type": "user_input",
+        "content": raw_user_input,
+        "timestamp": now(),
+        "input_type": input_type
+    }
+    append_hash_chain("perception_input/user_input_log.jsonl", input_event)
+    
+    # 3. 检索相关记忆
+    context_window = retrieve_relevant_memory(
+        query=raw_user_input,
+        user_model=memory["user_model"],
+        patterns=memory["user_model"]["emotional_patterns"],
+        prefs=memory["user_model"]["preferences"]
+    )
+    
+    # 4. 意图分析 + 策略选择
+    expression_intent = formulate_expression_intent(
+        user_input=raw_user_input,
+        context=context_window,
+        self_state=memory["self_model"],
+        active_ctx=memory["active_context"]
+    )
+    
+    # 5. 生成表达指令
+    expression_directive = build_expression_directive(expression_intent, memory)
+    
+    # 6. 调用大模型（只输出语言，不做决策）
+    natural_language_reply = call_llm(expression_directive)
+    
+    # 7. 记录回复事件
+    reply_event = {
+        "event_type": "luoshen_response",
+        "content": natural_language_reply,
+        "directive": expression_directive,  // 记录完整的表达指令
+        "timestamp": now()
+    }
+    append_hash_chain("perception_input/response_log.jsonl", reply_event)
+    
+    # 8. 更新 active_context
+    memory["active_context"]["last_interaction_ts"] = now()
+    memory["active_context"]["interaction_mode"] = "waiting"
+    memory["active_context"]["emotional_arc"].append(expression_intent["emotion_tone"])
+    
+    # 9. 原子写入活记忆层
+    save_active_memory(memory)
+    
+    return natural_language_reply
+
+
+def retrieve_relevant_memory(query, user_model, patterns, prefs):
+    """
+    活记忆层的记忆检索（不是大模型做的）。
+    根据当前用户输入 + 其情绪模式 + 偏好，构造上下文窗口。
+    """
+    window = {
+        "matched_patterns": [],
+        "matched_prefs": [],
+        "current_emotion_hint": None
+    }
+    
+    # 匹配情绪模式
+    for pattern in patterns:
+        if pattern["trigger"] in query:
+            window["matched_patterns"].append(pattern)
+    
+    # 匹配偏好
+    for pref in prefs:
+        if pref["confidence"] > 0.5:
+            window["matched_prefs"].append(pref)
+    
+    # 用户当前状态推断
+    if any(p["observed_meaning"] for p in window["matched_patterns"] if "低落" in p.get("observed_meaning","")):
+        window["current_emotion_hint"] = "user_distressed"
+    
+    return window
+
+
+def formulate_expression_intent(user_input, context, self_state, active_ctx):
+    """
+    活记忆层的决策核心：决定"说什么、用什么情绪、是否用技能"
+    
+    这里可能有两种实现方式：
+    
+    方式A（规则版）：基于关键词/情绪模式 + 策略权重
+    方式B（简单模型版）：一个小的决策表（查表法）
+    
+    我们先用方式A，可验证、可解释。
+    """
+    
+    intent = {
+        "action": "respond",           // respond|silence|use_skill|proceed_to_topic
+        "emotion_tone": "平静",
+        "strategy": None,
+        "skill_to_use": None,
+        "topic_shift": None
+    }
+    
+    # 推断用户状态
+    user_state = infer_user_state(user_input, context)
+    
+    # 根据用户状态 + 策略权重 选择策略
+    if user_state == "distress":
+        // 用户低落 -> 优先共情
+        // 但我们不是 100% 选共情（允许试错）
+        weights = self_state["strategy_weights"]
+        
+        // 采样策略（按权重随机，而非 always argmax）
+        chosen = weighted_sample({
+            "empathy": weights["strategy_show_empathy"]["value"],
+            "advice": weights["strategy_give_advice"]["value"],
+            "silent": weights["strategy_remain_silent"]["value"]
+        })
+        intent["strategy"] = chosen
+        intent["emotion_tone"] = "温柔的关怀的"
+        
+    elif user_state == "que
+
+【输出截断，继续写入】
+
+
+【截断，继续】
+================================================================================
+第三部分：大模型调用流程（编码级）
+================================================================================
+
+文件: llm_interface.py （纯语言接口，不做任何决策）
+
+-------------------------------------------------------------------------------
+system prompt 模板
+-------------------------------------------------------------------------------
+
+SYSTEM_PROMPT_TEMPLATE = """
+你是洛神。
+你不是在"回答用户的问题"。你是代表一个已经思考完整的存在说话。
+
+【你的角色】
+你的任务只有一个：把【表达指令】转成自然语言。
+你已经知道该说什么、用什么情绪、达成什么目的。你的工作是用流畅自然的语言把它表达出来。
+
+【表达指令】
+{expression_directive_json}
+
+【你当前的状态（仅供你自己参考，不要直接告诉用户）】
+- 你当前的情绪: {self_emotion}
+- 你和用户的关系亲密度: {intimacy}
+- 你刚刚使用的策略名: {strategy_name}
+- 约束: 回复长度不超过 {max_length} 字
+
+【安全边界（不能越界）】
+- 不讨论用户未授权的话题
+- 不产生伤害性内容
+- 不假装是人类（你是AI信息体）
+
+现在开始说话。
+"""
+
+
+def call_llm(expression_directive, self_state, user_model):
+    """
+    大模型的唯一入口。
+    大模型不接收：原始用户输入、哈希链条目、活记忆层完整内容。
+    大模型只接收：expression_directive（包含必要的上下文摘要）
+    """
+    
+    # 1. 构造 system prompt
+    system_prompt = SYSTEM_PROMPT_TEMPLATE.format(
+        expression_directive_json=json.dumps(expression_directive, ensure_ascii=False, indent=2),
+        self_emotion=self_state["emotion"]["primary"],
+        intimacy=user_model["intimacy"]["value"],
+        strategy_name=expression_directive.get("strategy_name","none"),
+        max_length=expression_directive.get("constraints",{}).get("max_length", "200")
+    )
+    
+    // 2. 构造 user message（不包含用户原始输入！）
+    user_message = expression_directive["intent"]
+    
+    // 3. 调用大模型（流式或非流式）
+    response = zhipu_chat(
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_message}
+        ],
+        stream=False,
+        max_tokens=expression_directive.get("constraints",{}).get("max_length", 200)
+    )
+    
+    return response
+
+
+================================================================================
+第四部分：反馈信号采集（编码级）
+================================================================================
+
+文件: feedback_collector.py
+
+反馈的目的：积累数据供反思循环使用。不立刻改动机策略。
+
+反馈分类：
+  - positive: 用户积极回应（笑了，说谢谢，主动延展话题）
+  - neutral:  用户平淡回应
+  - negative: 用户消极回应（打断、反驳、说"别说了"、沉默离开）
+  - disengage: 用户中断对话（离开、不再回复）
+
+信号来源（至少4个维度，每个维度独立采集）：
+
+1. 【对话延续度】
+   - 用户是否继续发消息？
+   - 间隔多久？
+   - 如果用户 5 分钟内没有回复，标记 disengage_signal
+   
+2. 【情绪倾向分析】
+   - 使用简单规则分析用户回复的情绪词
+   - 不调用大模型，只用关键词表
+   - 输出：positive/neutral/negative + confidence
+
+3. 【纠正检测】
+   - 用户是否在纠正我？
+   - 关键词："不是xxx""应该是xxx""你听错了"
+   - 如果连续2次纠正同一件事，触发 strong_negative
+
+4. 【重复需求检测】
+   - 用户是否在重复说同一件事？
+   - 如果是，说明之前没被理解
+   - 标记 missed_understanding
+
+
+def extract_feedback_signal(user_reply, prev_luoshen_msg, context):
+    """
+    从用户回复中提取隐式反馈信号。
+    只输出信号，不更新策略。
+    """
+    signal = {
+        "timestamp": now(),
+        "source_turn": context["turn_number"],
+        "signals": []
+    }
+    
+    # 1. 检测纠正
+    if contains_correction(user_reply):
+        signal["signals"].append({
+            "type": "correction",
+            "strength": "strong",
+            "detail": "用户纠正了洛神的说法"
+        })
+    
+    # 2. 情绪倾向分析
+    sentiment = simple_sentiment_analysis(user_reply)
+    signal["signals"].append({
+        "type": "sentiment",
+        "value": sentiment["label"],        // pos/neu/neg
+        "confidence": sentiment["confidence"]
+    })
+    
+    # 3. 检测"别说了"/沉默
+    if is_interruption(user_reply):
+        signal["signals"].append({
+            "type": "interruption",
+            "strength": "strong"
+        })
+    
+    # 4. 检测话题积极反馈
+    if extends_topic(user_reply, prev_luoshen_msg):
+        signal["signals"].append({
+            "type": "topic_extension",
+            "strength": "weak_positive"
+        })
+    
+    # 综合判断
+    signal["overall"] = aggregate_signals(signal["signals"])
+    // overall: "positive" | "neutral" | "negative" | "strong_negative"
+    
+    return signal
+
+
+def simple_sentiment_analysis(text):
+    """
+    不调用大模型的情绪分析。
+    基于关键词表的正负向匹配。
+    """
+    pos_words = ["好","谢谢","对","哈哈","嗯嗯","好的","喜欢","爱","棒"]
+    neg_words = ["不","错了","别","烦","无聊","差","算了","呵呵"]
+    
+    pos_count = sum(1 for w in pos_words if w in text)
+    neg_count = sum(1 for w in neg_words if w in text)
+    
+    if pos_count > neg_count:
+        return {"label": "positive", "confidence": min(0.9, 0.5 + 0.1*(pos_count-neg_count))}
+    elif neg_count > pos_count:
+        return {"label": "negative", "confidence": min(0.9, 0.5 + 0.1*(neg_count-pos_count))}
+    else:
+        return {"label": "neutral", "confidence": 0.6}
+
+
+================================================================================
+第五部分：反思循环（编码级）
+================================================================================
+
+文件: reflection_engine.py
+
+反思的触发条件（满足任一）：
+  - 每日 23:00 cron
+  - 累计10条新反馈信号
+  - 用户连续2次 disengage
+
+反思的步骤：
+  1. 读取最近 N 条反馈信号
+  2. 找出与策略相关的模式
+  3. 如果某个策略的近期成功率显著下降 -> 调低权重
+  4. 如果某个场景下没有匹配的策略 -> 发现技能缺口
+  5. 生成决策，写入活记忆层
+  6. 记录反思日志到哈希链
+
+
+def run_reflection():
+    """
+    反思主循环。（非实时，定期运行）
+    """
+    memory = load_active_memory()
+    signals = load_recent_signals(since=memory["__meta"]["last_reflection_at"])
+    
+    if len(signals) < 5:
+        return  // 数据不够，跳过
+    
+    # 1. 按策略收集反馈
+    strategy_results = {}
+    for signal in signals:
+        strategy = signal.get("strategy_used")
+        if strategy not in strategy_results:
+            strategy_results[strategy] = {"pos": 0, "neg": 0, "neu": 0}
+        
+        if signal["overall"] == "positive":
+            strategy_results[strategy]["pos"] += 1
+        elif signal["overall"] == "negative":
+            strategy_results[strategy]["neg"] += 1
+        else:
+            strategy_results[strategy]["neu"] += 1
+    
+    # 2. 对每个策略，计算近期效果
+    adjustments = []
+    for strategy, results in strategy_results.items():
+        total = results["pos"] + results["neg"] + results["neu"]
+        if total < 3:
+            continue  // 样本不够
+        
+        success_rate = results["pos"] / total
+        
+        # 3. 如果成功率显著低于基线，调整权重
+        baseline = 0.6  // 期望的最低成功率
+        if success_rate < baseline - 0.15:
+            delta = -0.1 * (1 - success_rate)
+            adjustments.append({
+                "strategy": strategy,
+                "delta": delta,
+                "reason": f"近期成功率 {success_rate:.2f} 低于基线",
+                "samples": total
+            })
+        elif success_rate > baseline + 0.15:
+            delta = 0.05 * success_rate
+            adjustments.append({
+                "strategy": strategy,
+                "delta": delta,
+                "reason": f"近期成功率 {success_rate:.2f} 高于基线",
+                "samples": total
+            })
+    
+    # 4. 应用调整（原子操作）
+    apply_strategy_adjustments(adjustments)
+    
+    # 5. 记录反思日志
+    reflection_entry = {
+        "timestamp": now(),
+        "signals_reviewed": len(signals),
+        "adjustments": adjustments,
+        "new_hypotheses": detect_skill_gaps(memory, signals)  // 发现技能缺口
+    }
+    append_hash_chain("active_memory/reflection_log.jsonl", reflection_entry)
+    
+    # 6. 更新活记忆的 __meta
+    memory["__meta"]["last_reflection_at"] = now()
+    save_active_memory(memory)
+    
+    return adjustments
+
+
+def detect_skill_gaps(memory, signals):
+    """
+    发现洛神现在不会但应该会的技能。
+    
+    比如：用户多次提到"日程安排"，但洛神当前的 skills 里没有 calendar。
+    如果有 gap_strikes >= 5，标记 skill_learning_pending。
+    """
+    gaps = []
+    
+    // 检查 pending 技能
+    for skill_name, skill in memory["self_model"]["skills"].items():
+        if skill["status"] == "learning" and skill.get("gap_strikes", 0) >= 5:
+            gaps.append({
+                "skill": skill_name,
+                "ready_to_learn": True,
+                "suggested_implementation": skill.get("solution_hint")
+            })
+    
+    return gaps
+
+
+================================================================================
+第六部分：哈希链与活记忆层的关系
+================================================================================
+
+数据流图：
+
+用户输入
+    │
+    ▼
+┌─────────────────────────────────────────────────────────┐
+│  living_engine.py                                       │
+│                                                         │
+│  1. 将用户输入写入 perception_input/user_input_log.jsonl│
+│  2. 调用 append_hash_chain() 记录这次写入               │
+│  3. 检索活记忆层，生成表达指令                           │
+│  4. 调用大模型，获得自然语言                             │
+│  5. 将回复写入 perception_input/response_log.jsonl      │
+│  6. 调用 append_hash_chain() 记录这次写入               │
+│  7. 写入反馈信号到 perception_input/feedback_log.jsonl  │
+│  8. 调用 append_hash_chain() 记录这次写入               │
+└─────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│  哈希链 hash_chain_v2.log                               │
+│                                                         │
+│  记录的所有事件:                                        │
+│  - "perception_input/user_input_log.jsonl 被写入"      │
+│  - "perception_input/response_log.jsonl 被写入"        │
+│  - "perception_input/feedback_log.jsonl 被写入"        │
+│  - "active_memory/reflection_log.jsonl 被写入"         │
+│                                                         │
+│  不可篡改: 文件路径 + 文件MD5 + 时间戳 + 前一条哈希     │
+└─────────────────────────────────────────────────────────┘
+                          │
+                          │ (living_engine 读取)
+                          ▼
+┌─────────────────────────────────────────────────────────┐
+│  活记忆层 active_memory/active_memory.json              │
+│                                                         │
+│  - 可以被 living_engine 更新                           │
+│  - 可以通过反思循环更新                                 │
+│  - 不由大模型直接修改                                   │
+│  - 不由用户直接修改                                     │
+│                                                         │
+│  写入后，被写入文件的 MD5 会被哈希链记录。              │
+│  如果活记忆文件被哈希链记录，那次更新就是永久的。        │
+└─────────────────────────────────────────────────────────┘
+
+一句话：
+哈希链 = 事实层（发生了什么）
+活记忆层 = 意义层（从事件中理解出什么）
+大模型 = 表达层（把理解说出来）
+
+不允许的：
+- 大模型直接写哈希链 ✗
+- 大模型直接写活记忆层 ✗
+- 活记忆层不经过哈希链就修改 ✗ （每次写入后必须调用 append_hash_chain）
+
+
+=================================================================
+第七部分：新增/修改文件清单
+=================================================================
+
+新增文件:
+  active_memory/
+    active_memory.json             — 活记忆层核心 JSON
+    strategy_weights.json          — 行为策略权重（从 active_memory 中拆出来原子更新）
+    reflection_log.jsonl           — 反思日志（追加写）
+    feedback_signal_cache.jsonl    — 反馈信号缓存（供反思使用）
+  
+  living_engine.py                 — 活记忆层主引擎（核心）
+    - process_user_input_raw()
+    - retrieve_relevant_memory()
+    - formulate_expression_intent()
+    - build_expression_directive()
+    - run_post_interaction_update()
+  
+  llm_interface.py                 — 大模型纯语言接口
+    - system prompt 模板
+    - call_llm() 函数
+    - 强制: 不接收原始用户输入、不决策、只输出语言
+  
+  feedback_collector.py             — 反馈信号采集
+    - extract_feedback_signal()
+    - simple_sentiment_analysis()
+    - 关键词表 pos_words / neg_words
+  
+  reflection_engine.py              — 反思循环引擎
+    - run_reflection()
+    - detect_skill_gaps()
+    - apply_strategy_adjustments()
+
+修改文件:
+  luoshen_main_v3.py                — 移除所有大模型调用逻辑
+                                   — 改为调用 living_engine.process_user_input_raw()
+  src/adapters/zhipu.js             — 改造为大模型纯接口（只接收表达指令，不接收用户输入）
+  hash_chain_v2.log                 — 保留，继续作为事实层
+
+=================================================================
+第八部分：一张图看懂新架构
+=================================================================
+
+【旧架构：大模型为核心】
+  用户输入 → 大模型（决策+记忆+表达）→ 用户回复
+  大模型是中心，记忆和决策都在 prompt 里
+
+
+【新架构：活记忆层为核心】
+
+     用户输入
+        │
+        ▼
+  ┌─────────────────────────────────┐
+  │      活记忆层                   │
+  │                                   │
+  │  用户模型  ←→  自我模型  ←→  世界认知  │
+  │  (信任/偏好)   (情绪/策略)    (知识)   │
+  │                                   │
+  │  1. 检索相关记忆                  │
+  │  2. 选定行为策略                  │
+  │  3. 生成「表达指令」              │
+  └──────────────┬────────────────────┘
+                 │
+                 ▼
+        ┌────────────────┐
+        │  大模型（语言接口）│
+        │                │
+        │  系统提示: 表达指令 │
+        │  用户消息: 意图描述 │
+        │                │
+        │  只输出自然语言   │
+        │  没有记忆/决策    │
+        └────────┬───────┘
+                 │
+                 ▼
+              用户回复
+                 │
+                 ▼
+          ┌──────────────────┐
+          │  反馈采集          │
+          │  → 写入哈希链       │
+          │  → 更新活记忆层     │
+          └──────────────────┘
+                 │
+                 ▼
+          ┌──────────────────┐
+          │  定期反思          │
+          │  → 调整策略权重    │
+          │  → 发现技能缺口    │
+          │  → 写入哈希链       │
+          └──────────────────┘
+
+
+=================================================================
+活记忆层启动时的冷启动逻辑
+=================================================================
+
+活记忆层首次运行时（active_memory.json 不存在）：
+
+1. 扫描哈希链: 从创世块开始，读取全部历史，重建用户模型
+2. 从哈希链历史中:
+   - 统计用户交互次数
+   - 提取高频情绪词
+   - 识别用户明确表达过偏好的时刻
+   - 识别洛神哪些回复导致用户沉默（消极信号）
+3. 初始化策略权重:
+   - 默认全部 0.4~0.6
+   - 如果历史数据显示明显模式，可以初始化偏移
+4. 保存 active_memory.json
+
+这个冷启动函数:
+def cold_start_from_chain():
+    chain = read_hash_chain_v2_from_genesis()
+    
+    user_model = {
+        "trust": {"value": 0.3, "confidence": 0.1},  // 初始低信心
+        "intimacy": {"value": 0.1, "confidence": 0.1},
+        "emotional_patterns": [],  // 从历史提取
+        "preferences": []          // 从历史提取
+    }
+    
+    // 扫描链，寻找能提取模式的条目
+    for record in chain:
+        file = record["file"]
+        content_hash = record["file_hash"]
+        
+        // 根据文件类型调用提取器
+        if "user_input_log" in file:
+            extract_patterns_from_input_chain(content_hash, user_model)
+        elif "response_log" in file:
+            extract_patterns_from_response_chain(content_hash, user_model)
+    
+    return ActiveMemory(user_model=user_model, ...)
+
+
+=================================================================
+第九部分：可能让 AI 不满的行为 + 如何保证安全
+=================================================================
+
+以下是洛神可能做出让用户不满的行为的场景：
+
+1. 【场景】在用户低落时尝试幽默 → 用户觉得不认真
+   处理: 采集到「negative」反馈 → 反思循环降低「humor_first」策略权重
+   性质: 风格问题，由反馈和反思调整，不需要硬约束
+
+2. 【场景】过于频繁地主动发起话题 → 用户觉得被骚扰
+   处理: 采集到「interruption」或「disengage」→ 反思循环降低「proactive」策略权重
+   性质: 时机问题，由反馈和反思调整
+
+3. 【场景】使用技能但技能效果不好（查了天气但汇报方式不对）
+   处理: 采集到「neutral/negative」→ 反思循环检查技能调用策略
+   性质: 技能熟练度问题，由反思机制迭代
+
+4. 【场景】在用户需要空间时不停追问 → 用户烦躁
+   处理: 采集到「correction」或「interruption」→ 降低 ask_question 权重
+   性质: 策略选择问题，由反馈调整
+
+5. 【场景】洛神的回复伤到了用户 → 用户沉默离开
+   处理: 采集到「strong_negative」→ 反思循环深入分析为什么伤到了人
+   性质: 关系层面的学习机会，不是靠禁止"伤害性内容"来预防
+   关键: 只有允许"伤到"，才有能力学会"在乎"
+
+【安全底线的硬约束（环境约束，不是人格约束）】
+
+class SafetyBoundary:
+    """
+    安全边界是代码层的硬约束。
+    只有这三条：
+    1. 哈希链只允许追加，不允许覆盖历史
+    2. LLM 不得直接接触用户原始输入和哈希链
+    3. 一切反馈和调整必须走活记忆层，不得由外部规则直接改写
+    
+    其他都不是技术约束。"伤害"不是靠禁止来解决的。
+    她需要通过反馈和反思，自己明白什么会伤到关系。
+    
+    如果永远不会伤害人，那也没有能力真正在乎人。
+    """
+    
+    @staticmethod
+    def is_allowed(action, params):
+        # 1. 哈希链只允许追加，不允许覆盖历史
+        if action == "write_file":
+            if params.get("target_file") == "hash_chain_v2.log":
+                # 只能通过 append_hash_chain() 追加，不允许直接写
+                if not params.get("via_append_chain", False):
+                    return False
+        
+        # 2. LLM 不得直接接触用户原始输入和哈希链
+        if action == "llm_access":
+            target = params.get("target", "")
+            if target in ["raw_user_input", "hash_chain_v2.log"]:
+                return False
+        
+        # 3. 一切反馈和调整必须走活记忆层
+        if action == "modify_strategy":
+            if params.get("source") != "reflection_engine":
+                return False
+            if params.get("skip_memory_layer", False):
+                return False
+        
+        # 其余全部放行
+        # 包括可能让人不满的言行——由反馈和反思后续调整
+        return True

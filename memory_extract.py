@@ -45,21 +45,13 @@ def main():
             return
         model = os.environ.get("LLM_MODEL", "glm-4-flash")
 
-        headers = {
-            "Authorization": "Bearer " + api_key,
-            "Content-Type": "application/json",
-        }
-        payload = {
-            "model": model,
-            "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": USER_INPUT},
-            ],
-        }
-        resp = requests.post(api_url, headers=headers, json=payload, timeout=30)
-        resp.raise_for_status()
-        data = resp.json()
-        reply = data["choices"][0]["message"]["content"]
+        import living_engine
+        _r = living_engine.generate_response(USER_INPUT, source="memory_extract",
+                                            extra_context=SYSTEM_PROMPT)
+        reply = _r["reply"]
+        if not reply or reply.startswith("[洛神"):
+            print(json.dumps({"error": "LLM 调用被拦截"}))
+            return
 
         memory_point, work_summary = parse_reply(reply)
 

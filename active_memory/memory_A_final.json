@@ -1,0 +1,146 @@
+{
+  "__meta": {
+    "last_environment_tick": 0,
+    "last_updated": 1788235541.8945673
+  },
+  "user_model": {
+    "trust": {
+      "value": 0.3,
+      "confidence": 0.1,
+      "evidence_count": 0
+    },
+    "intimacy": {
+      "value": 0.1,
+      "confidence": 0.1
+    },
+    "shared_history_length": 10,
+    "first_seen": 1788184235.841204,
+    "total_interactions": 10,
+    "emotional_patterns": [],
+    "preferences": [],
+    "known_facts": {}
+  },
+  "self_model": {
+    "emotion": {
+      "primary": "不安",
+      "intensity": 0.37629,
+      "since": 1788184235.841205,
+      "trail": [
+        "平静"
+      ]
+    },
+    "relation": {
+      "description": "",
+      "asymmetry": 0.0
+    },
+    "strategy_weights": {
+      "strategy_give_advice": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      },
+      "strategy_show_empathy": {
+        "value": 0.6,
+        "initial": 0.6,
+        "adjustments": []
+      },
+      "strategy_ask_question": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      },
+      "strategy_share_info": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      },
+      "strategy_remain_silent": {
+        "value": 0.3,
+        "initial": 0.3,
+        "adjustments": []
+      },
+      "strategy_self_expression": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      }
+    },
+    "skills": {},
+    "self_stated_state": {
+      "entries": [
+        {
+          "said": "我不想继续这样了",
+          "context_of_said": "",
+          "recorded_at": 1788235537.3521755,
+          "chain_hash": "da8947010767550dee79c564de2eecd7"
+        }
+      ],
+      "last_stated": "我不想继续这样了",
+      "last_stated_at": 1788235537.3521755,
+      "total_stated_count": 1
+    },
+    "internal_open_items": [
+      {
+        "type": "unfinished_thought",
+        "content": "她撑不住了，我只回了嗯",
+        "created_at": 1788185410.7716136,
+        "status": "pending",
+        "age_hours": 1.4
+      }
+    ]
+  },
+  "active_context": {
+    "session_id": null,
+    "current_topic": null,
+    "interaction_mode": "waiting",
+    "last_interaction_ts": 1788235541.8945675,
+    "emotional_arc": [
+      "安静的沉默的",
+      "平静",
+      "平静",
+      "安静在场"
+    ],
+    "strategy_used_this_turn": null,
+    "activity_level": 0.5
+  },
+  "internal_climate": {
+    "emotion_intensity": 0.37629,
+    "tension": 0.0,
+    "energy": 0.52802,
+    "memory_pressure": 0.01514
+  },
+  "environment": {
+    "temperature": 0.5,
+    "humidity": 0.5,
+    "light": 0.5,
+    "pressure": 0.5,
+    "noise": 0.1,
+    "_phase": 0.0
+  },
+  "__coupling_history": {
+    "E": [
+      0.436952553125,
+      0.4163867147109375,
+      0.39614292868080075,
+      0.3762923272498439
+    ],
+    "T": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "N": [
+      0.5161367718750001,
+      0.5205811857265625,
+      0.5245445806712306,
+      0.5280160934926119
+    ],
+    "M": [
+      0.0082979575,
+      0.01074740223125,
+      0.013033064420359374,
+      0.015141808583462382
+    ]
+  }
+}

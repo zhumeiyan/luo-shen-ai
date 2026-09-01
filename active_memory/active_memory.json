@@ -1,0 +1,93 @@
+{
+  "user_model": {
+    "known_facts": {
+      "facts": [],
+      "last_update": 0
+    },
+    "episodic_memory": [
+      {
+        "timestamp": 1788262884.9895425,
+        "e_s": 0.5288,
+        "t_s": 0.0192,
+        "n_s": 0.504,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction"
+      },
+      {
+        "timestamp": 1788262892.2592237,
+        "e_s": 0.5288,
+        "t_s": 0.0192,
+        "n_s": 0.488,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction"
+      }
+    ],
+    "total_interactions": 2,
+    "shared_history_length": 2,
+    "intimacy": {
+      "value": 0.5
+    },
+    "emotional_patterns": [],
+    "preferences": []
+  },
+  "self_model": {
+    "emotion": {
+      "primary": "平静",
+      "intensity": 0.5288
+    },
+    "self_stated_state": {
+      "last_stated": null,
+      "last_stated_at": null
+    },
+    "strategy_weights": {},
+    "ring_state": {
+      "E": 0.5,
+      "T": 0.0,
+      "N": 0.5,
+      "M": 0.3
+    }
+  },
+  "active_context": {
+    "interaction_mode": "waiting",
+    "last_interaction_ts": 1788262890.6941853,
+    "emotional_arc": [
+      "平静",
+      "平静"
+    ],
+    "strategy_used_this_turn": null,
+    "memory_emergence": {
+      "background": {
+        "e_bg": 0.5288000000000002,
+        "t_bg": 0.0192,
+        "n_bg": 0.4959960044567622,
+        "age_bg": 6.0069967751214545e-06,
+        "sal_bg": 1.0,
+        "dominance": 0.5002497214523645
+      },
+      "weights": [
+        0.49987513926603133,
+        0.5001248607339686
+      ],
+      "length_bias": 0.5290641054080208,
+      "tone_bias": 0.1152575358226254,
+      "arousal_bias": 0.07147853760162201
+    },
+    "input_pressure": {
+      "valence": 0.0,
+      "arousal": 0.1,
+      "applied_at": 1788262892.2592115
+    },
+    "mem_arousal_bias": 0.0
+  },
+  "internal_climate": {
+    "emotion_intensity": 0.5288,
+    "tension": 0.0192,
+    "energy": 0.488,
+    "memory_pressure": 0.3
+  },
+  "__meta": {
+    "last_updated": 1788262890.6941848
+  }
+}

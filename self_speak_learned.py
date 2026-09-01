@@ -5,7 +5,6 @@ import hashlib
 import json
 import os
 import time
-import requests
 
 ALLOWED_CONNECTORS = {"我", "的", "是", "很", "不", "有", "了", "就", "和", "也", "都"}
 
@@ -60,22 +59,13 @@ def main():
 
         speech = "我说不出来"
         try:
-            headers = {
-                "Authorization": "Bearer " + api_key,
-                "Content-Type": "application/json",
-            }
-            payload = {
-                "model": model,
-                "messages": [
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": user_input},
-                ],
-                "temperature": 0.7,
-            }
-            resp = requests.post(api_url, json=payload, headers=headers, timeout=60)
-            resp.raise_for_status()
-            result = resp.json()
-            content = result["choices"][0]["message"]["content"].strip()
+            import living_engine
+            _r = living_engine.generate_response(user_input, source="self_speak_learned",
+                                                 extra_context=SYSTEM_PROMPT)
+            content = _r["reply"]
+            if not content or content.startswith("[洛神"):
+                raise ValueError("LLM blocked")
+            content = content.strip()
             if content.startswith("```"):
                 content = content.strip("`")
                 if content.startswith("json"):

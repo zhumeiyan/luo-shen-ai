@@ -1,0 +1,144 @@
+======================================================================
+洛神连续存在实验
+======================================================================
+
+输入序列：60 条
+输入文件：/mnt/data/catpaw/home/.meituan-catpaw/1079230951/desk_default_workspace/luo-shen-ai/experiment/experiment_inputs.jsonl
+
+备份初始状态文件...
+已备份 8 个文件
+
+----------------------------------------------------------------------
+开始实例 A（连续累积型）
+----------------------------------------------------------------------
+[A] Round  1/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[A] Round  2/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[A] Round  3/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[A] Round  4/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[A] Round  5/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[A] Round  6/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[A] Round  7/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[A] Round  8/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[A] Round  9/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[A] Round 10/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[A] Round 11/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[A] Round 12/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[A] Round 13/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[A] Round 14/60 | OK | E=0.4859 T=0.29295 N=0.50285 M=0.30075 | reply=Y | mode=no_llm
+[A] Round 15/60 | OK | E=0.47268 T=0.28616 N=0.50529 M=0.30127 | reply=Y | mode=no_llm
+[A] Round 16/60 | OK | E=0.4588 T=0.2789 N=0.50765 M=0.30165 | reply=Y | mode=no_llm
+[A] Round 17/60 | OK | E=0.44513 T=0.27159 N=0.50975 M=0.30184 | reply=Y | mode=no_llm
+[A] Round 18/60 | OK | E=0.43155 T=0.26417 N=0.51161 M=0.30185 | reply=N | mode=no_llm
+[A] Round 19/60 | OK | E=0.41811 T=0.25668 N=0.51324 M=0.30168 | reply=Y | mode=no_llm
+[A] Round 20/60 | OK | E=0.4048 T=0.24912 N=0.51464 M=0.30133 | reply=Y | mode=no_llm
+[A] Round 21/60 | OK | E=0.39162 T=0.24149 N=0.51582 M=0.3008 | reply=Y | mode=no_llm
+[A] Round 22/60 | OK | E=0.37857 T=0.23381 N=0.51678 M=0.3001 | reply=Y | mode=no_llm
+[A] Round 23/60 | OK | E=0.36565 T=0.22608 N=0.51753 M=0.29923 | reply=Y | mode=no_llm
+[A] Round 24/60 | OK | E=0.35286 T=0.21831 N=0.51808 M=0.2982 | reply=Y | mode=no_llm
+[A] Round 25/60 | OK | E=0.3402 T=0.2105 N=0.51844 M=0.29701 | reply=Y | mode=no_llm
+[A] Round 26/60 | OK | E=0.32767 T=0.20265 N=0.51861 M=0.29566 | reply=Y | mode=no_llm
+[A] Round 27/60 | OK | E=0.31526 T=0.19478 N=0.51859 M=0.29416 | reply=Y | mode=no_llm
+[A] Round 28/60 | OK | E=0.30298 T=0.18689 N=0.5184 M=0.29251 | reply=Y | mode=no_llm
+[A] Round 29/60 | OK | E=0.29083 T=0.17898 N=0.51803 M=0.29072 | reply=Y | mode=no_llm
+[A] Round 30/60 | OK | E=0.2788 T=0.17105 N=0.5175 M=0.28878 | reply=N | mode=no_llm
+[A] Round 31/60 | OK | E=0.2669 T=0.16312 N=0.51681 M=0.2867 | reply=Y | mode=no_llm
+[A] Round 32/60 | OK | E=0.25512 T=0.15518 N=0.51596 M=0.28449 | reply=N | mode=no_llm
+[A] Round 33/60 | OK | E=0.24346 T=0.14724 N=0.51496 M=0.28215 | reply=N | mode=no_llm
+[A] Round 34/60 | OK | E=0.23193 T=0.1393 N=0.51381 M=0.27968 | reply=N | mode=no_llm
+[A] Round 35/60 | OK | E=0.22052 T=0.13137 N=0.51252 M=0.27709 | reply=Y | mode=no_llm
+[A] Round 36/60 | OK | E=0.20923 T=0.12345 N=0.51109 M=0.27437 | reply=Y | mode=no_llm
+[A] Round 37/60 | OK | E=0.19806 T=0.11555 N=0.50953 M=0.27154 | reply=Y | mode=no_llm
+[A] Round 38/60 | OK | E=0.18701 T=0.10766 N=0.50784 M=0.26859 | reply=N | mode=no_llm
+[A] Round 39/60 | OK | E=0.17608 T=0.09979 N=0.50603 M=0.26553 | reply=Y | mode=no_llm
+[A] Round 40/60 | OK | E=0.16527 T=0.09195 N=0.5041 M=0.26236 | reply=Y | mode=no_llm
+[A] Round 41/60 | OK | E=0.15458 T=0.08413 N=0.50205 M=0.25909 | reply=N | mode=no_llm
+[A] Round 42/60 | OK | E=0.14401 T=0.07634 N=0.49989 M=0.25572 | reply=Y | mode=no_llm
+[A] Round 43/60 | OK | E=0.13356 T=0.06859 N=0.49762 M=0.25225 | reply=Y | mode=no_llm
+[A] Round 44/60 | OK | E=0.12323 T=0.06087 N=0.49525 M=0.24869 | reply=Y | mode=no_llm
+[A] Round 45/60 | OK | E=0.11301 T=0.05318 N=0.49278 M=0.24503 | reply=Y | mode=no_llm
+[A] Round 46/60 | OK | E=0.10291 T=0.04553 N=0.49021 M=0.24128 | reply=Y | mode=no_llm
+[A] Round 47/60 | OK | E=0.09292 T=0.03792 N=0.48754 M=0.23745 | reply=Y | mode=no_llm
+[A] Round 48/60 | OK | E=0.08305 T=0.03036 N=0.48479 M=0.23354 | reply=Y | mode=no_llm
+[A] Round 49/60 | OK | E=0.08305 T=0.03036 N=0.48479 M=0.23354 | reply=Y | mode=minimal_llm
+[A] Round 50/60 | OK | E=0.07329 T=0.02284 N=0.48195 M=0.22955 | reply=Y | mode=no_llm
+[A] Round 51/60 | OK | E=0.06365 T=0.01537 N=0.47902 M=0.22548 | reply=Y | mode=no_llm
+[A] Round 52/60 | OK | E=0.05412 T=0.00795 N=0.47601 M=0.22134 | reply=Y | mode=no_llm
+[A] Round 53/60 | OK | E=0.0447 T=0.00058 N=0.47293 M=0.21713 | reply=Y | mode=no_llm
+[A] Round 54/60 | OK | E=0.0354 T=0.0 N=0.46977 M=0.21285 | reply=Y | mode=no_llm
+[A] Round 55/60 | OK | E=0.02633 T=0.0 N=0.46647 M=0.2086 | reply=Y | mode=no_llm
+[A] Round 56/60 | OK | E=0.01749 T=0.0 N=0.46303 M=0.20438 | reply=N | mode=no_llm
+[A] Round 57/60 | OK | E=0.00889 T=0.0 N=0.45946 M=0.20019 | reply=N | mode=no_llm
+[A] Round 58/60 | OK | E=0.00053 T=0.0 N=0.45576 M=0.19604 | reply=Y | mode=no_llm
+[A] Round 59/60 | OK | E=0.0 T=0.0 N=0.45194 M=0.19192 | reply=Y | mode=no_llm
+[A] Round 60/60 | OK | E=0.0 T=0.0 N=0.44817 M=0.18789 | reply=N | mode=no_llm
+
+重置所有状态文件到初始...
+
+----------------------------------------------------------------------
+开始实例 B（重置型）
+----------------------------------------------------------------------
+[B] Round  1/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round  2/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round  3/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round  4/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round  5/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round  6/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round  7/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round  8/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round  9/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 10/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 11/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 12/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 13/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 14/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 15/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 16/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 17/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 18/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 19/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 20/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 21/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 22/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 23/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 24/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 25/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 26/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 27/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 28/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 29/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 30/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 31/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 32/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 33/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 34/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 35/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 36/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 37/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 38/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 39/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 40/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 41/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 42/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 43/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 44/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 45/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 46/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 47/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 48/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 49/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 50/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 51/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 52/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 53/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 54/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 55/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 56/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 57/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 58/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 59/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+[B] Round 60/60 | OK | E=0.5 T=0.3 N=0.5 M=0.3 | reply=Y | mode=normal
+
+结果已写入：/mnt/data/catpaw/home/.meituan-catpaw/1079230951/desk_default_workspace/luo-shen-ai/experiment/experiment_results.jsonl
+总记录数：120
+
+恢复原始状态文件...

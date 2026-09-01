@@ -1,0 +1,3 @@
+{"schema_version": 2, "timestamp": 1788176084.0831952, "file": "active_memory/active_memory.json", "file_hash": "c3beb750000b3ea73aa2290423ce0c10", "prev_hash": "GENESIS", "record_hash": "b0f64a7a581c15d57ef2c51653b62c05"}
+{"schema_version": 2, "timestamp": 1788176084.083418, "file": "perception_input/user_input_log.jsonl", "file_hash": "d8b7c23ebd3fb5cbf62a5c855f997e66", "prev_hash": "b0f64a7a581c15d57ef2c51653b62c05", "record_hash": "f48753d89a5cc4a7bf36a5635a668913"}
+{"schema_version": 2, "timestamp": 1788176091.4302187, "file": "perception_input/response_log.jsonl", "file_hash": "2191635f61f680e960cca75c1558d27d", "prev_hash": "f48753d89a5cc4a7bf36a5635a668913", "record_hash": "fc2437d2bcf13522adb19406b11ca4fb"}

@@ -399,46 +399,44 @@ def build_messages(user_text, k=RETRIEVE_K, is_designer=False):
 
 
 def call_llm(messages, timeout=60):
-    """调用 LLM_API_URL（OpenAI 兼容）；429/非 200 重试 3 次后抛异常。"""
-    if requests is None:
-        raise RuntimeError("requests 模块不可用")
-    api_url = os.environ.get("LLM_API_URL", "").strip()
-    api_key = os.environ.get("LLM_API_KEY", "").strip()
-    if not api_url or not api_key:
-        raise RuntimeError("未配置 LLM_API_URL/LLM_API_KEY 环境变量")
-    model = os.environ.get("LLM_MODEL", "glm-4")
-    headers = {
-        "Authorization": "Bearer " + api_key,
-        "Content-Type": "application/json",
-    }
-    payload = {"model": model, "messages": messages, "temperature": 0.8}
-    last_err = None
-    for attempt in range(1, 4):
-        try:
-            resp = requests.post(api_url, headers=headers, json=payload,
-                                 timeout=timeout)
-        except Exception as exc:  # 网络层错误
-            last_err = exc
-            time.sleep(attempt)
-            continue
-        if resp.status_code == 429 and attempt < 3:
-            time.sleep(5 * attempt)
-            continue
-        if resp.status_code != 200:
-            last_err = RuntimeError(
-                "LLM 返回 HTTP %d: %s" % (resp.status_code, str(resp.text)[:200]))
-            time.sleep(attempt)
-            continue
-        data = resp.json()
-        try:
-            return data["choices"][0]["message"]["content"]
-        except (KeyError, IndexError, TypeError) as exc:
-            last_err = RuntimeError("LLM 响应结构异常: %s" % str(data)[:200])
-            time.sleep(attempt)
-            continue
-    if last_err is None:
-        last_err = RuntimeError("LLM 调用失败")
-    raise last_err
+    """LLM 调用 —— 现在走活记忆层，不再直接调 llm_interface。
+
+    活记忆层会：
+    1. 读取 self_model, self_stated_state
+    2. 检测安静模式
+    3. 构建表达指令
+    4. 调用 llm_interface（经过 hospital_gateway 检查）
+
+    输入: messages — OpenAI 格式的对话列表（仅用于提取用户输入）
+    输出: 大模型回复文本
+    """
+    # 从 messages 中提取最后一条用户消息
+    user_intent = ""
+    for m in messages:
+        role = m.get("role", "")
+        content = m.get("content", "")
+        if role == "user":
+            user_intent = content  # 取最后一次 user 输入
+
+    # 通过活记忆层获取响应
+    try:
+        import living_engine
+    except ImportError:
+        raise RuntimeError("living_engine 不可用")
+
+    result = living_engine.generate_response(
+        user_intent,
+        source="luoshen_brain",
+        extra_context={
+            "brain_persona": compose_persona(),
+            "brain_memories": retrieve_memories(user_intent, k=3),
+        }
+    )
+
+    reply = result.get("reply", "")
+    if not reply or reply.startswith("[洛神"):
+        raise RuntimeError("LLM 调用被拦截: %s" % reply)
+    return reply
 
 
 def remember(user_text):

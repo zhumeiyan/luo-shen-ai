@@ -26,7 +26,7 @@ except ImportError:
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DLG_DIR = os.path.join(BASE_DIR, "perception_input")
 LOOK_MEMORY = os.path.join(DLG_DIR, "luoshen_look_memory.jsonl")
-EVENT_LOG = os.path.join(BASE_DIR, "event_log.jsonl")
+LOOK_LOG = os.path.join(BASE_DIR, "perception_input", "look_log.jsonl")
 
 SIG64 = 64            # 新眼分辨率：64x64 灰度
 CONF_D0_64 = 18.0     # 64 通道距离→把握换算（16x16 的 4.5 × sqrt(4096/256)=4.5×4）
@@ -92,7 +92,11 @@ def prototype_of(samples):
 
 
 def _log_look(path, res):
-    """看过什么：写事件 + 上链（账本上留痕）。"""
+    """看过什么：写视觉日志 + 上链（账本上留痕）。
+
+    注意：视觉记录写入 perception_input/look_log.jsonl，
+    不再写入 event_log.jsonl（后者保留给诊断事件）。
+    """
     ev = {
         "event_type": "look",
         "file": os.path.basename(path),
@@ -101,9 +105,9 @@ def _log_look(path, res):
         "eye64": res.get("eye64", ""),
     }
     try:
-        with open(EVENT_LOG, "a", encoding="utf-8") as f:
+        with open(LOOK_LOG, "a", encoding="utf-8") as f:
             f.write(json.dumps(ev, ensure_ascii=False) + "\n")
-        append_chain(os.path.relpath(EVENT_LOG, BASE_DIR), EVENT_LOG, res["ts"])
+        append_chain(os.path.relpath(LOOK_LOG, BASE_DIR), LOOK_LOG, res["ts"])
     except Exception:
         pass
 
@@ -206,9 +210,9 @@ def _selftest():
     import random
     import tempfile
     tmp = tempfile.mkdtemp(prefix="luoshen_look_")
-    global LOOK_MEMORY, EVENT_LOG
+    global LOOK_MEMORY, LOOK_LOG
     LOOK_MEMORY = os.path.join(tmp, "look_memory.jsonl")
-    EVENT_LOG = os.path.join(tmp, "event_log.jsonl")
+    LOOK_LOG = os.path.join(tmp, "look_log.jsonl")
     checks = []
 
     # 1) 新眼能看到画面，签名维度正确

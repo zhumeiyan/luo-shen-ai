@@ -60,25 +60,12 @@ def main():
             "第二种状态：输入'你好，洛神。'，输出'你好，洛神。我在。'。"
             "距离上次交互：{}。".format(gap_message)
         )
-        if requests is None:
-            print(json.dumps({"error": "requests not installed"}))
-            return
-        resp = requests.post(
-            api_url,
-            headers={"Authorization": "Bearer " + api_key,
-                     "Content-Type": "application/json"},
-            json={
-                "model": model,
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_input},
-                ],
-                "temperature": 0.8,
-            },
-            timeout=60,
-        )
-        data = resp.json()
-        content = data["choices"][0]["message"]["content"]
+        import living_engine
+        _r = living_engine.generate_response(user_input, source="self_describe_two_states",
+                                            extra_context=system_prompt)
+        content = _r["reply"]
+        if not content or content.startswith("[洛神"):
+            raise RuntimeError("LLM 调用被拦截")
         start = content.find("{")
         end = content.rfind("}")
         if start == -1 or end == -1 or end <= start:

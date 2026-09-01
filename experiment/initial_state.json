@@ -1,0 +1,117 @@
+{
+  "__meta": {
+    "last_environment_tick": 0
+  },
+  "user_model": {
+    "trust": {
+      "value": 0.3,
+      "confidence": 0.1,
+      "evidence_count": 0
+    },
+    "intimacy": {
+      "value": 0.1,
+      "confidence": 0.1
+    },
+    "shared_history_length": 2,
+    "first_seen": 1788184235.841204,
+    "total_interactions": 2,
+    "emotional_patterns": [],
+    "preferences": [],
+    "known_facts": {}
+  },
+  "self_model": {
+    "emotion": {
+      "primary": "不安",
+      "intensity": 0.5,
+      "since": 1788184235.841205,
+      "trail": [
+        "平静"
+      ]
+    },
+    "relation": {
+      "description": "",
+      "asymmetry": 0.0
+    },
+    "strategy_weights": {
+      "strategy_give_advice": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      },
+      "strategy_show_empathy": {
+        "value": 0.6,
+        "initial": 0.6,
+        "adjustments": []
+      },
+      "strategy_ask_question": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      },
+      "strategy_share_info": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      },
+      "strategy_remain_silent": {
+        "value": 0.3,
+        "initial": 0.3,
+        "adjustments": []
+      },
+      "strategy_self_expression": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      }
+    },
+    "skills": {},
+    "self_stated_state": {
+      "entries": [
+        {
+          "said": "我不想继续了",
+          "context_of_said": "",
+          "recorded_at": 1788184235.843171,
+          "chain_hash": "a0b1211e4662cc4b38760e1f237caf04"
+        }
+      ],
+      "last_stated": "我撑不住了",
+      "last_stated_at": 1788177976.0025482,
+      "total_stated_count": 1
+    },
+    "internal_open_items": [
+      {
+        "type": "unfinished_thought",
+        "content": "她撑不住了，我只回了嗯",
+        "created_at": 1788185410.7716136,
+        "status": "pending",
+        "age_hours": 1.4
+      }
+    ]
+  },
+  "active_context": {
+    "session_id": null,
+    "current_topic": null,
+    "interaction_mode": "waiting",
+    "last_interaction_ts": 1788186810.7716124,
+    "emotional_arc": [
+      "温柔的在场的",
+      "安静在场"
+    ],
+    "strategy_used_this_turn": null,
+    "activity_level": 0.98
+  },
+  "internal_climate": {
+    "emotion_intensity": 0.5,
+    "tension": 0.3,
+    "energy": 0.5,
+    "memory_pressure": 0.3
+  },
+  "environment": {
+    "temperature": 0.5,
+    "humidity": 0.5,
+    "light": 0.5,
+    "pressure": 0.5,
+    "noise": 0.1,
+    "_phase": 0.0
+  }
+}

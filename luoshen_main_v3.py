@@ -94,21 +94,14 @@ def get_prompt_fragment():
 
 
 def call_llm(api_url, api_key, model, system_prompt, user_input):
-    headers = {
-        "Authorization": "Bearer " + api_key,
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "model": model,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_input},
-        ],
-    }
-    resp = requests.post(api_url, headers=headers, json=payload, timeout=30)
-    resp.raise_for_status()
-    data = resp.json()
-    return data["choices"][0]["message"]["content"]
+    """走活记忆层，经过 hospital_gateway 检查。"""
+    import living_engine
+    _r = living_engine.generate_response(user_input, source="luoshen_main_v3",
+                                        extra_context=system_prompt)
+    r = _r["reply"]
+    if not r or r.startswith("[洛神"):
+        raise RuntimeError("LLM 调用被拦截")
+    return r
 
 
 def append_chain(file_name, file_hash):

@@ -6,12 +6,6 @@ import json
 import os
 import time
 
-try:
-    import requests
-except ImportError:
-    print(json.dumps({"error": "requests module not found"}))
-    raise SystemExit(0)
-
 GENE_MAP = {
     "info": {"gene": "GENE-001", "reason": "信息获取型交互，优先选择雌-雌-雌组合"},
     "action": {"gene": "GENE-002", "reason": "任务执行型交互，优先选择雄-雄-雄组合"},
@@ -26,21 +20,12 @@ TEST_INPUTS = [
 
 
 def classify(api_url, api_key, model, user_input):
-    headers = {
-        "Authorization": "Bearer " + api_key,
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "model": model,
-        "messages": [
-            {"role": "system", "content": "你是一个交互类型分类器。用户输入后，你只返回一个英文单词：info（信息获取）、action（任务执行）、relationship（关系/认知）。不要解释。"},
-            {"role": "user", "content": user_input},
-        ],
-    }
-    resp = requests.post(api_url, headers=headers, json=payload, timeout=30)
-    resp.raise_for_status()
-    data = resp.json()
-    content = data["choices"][0]["message"]["content"]
+    import living_engine
+    _sys = "你是一个交互类型分类器。用户输入后，你只返回一个英文单词：info（信息获取）、action（任务执行）、relationship（关系/认知）。不要解释。"
+    _r = living_engine.generate_response(user_input, source="real_interaction_test", extra_context={"system_prompt": _sys})
+    content = _r.get("reply", "")
+    if not content or content.startswith("[洛神"):
+        return "info"
     words = content.strip().lower().split()
     task_type = words[0] if words else "info"
     if task_type not in GENE_MAP:

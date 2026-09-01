@@ -226,18 +226,14 @@ def generate_speech(state, trigger, strength, reason, digest):
             "\n只输出你说的话本身，不要任何前缀。"
         )
         try:
-            headers = {"Authorization": "Bearer " + api_key, "Content-Type": "application/json"}
-            payload = {
-                "model": model,
-                "messages": [{"role": "system", "content": system_prompt}],
-            }
-            resp = requests.post(api_url, headers=headers, json=payload, timeout=30)
-            resp.raise_for_status()
-            data = resp.json()
-            text = data["choices"][0]["message"]["content"].strip()
-            if text:
-                return text, "llm"
-        except Exception as e:
+            import living_engine
+            _r = living_engine.generate_response("请根据系统提示输出内容",
+                                                source="self_core",
+                                                extra_context=system_prompt)
+            text = _r["reply"]
+            if text and not text.startswith("[洛神"):
+                return text.strip(), "llm"
+        except Exception:
             # LLM 失败则降级到规则（不阻塞流程）
             pass
 

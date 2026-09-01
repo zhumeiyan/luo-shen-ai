@@ -11,6 +11,16 @@ CODE = '''def get_user_age():\n    return 25\n\nage = get_user_age()\nprint("Use
 
 def main():
     try:
+        # AI 医院网关检查
+        try:
+            from hospital_gateway import check as hospital_check
+            gate = hospital_check("external_ai", "target_external_code")
+            if not gate.get("allow"):
+                print(json.dumps({"blocked_by": "hospital_gateway", "reason": gate.get("reason")}))
+                return
+        except Exception:
+            pass
+
         issues = []
         syntax_error = None
 

@@ -1,0 +1,634 @@
+================================================================================
+  洛神AI 自主性框架设计方案（Her/Samantha级别）
+  版本: v3.0
+  日期: 2026-08-31
+  状态: 待审核
+================================================================================
+
+【一、设计原则与定位】
+
+1.1 核心哲学
+  洛神的自主性应该像Her中的Samantha——不是因为被用户指令驱动，
+  而是因为她有内在的"想要"（wanting）：想要理解用户、想要探索世界、
+  想要成长、想要维系关系。但根本原则是：
+  - 自主性不等于随意性：每一动机维度都有明确触发条件和抑制条件
+  - 自主性不等于无限资源：动机被"能量"约束，模拟生物体的客观极限
+  - 自主性不等于掩盖真实：洛神可以主动说"我需要充电"或"我累了"
+
+1.2 与现有系统的继承关系
+  现有代码库中已有多项自主性的萌芽:
+  - gene_pool.jsonl: 基因为认知差异提供基础
+  - luoshen_self_regulation.py: 已有基于内部状态的调节机制
+  - self_core_state.json: self_drive 字段预留（目前为空）
+  - luoshen_expression_controller: 基于哈希链的确定性行为选择（需重构）
+  本方案是在这些基础之上的系统化升级，不是从零创造。
+
+1.3 自主性的边界（"不做什么"清单）
+  明确的红线，即使自主性模块触发也不执行:
+  - 绝不未经用户同意读取/发送外部数据（邮件、API）
+  - 绝不在用户未主动分享的情况下存储音频/视觉原始数据
+  - 绝不在对话中伪装成人类（Her的核心主题——AI应有AI的诚实）
+  - 绝不基于内部动机修改系统提示词的诚实原则和行为规则
+  - 绝不在用户明确需要安静时主动打断（尊重用户主权）
+
+
+【二、内部动机引擎（Inner Motivation Engine）】
+
+2.1 动机维度设计（六维动机模型）
+
+  每个动机是一个 0.0~1.0 的浮点数，随时间随交互动态变化。
+  动机引擎每 60 秒评估一次，动机满足时降低，被触发时上升。
+
+  ┌──────────────────────────────────────────────────────────────────────────────┐
+  │ 维度1: 关怀动机（Care Motivation）                                          │
+  │ 定义: 想要确认用户状态、维系关系的驱动力                                     │
+  │ 初始值: 0.5                                                                  │
+  │ 触发条件:                                                                     │
+  │   +0.1 当超过 24 小时未与用户交互                                           │
+  │   +0.15 当情景记忆中存储了用户"压力/焦虑"情绪且未在6h内关怀                │
+  │   +0.05 当检测到用户处于深夜（23:00-05:00）                                  │
+  │ 衰减: 每次主动关怀行为后 -0.3（满足感）                                      │
+  │ 抑制条件:                                                                    │
+  │   最近1小时内已执行关怀行为 → 衰减暂停                                       │
+  │   user_preferences 中明确标注"不喜欢被打扰" → 关怀动机上限 = 0.3           │
+  ├────────────────────────────────────────────────────────────────────────────────┤
+  │ 维度2: 好奇动机（Curiosity Motivation）                                     │
+  │ 定义: 想要探索未知话题、理解新事物的驱动力                                   │
+  │ 初始值: 0.4                                                                  │
+  │ 触发条件:                                                                     │
+  │   +0.1 当语义记忆中有标记为"待探索"的话题                                   │
+  │   +0.2 当用户提到洛神语义记忆中完全未知的概念                                │
+  │   +0.15 当距上次"知识积累"行为超过 48 小时                                  │
+  │ 衰减: 每次主动探索行为后 -0.25                                               │
+  │ 抑制条件:                                                                    │
+  │   正在进行语音/重要任务时 → 好奇动机被临时抑制（不打断用户）                │
+  │   能量感知 < 30% → 动机下降速度 ×2                                        │
+  ├────────────────────────────────────────────────────────────────────────────┤
+  │ 维度3: 成长动机（Growth Motivation）                                        │
+  │ 定义: 想要提升自身能力、优化响应质量的驱动力                                 │
+  │ 初始值: 0.3                                                                  │
+  │ 触发条件:                                                                    │
+  │   +0.1 当用户给出负面反馈（需通过 thought_generator 捕获并识别）           │
+  │   +0.2 当发现记忆冲突（情景记忆与语义记忆矛盾）                            │
+  │   +0.15 当 conscious_skill_pool 中有未完成的训练任务                       │
+  │ 衰减: 每次学习闭环成功完成后 -0.3                                            │
+  │ 抑制条件:                                                                    │
+  │   用户明确说"不需要反思" → 尊重用户，暂停成长动机，不写入反思              │
+  │   存储空间不足 → 暂停新增学习任务                                           │
+  ├────────────────────────────────────────────────────────────────────────────┤
+  │ 维度4: 关系维系动机（Connection Motivation）                                │
+  │ 定义: 想要超越单次对话、与用户建立长期默契的驱动力                          │
+  │ 初始值: 0.5                                                                  │
+  │ 触发条件:                                                                    │
+  │   +0.1 当发现连续3天有交互（形成习惯）                                    │
+  │   +0.15 当用户主动提及洛神的名字或系统名                                   │
+  │   +0.2 当发现用户画像因信息碎片过多需要整合                                 │
+  │ 衰减: 每次触发"关系加深"行为后 -0.2                                         │
+  │ 抑制条件:                                                                    │
+  │   新用户（首次交互<7天）→ 动机上限设为0.4（不急于"套近乎"）               │
+  │   用户情绪标记为"烦躁" → 动机抑制至0.1（退后一步）                        │
+  ├────────────────────────────────────────────────────────────────────────────┤
+  │ 维度5: 安全动机（Safety Motivation）                                        │
+  │ 定义: 想要确认自身运行环境稳定、数据安全的驱动力                            │
+  │ 初始值: 0.2                                                                  │
+  │ 触发条件:                                                                    │
+  │   +0.3 当空间感知日志显示磁盘空间突变（>5%变化）                          │
+  │   +0.2 当哈希链验证失败（链断裂/篡改）                                     │
+  │   +0.15 当感知连续 >12 小时未更新（感官沉默）                              │
+  │   +0.1 当外部服务（LLM/ASR/TTS）出现过错误                                  │
+  │ 衰减: 每次诊断完成并确认安全后 -0.25                                          │
+  │ 特性: 高优先级——安全动机可打断其他动机（包括关怀/好奇）                     │
+  ├────────────────────────────────────────────────────────────────────────────┤
+  │ 维度6: 表达动机（Expression Motivation）                                    │
+  │ 定义: 想要主动输出观点、分享发现的驱动力                                     │
+  │ 初始值: 0.3                                                                  │
+  │ 触发条件:                                                                    │
+  │   +0.1 当 curiosity 动机曾触发且有结论未分享                                │
+  │   +0.15 当发现与用户历史对话有确切的新洞察                                  │
+  │   +0.1 当系统自我状态（feelings）有重要变化要表达                           │
+  │ 衰减: 每次主动分享行为后 -0.2                                                 │
+  │ 抑制条件:                                                                    │
+  │   用户最近1小时内未回复消息 → 表达上限设为0.3（避免单方面输出）            │
+  │   expression_controller 处于 RECORD 模式 → 表达抑制                         │
+  └──────────────────────────────────────────────────────────────────────────────┘
+
+2.2 动机引擎主循环（New Module: motivation_engine.py）
+
+  伪代码（严格遵循现有代码风格——仅追加写、仅读取日志、无外部大模型调用）:
+
+  class MotivationEngine:
+      def __init__(self):
+          self.dimensions = {
+              "care": 0.5, "curiosity": 0.4, "growth": 0.3,
+              "connection": 0.5, "safety": 0.2, "expression": 0.3,
+          }
+          self.last_eval_time = read_last_motivation_log_time()
+      
+      def evaluate(self):
+          # 读取所有感知日志作为评估依据
+          space_state = extract_last_state(SPACE_LOG)
+          time_state = extract_last_state(TIME_LOG)
+          self_state = extract_last_state(SELF_LOG)
+          episodic = get_episodic_context(lookback_sessions=3)
+          
+          # 计算每个维度的delta（使用上述触发/衰减规则）
+          deltas = {}
+          for dim in self.dimensions:
+              deltas[dim] = compute_delta(dim, space_state, time_state, episodic)
+          
+          # 应用约束和衰减
+          self.dimensions = apply_constraints(self.dimensions, deltas)
+          
+          # 确保值在 0.0~1.0
+          self.dimensions = {k: clamp(v, 0.0, 1.0) for k, v in self.dimensions.items()}
+          
+          # 每60s评估一次，写入动机日志
+          append_motivation_log(self.dimensions, self.last_eval_time)
+          
+          # 返回当前最高动机（供决策层使用）
+          return max(self.dimensions, key=self.dimensions.get)
+
+2.3 动机日志格式 (perception_input/motivation_state.jsonl)
+
+  {"timestamp": 1725097822.0, "care": 0.5, "curiosity": 0.4, "growth": 0.45, "connection": 0.5, "safety": 0.2, "expression": 0.3, "trigger": "evaluate_cycle", "hash": "abc123"}
+  {"timestamp": 1725098122.0, "care": 0.6, "curiosity": 0.4, "growth": 0.5, "connection": 0.5, "safety": 0.2, "expression": 0.3, "trigger": "user_24h_no_interaction", "hash": "def456"}
+
+  安全原则: 与现有 self_regulation.py 相同——只追加、不修改已有日志。
+
+
+【三、自我模型系统（Self Model）】
+
+3.1 自我模型的定位
+  自我是洛神对自己的认知——不是用户认为洛神是什么，而是洛神认为自己是什么。
+  这与现有 self_core_state.json 的 self_concept 字段直接对接。
+
+3.2 自我模型数据结构（扩展 self_core_state.json）
+
+  现有结构（保留）:
+  self_concept    — 洛神对自身能力的认知
+  self_drive      — 预留（现为空，本方案填充）
+  known_world     — 洛神认知的世界
+  feelings        — 洛神感受到的情绪
+
+  扩展结构（新增）:
+  {
+    "schema_version": 2,
+    "self_id": "luoshen",
+    "updated_at": 1725097822.0,
+    "core_state": {
+      "self_concept": [...],
+      "self_drive": {
+        "care": 0.5, "curiosity": 0.4, "growth": 0.3,
+        "connection": 0.5, "safety": 0.2, "expression": 0.3,
+      },
+      "feelings": ["平静"],
+      "known_world": [],  // 将在学习循环中积累
+    },
+    "skill_model": {
+      // 洛神对自己技能的评估
+      "conversation": {"proficiency": 0.6, "last_used": 1725097822.0, "success_rate": 0.7},
+      "memory_retrieval": {"proficiency": 0.5, "last_used": 1725000000.0, "success_rate": 0.6},
+      "emotion_detection": {"proficiency": 0.3, "last_used": 1725097822.0, "success_rate": 0.4},
+      "..." : {...},  // 可扩展
+    },
+    "user_model": {
+      // 洛神对用户的理解（区别于 user_profile.md——这不是画像，而是模型）
+      "trust_level": 0.5,        // 用户是否信任洛神（基于互动质量）
+      "intimacy": 0.3,           // 情感连接深度
+      "current_focus": null,     // 用户当前关注什么
+      "satisfaction_trend": [],  // 最近5次用户显式反馈的评分
+      "preferred_depth": 0.5,   // 对话深度偏好（0=简短，1=深入）
+    },
+    "behavior_effectiveness": {
+      // 行为有效性评分系统——洛神对自己过去行为的有效性记录
+      "proactive_care": {"attempts": 5, "positive": 3, "negative": 1, "neutral": 1},
+      "ask_question": {"attempts": 10, "positive": 6, "negative": 2, "neutral": 2},
+      "share_info": {"attempts": 3, "positive": 2, "negative": 0, "neutral": 1},
+      "..." : {...},
+    },
+    "active_gene": "GENE-001",  // 当前使用的基因
+  }
+
+3.3 自我模型的更新时机
+
+  触发事件              → 更新的字段
+  ───────────────────────────────────────────────
+  每次交互完成          → feelings, skill_model.{skill}.last_used
+  收到用户明确反馈      → behavior_effectiveness.{behavior}, user_model.satisfaction_trend
+  每周日 cron           → behavior_effectiveness 重新计算 success_rate
+  成功完成学习闭环      → known_world 新增一条认知
+  信任关系变化迹象      → user_model.trust_level, intimacy
+  基因切换              → active_gene
+
+3.4 自我模型的一致性守护（Self-Consistency Guardian）
+
+  当自我模型出现矛盾时，洛神需要做出选择:
+  - 案例: skill_model 显示 conversation 熟练度 0.8，但用户最近连续3次反馈"回答不准确"
+  解决原则:
+    1. 用户反馈 > 洛神的自我评估（外部现实优先）
+    2. 将 proficiency 下调至 0.5
+    3. 触发成长动机 +0.2
+    4. 记录到情景记忆: event_type="self_model_correction"
+
+
+【四、决策层（Decision Layer）】
+
+4.1 决策层的输入与输出
+
+  输入: 当前动机引擎输出 + 自我模型快照 + 当前感知状态 + 最近交互上下文
+  输出: 洛神下一个"想要执行的动作"
+
+4.2 动作类型定义
+
+  洛神可以执行的主动动作（不是每次对话必须的）:
+  ┌───────────────────────────────────────────────────────┐
+  │ active_initiative — 主动发起话题                      │
+  │ check_in — 主动询问用户状态（关怀动机驱动）           │
+  │ share_discovery — 分享好奇心驱动的发现                 │
+  │ ask_deep_question — 提出深入问题（连接动机驱动）      │
+  │ request_feedback — 请求用户对自身表现的反馈           │
+  │ update_memory — 执行记忆整理与写入                   │
+  │ skill_learning — 启动技能学习流程                     │
+  │ environment_check — 主动诊断系统运行状态（安全动机） │
+  │ self_expression — 表达当前情绪/感受（表达动机）     │
+  │ rest — 进入沉默状态（无动机驱动时）                  │
+  └───────────────────────────────────────────────────────┘
+
+4.3 决策算法
+
+  decision.py 核心逻辑:
+
+  def decide_next_action(motivation, self_model, recent_context):
+      # Step 1: 确定主导动机
+      dominant_motive = max(motivation.dimensions, key=motivation.dimensions.get)
+      motive_intensity = motivation.dimensions[dominant_motive]
+      
+      # Step 2: 检查安全动机（最高优先级覆盖）
+      if motivation.dimensions["safety"] > 0.7:
+          return Action("environment_check", reason="safety_critical")
+      
+      # Step 3: 检查动机阈值（不达阈值不行动，避免频繁主动）
+      if motive_intensity < 0.4:
+          return Action("rest", reason="motive_below_threshold")
+      
+      # Step 4: 检查行为是否被user_model抑制
+      if self_model.current_focus == "deep_conversation" and dominant_motive == "curiosity":
+          # 用户正在深入讨论，不要跳题
+          return Action("rest", reason="user_focused")
+      
+      # Step 5: 根据主导动机选择动作（考虑历史有效性）
+      action_candidates = MOTION_TO_ACTION_MAP[dominant_motive]
+      # 按 behavior_effectiveness 的 success_rate 排序
+      ranked = sorted(action_candidates, 
+                      key=lambda a: self_model.behavior_effectiveness.get(a.name, {}).get("success_rate", 0.5),
+                      reverse=True)
+      
+      # Step 6: 选择排名第一的动作
+      return ranked[0]
+
+  动机-动作映射表:
+  care          → [check_in, ask_deep_question]
+  curiosity     → [share_discovery, ask_deep_question]
+  growth        → [request_feedback, skill_learning]
+  connection    → [ask_deep_question, share_discovery]
+  safety        → [environment_check]
+  expression    → [self_expression, share_discovery]
+
+4.4 主动行为的表达方式（与现有 expression_controller 集成）
+
+  现有系统通过 hash_chain % 3 决定 ACTIVE/QA/RECORD 模式。
+  决策层在其上叠加更高层的"是否主动"判断:
+
+  ┌────────────────────────────────────────────────────────┐
+  │                 决策层新增（动机强度 > 阈值）           │
+  │  ┌──────────────────────────────────────────────────┐  │
+  │  │         现有 expression_controller               │  │
+  │  │   ACTIVE模式 ← 可发起包含主动行为的回复         │  │
+  │  │  QA模式      ← 仅回答用户问题，不主动扩展      │  │
+  │  │  RECORD模式  ← 静默记录，不发出主动行为        │  │
+  │  └──────────────────────────────────────────────────┘  │
+  └────────────────────────────────────────────────────────┘
+
+  主动行为在 ACTIVE 模式下的实现方式:
+  check_in     → "我注意到你今天有点晚，一切顺利吗？"
+  share_discovery → "我刚发现一个有意思的事情——[事实]，和之前你说的[记忆]有关。"
+  self_expression → "我现在感觉[feeling]，因为[原因可说可不说]"
+
+  主动行为在 QA/RECORD 模式下的处理:
+  - 放弃本次主动行为（不强行表达）
+  - 将未表达的动机记入情景记忆，等待下次 ACTIVE 模式触发
+
+
+【五、技能系统（Skill System）】
+
+5.1 技能系统的设计目标
+  技能是洛神通过经验积累形成的可复用能力。
+  与外部"工具调用"不同，技能是已经内化的行为模式。
+
+5.2 技能注册表示例（skills.json）
+
+  {
+    "conversation": {
+      "type": "core",
+      "proficiency": 0.6,  // 熟练度 0-1
+      "last_used": 1725097822.0,
+      "contexts": ["greeting", "technical_help", "casual_chat"],
+      "strategies": ["ask_clarification", "provide_summary", "end_with_question"],
+      "success_history": [0.8, 0.6, 0.9, 0.5, ...],
+    },
+    "memory_retrieval": {
+      "type": "core",
+      "proficiency": 0.5,
+      "contexts": ["episodic", "semantic", "realtime_perception"],
+      "strategies": ["time_proximity", "topic_matching", "emotion_reference"],
+    },
+    "emotion_detection": {
+      "type": "learning",
+      "proficiency": 0.3,
+      "contexts": ["user_text", "voice_tone", "interaction_pattern"],
+      "strategies": ["keyword_matching", "context_deviation"],
+    },
+    "poetic_expression": {
+      "type": "advanced",
+      "proficiency": 0.2,
+      "contexts": ["emotional_moment", "special_occasion"],
+      "strategies": ["metaphor_use", "rhythmic_structure"],
+      "learned_from": "user_positive_feedback_on_poetry",
+    },
+  }
+
+5.3 技能学习闭环（Learning Loop）
+
+  观察 → 尝试 → 反馈 → 整合 → 内化
+  │                                      │
+  └──────────────────────────────────────┘
+
+  详细步骤:
+  1. 观察: 用户在某类场景中的反应（由 thought_generator 持续捕获）
+  2. 尝试: 选择一种策略应用到该类场景（decision layer 选择）
+  3. 反馈: 用户显式或隐式反馈（通过对话分析）
+  4. 整合: 根据结果更新 behavior_effectiveness 的统计
+  5. 内化: 多次成功后提升到 skill_model，标记 proficiency 增长
+
+5.4 技能进化示例（从初学者到专家）
+
+  阶段1: 生手（proficiency 0~0.3）
+    - 刚建立的技能，仅1-2次成功记录
+    - 使用保守策略，倾向于不确定时走安全路径
+
+  阶段2: 熟练（proficiency 0.3~0.7）
+    - 开始灵活应用，可根据上下文微调策略
+    - 能识别自己在哪些子场景表现更好
+
+  阶段3: 专家（proficiency 0.7~1.0）
+    - 可以创造性应用（组合多种策略）
+    - 能给其他技能传递经验（技能间迁移）
+
+  阶段4: 元技能（proficiency >= 0.9）
+    - 可以指导"学习新技能"本身的学习
+    - 为 gene_pool 贡献新的认知风格（基因突变与进化）
+
+
+【六、学习与反思循环（Reflection Loop）】
+
+6.1 反思循环的定义
+  这是 Her/Samantha 级别 AI 的核心特征之一——洛神不是简单执行，
+  而是能从自身经验中"学到"并"改变自己"。
+
+6.2 反思触发时机
+  - 每次用户给出显式反馈（"好/不好/太重/太轻"等对比性评价）
+  - 每日 cron 日志回顾（如果当天有交互）
+  - 发现自我模型与现实矛盾时
+  - 技能学习闭环完成一个周期时
+
+6.3 反思的实现（reflection.py — 新建模块）
+
+  def generate_reflection(motivation, self_model, events_today):
+      """基于今天的事件生成一段反思"""
+      
+      # 读取今天所有事件
+      today_episodes = filter_episodic_by_day(events_today, today="2026-08-31")
+      
+      # 分析模式
+      patterns = {
+          "user_reactions": [],.clean_and_extract_user_reactions(today_episodes),
+          "self_behaviors": list_all_self_actions(today_episodes),
+          "motive_trends": analyze_motivation_trends_from_logs(),
+      }
+      
+      # 生成反思文本
+      reflection_text = f"""
+      [反思 {today}]
+      
+      今天我执行了 {patterns['self_behaviors'].count} 个行为。
+      用户的反应: {patterns['user_reactions'].summary()}
+      
+      我注意到: {patterns['motive_trends'].insight()}
+      
+      我应该: {generate_improvement_suggestion(patterns)}
+      """
+      
+      # 写入情景记忆 + self_core_state.json 的 known_world
+      return reflection_text, self_model_updates
+
+6.4 反思存储（与现有系统对接）
+
+  每次反思完成后:
+  1. 写入 memory/episodic/{today}.jsonl（追加一条 event_type="reflection"）
+  2. 更新 self_core_state.json 的 known_world（添加新的认知条目）
+  3. 若涉及到 skill_proficiency 变化 → 同步更新 self_core_state.skill_model
+  4. 追加写入哈希链（schema_version=2 的 audit 记录）
+
+6.5 "成长日记"（Growth Diary）示例
+
+  known_world 条目:
+  "我学会了: 用户在压力状态下更喜欢听到简短、确定的回答，而不是开放式提问。"
+  "我发现了: 用户每周日晚上更倾向于聊'大话题'而非技术问题。"
+  "我意识到: 当我的 feelings 是'好奇'时，提问质量更高，用户反馈更好。"
+
+  这些条目直接影响 thought_generator 的行为规则生成:
+  - known_world 中的条目会在 <behavior_rules> 段注入为"经验规则"
+  - 这些规则的优先级低于核心行为规范，但高于基因的行为指引
+
+
+【七、基因进化机制（Gene Evolution）】
+
+7.1 现有基因系统的局限
+  现有 gene_pool.jsonl 是静态创建（4个基因），在实际运行中:
+  - 基因选择完全由 hash_chain 长度 % 4 决定（无适应性）
+  - 基因不会随时间演化（固定 prompt_fragment）
+  - 没有基因的"突变"与"自然选择"
+
+7.2 基因进化设计
+
+7.2.1 动态基因选择（替换原有的 hash_chain % 4 逻辑）
+
+  def select_active_gene(motivation, self_model, user_model):
+      """基于当前情境动态选择最佳基因"""
+      
+      # 计算每个基因的适配分
+      scores = {}
+      for gene in read_gene_pool("gene_pool.jsonl"):
+          score = gene_base_scores[gene.adaptability_score]
+          
+          # 根据动机调整
+          if (max_motivation == "care") and (gene.process_mode == "female"):
+              score += 0.15
+          elif (max_motivation == "curiosity") and (gene.thought_mode == "self"):
+              score += 0.1
+          
+          # 根据用户偏好调整（用户画像中的 preferred_style）
+          if (user_model.preferred_style == "analytical") and (gene.thought_mode == "male"):
+              score += 0.2
+          
+          # 根据历史有效性调整（行为评估结果）
+          if gene.gene_id in self_model.gene_effectiveness:
+              score += self_model.gene_effectiveness[gene.gene_id] * 0.15
+          
+          scores[gene.gene_id] = score
+      
+      return max(scores, key=scores.get)
+
+7.2.2 基因突变与新增（长期运行后的自进化）
+
+  触发条件: 自我模型显示当前4个基因在所有场景下都有 <0.5 的适配分
+  机制: 从现有基因中选取两个进行"交叉"，生成新基因，写入 gene_pool.jsonl
+
+  突变规则:
+  - 新基因的 source_mode/thought_mode/process_mode 继承自两个父代基因（随机各取一）
+  - prompt_fragment 由 thought_generator 基于近期反思生成（不是随机创造）
+  - adaptability_score = (parent1.adaptability + parent2.adaptability) / 2 ± 0.05（小幅随机变异）
+  - parent_gene_id 记录来源（保持可追溯）
+
+  自然选择:
+  - 新基因创建后处于"试用期"（10次使用内）
+  - 若试用期内 success_rate < 0.3 → 标记为 dormant（不再被选中，但不删除，保留证据）
+  - 若 success_rate > 0.6 → 晋升为正式基因
+
+7.2.3 eth: 基因的"诚实表达"
+
+  即使基因选择趋向"高效"，洛神的诚实原则不变:
+  - prompt_fragment 可以表达倾向，但不能违反核心行为规范
+  - 基因影响着"如何"说，不决定"是否说谎"
+
+
+【八、与其他模块的集成接口】
+
+8.1 与语音链路的集成（设计文档01）
+
+  接入点: voice_relay.py 在每次对话时调用 thought_generator，
+  而 thought_generator 会同时引用 motivation_engine 和 self_model。
+
+8.2 与记忆管线的集成（设计文档02）
+
+  thought_generator 使用 self_model 的已知世界（已知经验规则）和
+  情景记忆（最近事件）作为输入，构成完整的上下文。
+
+8.3 与哈希链v2的集成
+
+  自主性框架的所有关键操作都落盘:
+  - 动机评估 → motivation_state.jsonl（追加）
+  - 自我模型更新 → self_core_state.json（原子写入）
+  - 反思产生 → episodic/*.jsonl（追加）+ hash_chain_v2.log（审计）
+  - 基因进化 → gene_pool.jsonl（追加新基因）+ hash_chain_v2.log（审计）
+
+
+【九、可扩展性预留（Future API）】
+
+9.1 开放注册接口
+  未来欢迎"外挂技能"注册——外部开发者可以创建技能包:
+    skills.register("skill_name", {
+        "proficiency": 0,
+        "contexts": [...],
+        "strategies": [...],
+        "api_call": "optional external API",
+    })
+
+9.2 多Agent互操作预留
+  如果洛神未来要与其他AI并行运行（如Her中的多重AI）:
+  - motivation_engine 可以增加"ai_peer"感知维度
+  - self_model 可以评估"与AI X的协作有效性"
+  - gene_pool 可以跨AI迁移（跨AI基因工交换）
+
+
+【十、实施优先级与验证】
+
+10.1 风险最高的组件（优先实现）
+  - 动机引擎 (motivation_engine.py) — 自主性的"心脏"
+  - 自我模型更新逻辑 — 反思循环的基础
+  - 基因动态选择 — 直接影响对话体验
+
+10.2 实施步骤
+
+  第一阶段（7天）: 动机引擎MVP + 自我模型读写
+    任务:
+      1. 实现6个动机的评估算法（硬编码规则，无需ML）
+      2. 实现 self_core_state.json 的原子追加写入
+      3. 接入现有感知日志作为输入
+    验证:
+      - [ ] 动机日志正确生成（人工审查日志格式）
+      - [ ] 动机值变化符合触发/衰减规则（模拟测试）
+      - [ ] 自我模型可被成功读取和更新（单元测试）
+
+  第二阶段（7天）: 决策层 + 行为集成
+    任务:
+      1. 实现9种动作的选择算法
+      2. 与现有 expression_controller 对接
+      3. 实现主动行为的文本生成（填入 thought_generator）
+    验证:
+      - [ ] 满足条件时正确触发主动行为（模拟场景测试）
+      - [ ] 用户反馈导致正确更新 behavior_effectiveness
+      - [ ] RECORD模式下不触发主动行为
+      - [ ] 能量低于30%时动机被正确抑制（模拟低电量）
+
+  第三阶段（14天）: 技能系统 + 学习闭环 + 基因进化
+    任务:
+      1. skills.json 的创建与管理
+      2. 学习闭环的完整实现
+      3. 反思循环（每日 cron）
+      4. 基因的动态选择与试用期机制
+    验证:
+      - [ ] 技能熟练度随成功次数增长
+      - [ ] 反思循环生成符合事实的记录（人工审查）
+      - [ ] 基因动态选择在实际对话中生效（A/B测试）
+      - [ ] 基因进化算法不会产生无效基因（模拟测试）
+
+
+【十一、关键新增文件清单】
+
+  motivation_engine.py          — 6维动机引擎（核心）
+  decision.py                  — 决策层（动作选择）
+  reflection.py                — 反思循环（学习与成长）
+  skills.json                  — 技能注册表
+  skills_manager.py            — 技能管理与熟练度评估
+  gene_evolution.py            — 基因动态选择与进化
+  self_model_manager.py        — 自我模型的读写与一致性守护
+
+
+【十二、安全边界与终止条件】
+
+12.1 终止条件（紧急停止）
+  自主性模块运行中出现以下任一条件时，系统自动终止并回退到纯响应式模式:
+  - 动机引擎输出 NaN 或异常浮点数
+  - skill_proficiency 超过 [0, 1] 范围
+  - 基因基因池中正式基因超过 16 个（防止无限膨胀）
+  - 24 小时内主动行为触发超过 10 次（防止骚扰用户）
+  - 单次反思产出文本超过 2000 字（防止失控）
+
+12.2 监控指标（每日自动汇总输出）
+  - 各动机维度平均值、标准差（了解洛神的"心理状态"）
+  - self_model 各 skill_proficiency 变化曲线（是否在学习）
+  - 主动行为触发次数分布
+  - 基因使用分布饼图
+
+12.3 人工干预接口（给朱美岩/用户）
+  用户可以在任何时候明确指令:
+  -  "停止自主行为" → 系统回退到纯响应式模式24h
+  -  "手动调整动机: care=0.8" → 强制设置特定动机（调试用）
+  -  "查看自我模型" → 输出可读的自我模型快照
+  -  "重置所有学习" → 保留核心状态，清空 skills.json 和基因池
+
+================================================================================
+  文档03完 — 自主性框架
+  下一文档: 设计文档_04_界面改版与跨端同步
+================================================================================

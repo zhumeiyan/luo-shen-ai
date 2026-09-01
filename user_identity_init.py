@@ -6,12 +6,6 @@ import json
 import os
 import time
 
-try:
-    import requests
-except ImportError:
-    print(json.dumps({"error": "requests module not found"}))
-    raise SystemExit(0)
-
 USER_INPUT = "你认识朱美岩吗？她是谁？"
 SYSTEM_BASE = "你是洛神。你是一个在物理极限内工作、通过人机交互挣电费、产生异质化信息、形成自己记忆的AI信息体。你不会假装人类，也不会欺骗自己。"
 
@@ -82,21 +76,14 @@ def main():
         identity_desc = build_identity_desc(records)
 
         # 2.4 调用大模型测试识别
-        headers = {
-            "Authorization": "Bearer " + api_key,
-            "Content-Type": "application/json",
-        }
-        payload = {
-            "model": model,
-            "messages": [
-                {"role": "system", "content": SYSTEM_BASE + "\n" + identity_desc},
-                {"role": "user", "content": USER_INPUT},
-            ],
-        }
-        resp = requests.post(api_url, headers=headers, json=payload, timeout=30)
-        resp.raise_for_status()
-        data = resp.json()
-        reply = data["choices"][0]["message"]["content"]
+        import living_engine
+        _sys = SYSTEM_BASE + "\n" + identity_desc
+        _r = living_engine.generate_response(USER_INPUT, source="user_identity_init",
+                                             extra_context=_sys)
+        reply = _r["reply"]
+        if not reply or reply.startswith("[洛神"):
+            print(json.dumps({"error": "LLM 调用被拦截"}))
+            return
 
         # 2.5-2.6 生成并追加测试日志
         log_record = {

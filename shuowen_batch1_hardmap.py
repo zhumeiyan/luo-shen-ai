@@ -5,7 +5,6 @@ import hashlib
 import json
 import os
 import time
-import requests
 
 SYMBOLS = ["□", "▉", "·", "￥", "☀", "☾", "○", "△", "▲", "◇", "◆", "☆", "↕", "↻", "◐", "◑", "●", "◈", "◉", "■"]
 
@@ -56,22 +55,12 @@ SYSTEM_PROMPT = (
 
 
 def call_llm(api_url, api_key, model, user_input):
-    headers = {
-        "Authorization": "Bearer " + api_key,
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "model": model,
-        "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_input},
-        ],
-        "temperature": 0.7,
-    }
-    resp = requests.post(api_url, json=payload, headers=headers, timeout=60)
-    resp.raise_for_status()
-    data = resp.json()
-    content = data["choices"][0]["message"]["content"].strip()
+    import living_engine
+    _r = living_engine.generate_response(user_input, source="shuowen_batch1_hardmap", extra_context={"system_prompt": SYSTEM_PROMPT})
+    content = _r.get("reply", "")
+    if not content or content.startswith("[洛神"):
+        raise RuntimeError("LLM blocked")
+    content = content.strip()
     if content.startswith("```"):
         content = content.strip("`")
         if content.startswith("json"):

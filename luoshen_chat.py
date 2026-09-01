@@ -55,21 +55,12 @@ def main():
 
         selected_gene_id, prompt_fragment = get_prompt_fragment()
 
-        headers = {
-            "Authorization": "Bearer " + api_key,
-            "Content-Type": "application/json",
-        }
-        payload = {
-            "model": model,
-            "messages": [
-                {"role": "system", "content": BASE_SYSTEM + "\n" + prompt_fragment},
-                {"role": "user", "content": USER_INPUT},
-            ],
-        }
-        resp = requests.post(api_url, headers=headers, json=payload, timeout=30)
-        resp.raise_for_status()
-        data = resp.json()
-        reply = data["choices"][0]["message"]["content"]
+        import living_engine
+        _r = living_engine.generate_response(USER_INPUT, source="luoshen_chat",
+                                            extra_context=BASE_SYSTEM + "\n" + prompt_fragment)
+        reply = _r["reply"]
+        if not reply or reply.startswith("[洛神"):
+            reply = "（洛神当前无法回应）"
 
         chat_record = {
             "schema_version": 1,

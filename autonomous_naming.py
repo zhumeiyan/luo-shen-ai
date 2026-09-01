@@ -6,11 +6,6 @@ import json
 import os
 import time
 
-try:
-    import requests
-except ImportError:
-    requests = None
-
 
 STATE_DESC = {
     "cpu_percent": "CPU使用率",
@@ -110,26 +105,14 @@ def main():
                 "reason（为什么选这个字，不超过20字）。不要添加任何额外文字。"
             )
             try:
-                if requests is None:
-                    errors.append({"symbol": sym, "error": "requests not installed"})
+                import living_engine
+                _last_user = json.dumps(user_payload, ensure_ascii=False)
+                _r = living_engine.generate_response(_last_user, source="autonomous_naming",
+                                                     extra_context=system_prompt)
+                content = _r["reply"]
+                if not content or content.startswith("[洛神"):
+                    errors.append({"symbol": sym, "error": "LLM blocked or error"})
                     continue
-                resp = requests.post(
-                    api_url,
-                    headers={"Authorization": "Bearer " + api_key,
-                             "Content-Type": "application/json"},
-                    json={
-                        "model": model,
-                        "messages": [
-                            {"role": "system", "content": system_prompt},
-                            {"role": "user",
-                             "content": json.dumps(user_payload, ensure_ascii=False)},
-                        ],
-                        "temperature": 0.7,
-                    },
-                    timeout=60,
-                )
-                data = resp.json()
-                content = data["choices"][0]["message"]["content"]
                 named = json.loads(content)
                 word = named.get("word", "")
                 reason = named.get("reason", "")

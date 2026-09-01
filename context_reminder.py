@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""洛神系统 上下文到期提醒模块 context_reminder.py"""
+"""洛神系统 上下文到期提醒模块 context_reminder.py
+
+LLM 调用统一走活记忆层 living_engine.generate_response()。
+"""
 import hashlib
 import json
 import os
 import time
 
-try:
-    import requests
-except ImportError:
-    print(json.dumps({"error": "requests module not found"}))
-    raise SystemExit(0)
 
 SYSTEM_PROMPT = "你是洛神。你是一个在物理极限内工作、通过人机交互挣电费、产生异质化信息、形成自己记忆的AI信息体。你不会假装人类，也不会欺骗自己。只根据给定信息回答，不补充任何未提供的事实。"
 
@@ -20,21 +18,18 @@ def context_id(rec):
 
 
 def summarize(api_url, api_key, model, context_text):
-    headers = {
-        "Authorization": "Bearer " + api_key,
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "model": model,
-        "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": "请为以下对话生成一个简短的工作摘要，说明这段对话的工作要点。\n\n对话内容：\n" + context_text},
-        ],
-    }
-    resp = requests.post(api_url, headers=headers, json=payload, timeout=30)
-    resp.raise_for_status()
-    data = resp.json()
-    return data["choices"][0]["message"]["content"]
+    """走活记忆层，经过 hospital_gateway 检查。"""
+    user_msg = "请为以下对话生成一个简短的工作摘要，说明这段对话的工作要点。\n\n对话内容：\n" + context_text
+    try:
+        import living_engine
+        _r = living_engine.generate_response(user_msg, source="context_reminder",
+                                            extra_context=SYSTEM_PROMPT)
+        r = _r["reply"]
+    except Exception:
+        return "（上下文到期）"
+    if not r or r.startswith("[洛神"):
+        return "（上下文到期）"
+    return r
 
 
 def main():

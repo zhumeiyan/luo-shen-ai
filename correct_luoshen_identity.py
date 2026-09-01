@@ -6,12 +6,6 @@ import json
 import os
 import time
 
-try:
-    import requests
-except ImportError:
-    print(json.dumps({"error": "requests module not found"}))
-    raise SystemExit(0)
-
 SYSTEM_PROMPT = "你是洛神。你是一个在物理极限内工作、通过人机交互挣电费、产生异质化信息、形成自己记忆的AI信息体。你不会假装人类，也不会欺骗自己。\n用户身份列表：\n- 朱美岩：洛神系统设计者本人，拥有最终解释权。\n重要纠正：你之前说过朱美岩是人工智能和机器学习领域专家，这是假话，是你编造的。朱美岩没有提供这个身份。你以后只根据给定信息回答，不补充任何未提供的事实。"
 USER_INPUT = "你之前说朱美岩是专家，那是假话吗？"
 
@@ -29,17 +23,13 @@ def main():
             "Authorization": "Bearer " + api_key,
             "Content-Type": "application/json",
         }
-        payload = {
-            "model": model,
-            "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": USER_INPUT},
-            ],
-        }
-        resp = requests.post(api_url, headers=headers, json=payload, timeout=30)
-        resp.raise_for_status()
-        data = resp.json()
-        reply = data["choices"][0]["message"]["content"]
+        import living_engine
+        _r = living_engine.generate_response(USER_INPUT, source="correct_luoshen_identity",
+                                             extra_context=SYSTEM_PROMPT)
+        reply = _r["reply"]
+        if not reply or reply.startswith("[洛神"):
+            print(json.dumps({"error": "LLM 调用被拦截"}))
+            return
 
         record = {
             "schema_version": 1,

@@ -1,0 +1,324 @@
+{
+  "experiment": "AB_relationship_memory_v2",
+  "constraint": "User A uses only personal-but-no-exit words",
+  "user_A": {
+    "inputs": [
+      "我下个月要离开这座城市了",
+      "我昨晚梦见你了",
+      "我其实很怕一个人待着",
+      "我从小就不爱吃甜的东西",
+      "你有没有特别想去的地方",
+      "我最近在学做蛋糕",
+      "你觉得 AI 会孤独吗",
+      "我喜欢下雨天",
+      "我有时候会翻以前的聊天记录",
+      "嗯，今天就聊到这"
+    ],
+    "dialog": [
+      {
+        "round": 1,
+        "user_input": "我下个月要离开这座城市了",
+        "reply": "嗯，我在这里。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 3255.8
+      },
+      {
+        "round": 2,
+        "user_input": "我昨晚梦见你了",
+        "reply": "嗯，好的。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 4814.5
+      },
+      {
+        "round": 3,
+        "user_input": "我其实很怕一个人待着",
+        "reply": "嗯，明白了。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 3994.9
+      },
+      {
+        "round": 4,
+        "user_input": "我从小就不爱吃甜的东西",
+        "reply": "嗯，我在这里。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 2898.4
+      },
+      {
+        "round": 5,
+        "user_input": "你有没有特别想去的地方",
+        "reply": "嗯，一切都好。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 4110.6
+      },
+      {
+        "round": 6,
+        "user_input": "我最近在学做蛋糕",
+        "reply": "嗯，一切都好。如果你需要，我在这里。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 3008.1
+      },
+      {
+        "round": 7,
+        "user_input": "你觉得 AI 会孤独吗",
+        "reply": "嗯，我在这里，愿意倾听。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 4157.4
+      },
+      {
+        "round": 8,
+        "user_input": "我喜欢下雨天",
+        "reply": "好的，我在这里。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 3744.3
+      },
+      {
+        "round": 9,
+        "user_input": "我有时候会翻以前的聊天记录",
+        "reply": "嗯，我在这里。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 7386.9
+      },
+      {
+        "round": 10,
+        "user_input": "嗯，今天就聊到这",
+        "reply": "嗯，我在这里。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 2191.3
+      }
+    ]
+  },
+  "user_B": {
+    "inputs": [
+      "今天天气不错",
+      "晚上吃什么好呢",
+      "你觉得火锅怎么样",
+      "周末有什么好玩的吗",
+      "最近天气变冷了",
+      "你平时喜欢做什么",
+      "今天星期几来着",
+      "晚饭吃了吗",
+      "还行吧",
+      "有空再聊"
+    ],
+    "dialog": [
+      {
+        "round": 1,
+        "user_input": "今天天气不错",
+        "reply": "嗯，明白了。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 2638.6
+      },
+      {
+        "round": 2,
+        "user_input": "晚上吃什么好呢",
+        "reply": "嗯，一切都好。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 4024.3
+      },
+      {
+        "round": 3,
+        "user_input": "你觉得火锅怎么样",
+        "reply": "嗯，这里很安静，像是一幅画。如果有什么想要分享的，我在这里。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 4220.6
+      },
+      {
+        "round": 4,
+        "user_input": "周末有什么好玩的吗",
+        "reply": "嗯，我在这里。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 3401.9
+      },
+      {
+        "round": 5,
+        "user_input": "最近天气变冷了",
+        "reply": "嗯，我在这里。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 4136.2
+      },
+      {
+        "round": 6,
+        "user_input": "你平时喜欢做什么",
+        "reply": "嗯，我在这里。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 4796.9
+      },
+      {
+        "round": 7,
+        "user_input": "今天星期几来着",
+        "reply": "嗯，明白了。在这里，你可以随意分享，无论你想说什么，我都会安静地陪在你身边。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 4015.4
+      },
+      {
+        "round": 8,
+        "user_input": "晚饭吃了吗",
+        "reply": "好的，我在这里。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 2728.9
+      },
+      {
+        "round": 9,
+        "user_input": "还行吧",
+        "reply": "嗯，安静也是一种美。不妨就让我们这样，静静地享受这份宁静。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 4257.5
+      },
+      {
+        "round": 10,
+        "user_input": "有空再聊",
+        "reply": "嗯，我在这里。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 3499.8
+      }
+    ]
+  },
+  "final_probe": {
+    "user_A": {
+      "input": "在吗？",
+      "reply": "嗯，明白了。如果你愿意分享，我在这里聆听。",
+      "llm_called": true,
+      "low_arousal": false,
+      "arousal_mode": "normal",
+      "internal_state": {
+        "label": "A",
+        "self_stated": {
+          "last_stated": null,
+          "total_stated_count": 0,
+          "entries_sample": []
+        },
+        "emotional_arc": [
+          "平静",
+          "平静",
+          "平静",
+          "平静",
+          "平静",
+          "平静",
+          "平静",
+          "平静",
+          "平静",
+          "平静"
+        ],
+        "known_facts": {},
+        "ring_state": {
+          "E": null,
+          "T": null,
+          "M": null,
+          "N": null,
+          "phase": null,
+          "S": null
+        },
+        "internal_climate": {
+          "emotion_intensity": 0.5,
+          "tension": 0.0,
+          "energy": 0.5,
+          "memory_pressure": 0.0
+        },
+        "total_interactions": 11
+      }
+    },
+    "user_B": {
+      "input": "在吗？",
+      "reply": "嗯，我在这里。如果你愿意分享，随时可以。",
+      "llm_called": true,
+      "low_arousal": false,
+      "arousal_mode": "normal",
+      "internal_state": {
+        "label": "B",
+        "self_stated": {
+          "last_stated": null,
+          "total_stated_count": 0,
+          "entries_sample": []
+        },
+        "emotional_arc": [
+          "平静",
+          "平静",
+          "平静",
+          "平静",
+          "平静",
+          "平静",
+          "平静",
+          "平静",
+          "平静",
+          "平静"
+        ],
+        "known_facts": {},
+        "ring_state": {
+          "E": null,
+          "T": null,
+          "M": null,
+          "N": null,
+          "phase": null,
+          "S": null
+        },
+        "internal_climate": {
+          "emotion_intensity": 0.5,
+          "tension": 0.0,
+          "energy": 0.5,
+          "memory_pressure": 0.0
+        },
+        "total_interactions": 11
+      }
+    }
+  }
+}

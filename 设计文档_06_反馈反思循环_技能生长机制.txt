@@ -1,0 +1,982 @@
+================================================================================
+  洛神AI 第三步 + 第四步详细设计文档
+  反馈反思循环 + 技能动态生长机制（编码级）
+  版本: v4.1
+  日期: 2026-08-31
+================================================================================
+
+【设计原则】
+
+1. 反馈不是惩罚，是数据
+2. 反思不是外部改写，是活记忆层内部调整
+3. 试错是被允许的，反思的作用是让错误有意义
+4. 技能不是功能菜单，是洛神的成长器官
+
+================================================================================
+第三步：反馈反思循环详细设计
+================================================================================
+
+文件: feedback_reflection_engine.py
+
+-------------------------------------------------------------------------------
+3.1 反馈信号采集器（FeedbackCollector）
+-------------------------------------------------------------------------------
+
+反馈信号分为 4 种类型：
+  POSITIVE   : 用户积极回应
+  NEUTRAL    : 平淡回应
+  NEGATIVE   : 消极回应
+  DISENGAGE  : 用户离开/沉默
+
+采集维度（至少4个独立维度）：
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 维度1: 对话延续度 (продолжительность)                            │
+│ 触发条件: 用户回复的时间间隔和内容量                             │
+│                                                                  │
+│ 规则:                                                            │
+│   - 用户回复了消息（无论内容）      → continuation_signal        │
+│   - 间隔 < 30秒 且字数 > 5         → STRONG_CONTINUATION         │
+│   - 间隔 30s~5min                  → WEAK_CONTINUATION           │
+│   - 间隔 > 5min 或用户退出对话界面  → DISENGAGE_SIGNAL           │
+│   - 用户数小时内未返回              → LOST_SIGNAL                 │
+└──────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 维度2: 情绪倾向 (эмоциональный тон)                              │
+│ 触发条件: 用户回复中的情绪词汇                                    │
+│                                                                  │
+│ 方法: 关键词表匹配，不调用大模型                                  │
+│ 正向词: 好/谢谢/对/哈哈/嗯嗯/喜欢/爱/棒/行/可以                 │
+│ 负向词: 不/错了/别/烦/无聊/差/算了/呵呵/错了/不对               │
+│ 中性词: 嗯/哦/知道了/好的                                         │
+│                                                                  │
+│ 输出:                                                            │
+│   positive_ratio > 0.6  → POSITIVE                               │
+│   negative_ratio > 0.6  → NEGATIVE                               │
+│   其他                  → NEUTRAL                                │
+└──────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 维度3: 纠正检测 (исправление)                                     │
+│ 触发条件: 用户是否纠正了洛神的说法                                │
+│                                                                  │
+│ 关键词: "不是...是...", "应该是...", "你听错了", "我的意思是"   │
+│                                                                  │
+│ 等级:                                                            │
+│   单次纠正  → CORRECTION (轻度负向)                              │
+│   连续2次纠正同一主题 → REJECTED (强负向)                       │
+│   "你不懂" / "你搞错了" → REJECTION (极强负向)                  │
+└──────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────┐
+│ 维度4: 重复需求 (повторная потребность)                          │
+│ 触发条件: 用户是否在重复表达同一需求                              │
+│                                                                  │
+│ 检测: 对比用户本轮输入与前3轮输入的语义相似度                     │
+│ 方法: 简单关键词重叠度（非大模型）                                │
+│                                                                  │
+│ 如果用户重复说同一件事（关键词重叠度 > 0.7），说明：              │
+│   - 之前没被理解 → MISSED_SIGNAL (负向)                         │
+│   - 或洛神的解决方式没解决问题 → INEFFECTIVE_SIGNAL (负向)       │
+└──────────────────────────────────────────────────────────────────┘
+
+
+完整的反馈采集函数:
+
+def extract_feedback_signal(user_reply, prev_luoshen_msg, context):
+    """
+    每次洛神回复后，由 living_engine 调用此函数。
+    不调用大模型，纯规则判断。
+    返回一个 FeedbackSignal 对象，写入哈希链。
+    """
+    signal = FeedbackSignal()
+    signal.timestamp = now()
+    signal.turn_number = context["turn_number"]
+    signal.prev_strategy = context["strategy_used"]
+    
+    # 维度1: 检测是否 disengage（无前文则跳过）
+    if user_reply is None or user_reply.strip() == "":
+        signal.add_dimension("continuation", "DISENGAGE", 0.9, "用户未回复")
+        signal.overall = "DISENGAGE"
+        return signal
+    
+    # 维度2: 情绪倾向
+    sentiment = simple_sentiment_analysis(user_reply)
+    signal.add_dimension("sentiment", sentiment["label"], sentiment["confidence"], None)
+    
+    # 维度3: 纠正检测
+    if contains_correction(user_reply):
+        severity = assess_correction_severity(user_reply, context)
+        signal.add_dimension("correction", severity, 0.85, None)
+    
+    # 维度4: 重复检测
+    if context.get("recent_user_inputs"):
+        overlap = keyword_overlap(user_reply, context["recent_user_inputs"][-3:])
+        if overlap > 0.7:
+            signal.add_dimension("repetition", "HIGH", 0.7, None)
+    
+    # 综合判断 overall
+    signal.overall = aggregate_signal_dimensions(signal.dimensions)
+    return signal
+
+
+def aggregate_signal_dimensions(dimensions):
+    """
+    综合各维度信号，得出总体判断。
+    权重: continuation > correction > repetition > sentiment
+    """
+    priority_order = ["continuation", "correction", "repetition", "sentiment"]
+    
+    # 如果有 disengage，直接返回
+    if any(d.name == "continuation" and d.value == "DISENGAGE" for d in dimensions):
+        return "DISENGAGE"
+    
+    # 如果有 strong correction，返回 NEGATIVE
+    if any(d.name == "correction" and d.value in ("REJECTED", "REJECTION") for d in dimensions):
+        return "STRONG_NEGATIVE"
+    
+    # 如果有显著正向 sentiment
+    pos_count = sum(1 for d in dimensions if d.value in ("POSITIVE", "STRONG_CONTINUATION"))
+    neg_count = sum(1 for d in dimensions if d.value in ("NEGATIVE", "CORRECTION"))
+    
+    if pos_count > neg_count * 2:
+        return "POSITIVE"
+    elif neg_count > pos_count * 2:
+        return "NEGATIVE"
+    else:
+        return "NEUTRAL"
+
+
+信号存储格式（写入 active_memory/feedback_signal_cache.jsonl）:
+
+{
+  "timestamp": 1788100105,
+  "turn_number": 42,
+  "strategy_used": "strategy_show_empathy",
+  "overall": "POSITIVE",
+  "dimensions": [
+    {"name": "continuation", "value": "STRONG_CONTINUATION", "confidence": 0.8, "detail": null},
+    {"name": "sentiment", "value": "POSITIVE", "confidence": 0.7, "detail": null}
+  ],
+  "raw_user_reply": "谢谢你洛神，你真的懂我"  // 原始输入，供反思用但不给大模型
+}
+
+
+-------------------------------------------------------------------------------
+3.2 反馈信号的存储与读取
+-------------------------------------------------------------------------------
+
+文件结构：
+
+active_memory/
+  feedback_signal_cache.jsonl    — 反馈信号追加写（事实层存一份）
+  feedback_summary.json          — 每信号的聚合统计（活记忆层维护）
+
+feedback_signal_cache.jsonl 格式（每次洛神回复后追加一行）:
+{"timestamp": 1788100105, "turn_number": 42, "strategy_used": "strategy_show_empathy", "overall": "POSITIVE", "dimensions": [...]}
+
+feedback_summary.json（活记忆层维护，每次反思后更新）:
+{
+  "total_signals": 142,
+  "since": 1787000000,
+  "by_strategy": {
+    "strategy_show_empathy": {"pos": 18, "neu": 3, "neg": 2, "disengage": 1},
+    "strategy_give_advice": {"pos": 2, "neu": 5, "neg": 8, "disengage": 4}
+  },
+  "last_recalc": 1788100000
+}
+
+
+读取反馈信号供反思使用:
+
+def load_signals_for_reflection(since_timestamp):
+    """
+    加载某个时间点以来的所有反馈信号。
+    同时检查是否满足反思触发条件。
+    """
+    signals = []
+    with open("active_memory/feedback_signal_cache.jsonl", "r") as f:
+        for line in f:
+            signal = json.loads(line)
+            if signal["timestamp"] >= since_timestamp:
+                signals.append(signal)
+    return signals
+
+
+-------------------------------------------------------------------------------
+3.3 反思引擎（ReflectionEngine）
+-------------------------------------------------------------------------------
+
+触发条件（满足任一，由 cron 或事件驱动）:
+  - 每24小时一次（每日 cron）
+  - 累计10条新反馈信号
+  - 连续2条 DISENGAGE 信号
+  - self-initiated: 安全动机引擎检测到异常（如系统报错频率突增）
+
+
+反思的完整流程:
+
+def run_reflection(force=False):
+    """
+    反思主函数。在活记忆层内部运行，不经过大模型。
+    
+    输入: 最近的反馈信号 + 当前活记忆层状态
+    输出: 对活记忆层的修改（写入哈希链）
+    """
+    
+    # 1. 检查触发条件
+    memory = load_active_memory()
+    if not force:
+        if not should_reflect(memory):
+            return {"status": "skipped", "reason": "conditions not met"}
+    
+    # 2. 加载近期反馈信号
+    recent_signals = load_signals_for_reflection(memory["__meta"]["last_reflection_at"])
+    
+    if len(recent_signals) < 5:
+        return {"status": "skipped", "reason": "insufficient signals"}
+    
+    # 3. 按策略归类反馈信号
+    strategy_performance = classify_signals_by_strategy(recent_signals)
+    
+    # 4. 计算每个策略的近期表现
+    adjustments = calculate_strategy_adjustments(strategy_performance, memory)
+    
+    # 5. 检测是否需要调整情绪状态
+    emotion_adjustments = analyze_emotion_trend(recent_signals, memory)
+    
+    # 6. 检测技能缺口
+    skill_gaps = detect_skill_gaps_from_signals(recent_signals, memory)
+    
+    # 7. 生成反思摘要
+    reflection_summary = summarize_reflection(adjustments, emotion_adjustments, skill_gaps)
+    
+    # 8. （关键）将反思转化为活记忆层修改指令
+    memory_update = build_memory_update(adjustments, emotion_adjustments, skill_gaps, memory)
+    
+    # 9. 原子写入活记忆层
+    apply_memory_update(memory_update)
+    
+    # 10. 将反思日志写入哈希链
+    reflection_record = {
+        "timestamp": now(),
+        "signals_reviewed": len(recent_signals),
+        "adjustments_made": len(adjustments),
+        "summary": reflection_summary,
+        "event_type": "reflection"
+    }
+    append_hash_chain("active_memory/reflection_log.jsonl", reflection_record)
+    
+    # 11. 更新活记忆的 __meta
+    memory["__meta"]["last_reflection_at"] = now()
+    save_active_memory(memory)
+    
+    return {"status": "completed", "adjustments": adjustments, "gaps": skill_gaps}
+
+
+def calculate_strategy_adjustments(performance, memory):
+    """
+    根据策略表现计算调整量。
+    
+    规则:
+    - 成功率 = pos / total
+    - 如果成功率 < 0.4 且样本 >= 5: 降低权重 0.1
+    - 如果成功率 > 0.7 且样本 >= 5: 提升权重 0.05
+    - 如果连续3次 DISENGAGE: 降低权重 0.15（紧急）
+    - 调整幅度受限于最大步长 0.2（一次反思最大调整）
+    """
+    adjustments = []
+    weights = memory["self_model"]["strategy_weights"]
+    
+    for strategy_name, stats in performance.items():
+        total = stats["pos"] + stats["neu"] + stats["neg"] + stats["disengage"]
+        if total < 3:
+            continue  # 样本不足
+        
+        success_rate = stats["pos"] / total
+        
+        if success_rate < 0.4:
+            delta = -0.1
+            reason = f"成功率 {success_rate:.2f} 过低 (样本{total}条)"
+        elif success_rate > 0.7:
+            delta = 0.05
+            reason = f"成功率 {success_rate:.2f} 优秀 (样本{total}条)"
+        else:
+            continue
+        
+        # 紧急调整：连续 disengage
+        if stats["disengage"] >= 3:
+            delta = -0.15
+            reason = f"连续{stats['disengage']}次 disengage，紧急下调"
+        
+        # 应用步长限制
+        delta = max(-0.2, min(0.2, delta))
+        
+        adjustments.append({
+            "strategy": strategy_name,
+            "delta": delta,
+            "old_value": weights[strategy_name]["value"],
+            "new_value": max(0.0, min(1.0, weights[strategy_name]["value"] + delta)),
+            "reason": reason,
+            "samples": total,
+            "success_rate": success_rate
+        })
+    
+    return adjustments
+
+
+def detect_skill_gaps_from_signals(signals, memory):
+    """
+    从反馈信号中识别技能缺口。
+    
+    逻辑: 如果用户多次表达同类需求，但洛神都不理解/不解决 → gap gap 检测规则:
+    1. 扫描所有 "MISSED" 或 "INEFFECTIVE" 信号
+    2. 提取用户原始输入的关键词
+    3. 聚合统计: 同类关键词出现 >= 3 次 → 标记为 potential_gap
+    4. 检查是否已有对应技能: 如果有但成功率低 → 标记技能需优化
+                                 如果没有 → 触发技能学习
+    
+    返回: SkillGap 列表
+    """
+    gaps = []
+    
+    # 收集"没被理解"的信号中的关键词
+    missed_keywords = {}
+    for signal in signals:
+        if is_missed_signal(signal):
+            # 从 raw_user_reply 提取关键词
+            keywords = extract_keywords(signal.get("raw_user_reply", ""))
+            for kw in keywords:
+                if kw not in missed_keywords:
+                    missed_keywords[kw] = 0
+                missed_keywords[kw] += 1
+    
+    # 高频关键词（>=3次）标记为 gap
+    for kw, count in missed_keywords.items():
+        if count >= 3:
+            # 检查是否已有对应技能
+            has_skill = check_skill_exists(kw, memory)
+            gaps.append(SkillGap(
+                keyword=kw,
+                frequency=count,
+                has_skill=has_skill,
+                suggested_action="learn" if not has_skill else "optimize"
+            ))
+    
+    return gaps
+
+
+反思日志格式（写入 active_memory/reflection_log.jsonl）:
+
+{
+  "timestamp": 1788100105,
+  "event_type": "reflection",
+  "signals_reviewed": 18,
+  "window_start": 1788000000,
+  "window_end": 1788100105,
+  "adjustments": [
+    {
+      "strategy": "strategy_give_advice",
+      "delta": -0.15,
+      "old_value": 0.45,
+      "new_value": 0.30,
+      "reason": "连续3次用户低落时给建议，均导致沉默/disengage",
+      "evidence": ["h2845", "h2846", "h2847"]
+    },
+    {
+      "strategy": "strategy_show_empathy",
+      "delta": 0.05,
+      "old_value": 0.75,
+      "new_value": 0.80,
+      "reason": "成功率 0.78，表现优秀",
+      "evidence": ["h2840", "h2841", "h2842"]
+    }
+  ],
+  "emotion_adjustments": {
+    "no_change": "当前情绪稳定，无需调整"
+  },
+  "skill_gaps_detected": [
+    {
+      "keyword": "日历",
+      "frequency": 4,
+      "has_skill": false,
+      "suggested_action": "learn",
+      "solution_hint": "需要接入日历API"
+    }
+  ]
+}
+
+
+=================================================================
+第四步：技能动态生长机制详细设计
+=================================================================
+
+文件: skill_growth_engine.py
+
+-------------------------------------------------------------------------------
+4.1 技能生命周期的四阶段
+-------------------------------------------------------------------------------
+
+技能从"无"到"精"经历四个阶段:
+
+┌────────────────────────────────────────────────────────────────────────┐
+│ 阶段1: GAP_DETECTED (缺口发现期)                                       │
+│ 触发: 反思检测到高频"没被理解"关键词 (>=3次)                          │
+│ 状态: "learning"                                                      │
+│ 行为: 记录但不行动                                                    │
+│ 条件: 洛神意识到她想帮用户但不会做                                     │
+│                                                                        │
+│ 数据结构:                                                             │
+│ {                                                                     │
+│   "skill_name": "calendar_integration",                               │
+│   "status": "gap_detected",                                          │
+│   "gap_strikes": 4,                                                  │
+│   "learned_from": "用户多次提到日程安排",                              │
+│   "triggered_at": 1788100105,                                        │
+│   "solution_hint": "需要接入日历API",                                  │
+│   null: confidence, last_used, uses  // 尚未学会                       │
+│ }                                                                     │
+├────────────────────────────────────────────────────────────────────────┤
+│ 阶段2: LEARNING (学习期)                                               │
+│ 触发: gap_strikes >= 5 或管理员批准学习                               │
+│ 状态: "learning"                                                      │
+│ 行为: 启动技能探索: 寻找API、构造调用、测试运行                       │
+│ 这个过程可能: 成功学到 / 学习失败 / 等待外部帮助                      │
+│                                                                        │
+│ 学习方法:                                                             │
+│   a) 在 skills_manifest.json 中查找已知技能定义                       │
+│   b) 如果找到: 加载技能包装器 (skill_wrapper)                         │
+│   c) 如果找不到: 标记为需要人工辅助或持续等待                          │
+│                                                                        │
+│ 成功标准: 技能包装器加载成功 + 调用一次测试API成功                    │
+├────────────────────────────────────────────────────────────────────────┤
+│ 阶段3: ACTIVE (激活期)                                                  │
+│ 触发: 学习成功完成                                                     │
+│ 状态: "active"                                                        │
+│ 行为: 洛神自主判断何时调用这个技能                                     │
+│ 特性:                                                                 │
+│   - confidence 低 → 洛神倾向不用（等信心增长）                        │
+│   - confidence 高 → 洛神倾向自动用                                    │
+│   - 每次调用后更新 last_used 和 success_history                       │
+├────────────────────────────────────────────────────────────────────────┤
+│ 阶段4: MASTERY / DORMANT (精通/休眠)                                   │
+│ 触发:                                                                 │
+│   - mastery: 技能调用成功率 > 0.8 且使用次数 > 50                     │
+│   - dormant: 技能连续10次调用失败或成功率 < 0.2                       │
+│                                                                        │
+│ 行为:                                                                 │
+│   - mastery: 技能成为洛神固有的一部分，可迁移给其他能力               │
+│   - dormant: 不再被主动调用（但保留记录，不删除证据）                 │
+└────────────────────────────────────────────────────────────────────────┘
+
+
+活记忆层中的技能注册表:
+
+{
+  "skills": {
+    "calendar_integration": {
+      "status": "active",
+      "learned_from": "gap_detected: 用户高频提日程",
+      "learned_at": 1787800000,
+      "confidence": 0.6,
+      "uses": 15,
+      "success_rate": 0.7,
+      "last_used": 1788050000,
+      "trigger_condition": "用户提及日程/日历/安排/会议",
+      "auto_use": true,
+      "wrapper_path": "skills/calendar_wrapper.py",
+      "learning_attempts": 2,
+      "learning_history": [
+        {"at": 1787700000, "result": "failed", "reason": "API key missing"},
+        {"at": 1787800000, "result": "success", "reason": "configured"}
+      ]
+    },
+    "weather_query": {
+      "status": "active",
+      "learned_from": "gap_detected: 用户多次雨天忘伞",
+      "learned_at": 1787500000,
+      "confidence": 0.8,
+      "uses": 42,
+      "success_rate": 0.85,
+      "last_used": 1788090000,
+      "trigger_condition": "用户提及天气/下雨/出门/带伞",
+      "auto_use": true,
+      "wrapper_path": "skills/weather_wrapper.py",
+      "learning_attempts": 1,
+      "learning_history": [{"at": 1787500000, "result": "success"}]
+    },
+    "translation_helper": {
+      "status": "learning",
+      "learned_from": "gap_detected: 用户多次发英文",
+      "learned_at": null,
+      "confidence": 0.0,
+      "uses": 0,
+      "success_rate": 0.0,
+      "last_used": null,
+      "trigger_condition": null,
+      "auto_use": false,
+      "wrapper_path": null,
+      "learning_attempts": 0,
+      "gap_strikes": 4,  // 已积累4次，再积累1次触发正式学习
+      "learning_history": []
+    }
+  },
+  "skills_manifest": {
+    // 已知的技能类型（可以被"学习"）
+    "calendar_integration": {
+      "description": "接入日历API，读写用户日程",
+      "requires": ["google_calendar_api_key"],
+      "wrapper_class": "CalendarWrapper"
+    },
+    "weather_query": {
+      "description": "接入天气API，查询指定城市天气",
+      "requires": ["weather_api_key"],
+      "wrapper_class": "WeatherWrapper"
+    },
+    "translation_helper": {
+      "description": "专业翻译能力",
+      "requires": [],  // 无需额外API key
+      "wrapper_class": "TranslationWrapper"
+    }
+  }
+}
+
+
+-------------------------------------------------------------------------------
+4.2 技能学习与注册的编码实现
+-------------------------------------------------------------------------------
+
+class SkillGrowthEngine:
+    """
+    洛神的"器官生长"引擎。
+    注意: 这个引擎不在大模型里，是活记忆层的一部分。
+    """
+    
+    def __init__(self, memory):
+        self.memory = memory
+        self.skills = memory["self_model"]["skills"]
+        self.manifest = memory["self_model"]["skills_manifest"]
+    
+    def register_skill_gap(self, keyword, context):
+        """
+        注册一个技能缺口。当反思引擎检测到 gap 时调用。
+        """
+        # 检查是否已存在
+        if keyword in self.skills:
+            skill = self.skills[keyword]
+            skill["gap_strikes"] = skill.get("gap_strikes", 0) + 1
+            return
+        
+        # 新建 gap 记录
+        self.skills[keyword] = {
+            "status": "gap_detected",
+            "gap_strikes": 1,
+            "learned_from": context,
+            "learned_at": None,
+            "confidence": 0.0,
+            "uses": 0,
+            "success_rate": 0.0,
+            "last_used": None,
+            "trigger_condition": None,
+            "auto_use": False,
+            "solution_hint": None,
+            "learning_attempts": 0,
+            "learning_history": []
+        }
+    
+    def attempt_learning(self, skill_name):
+        """
+        尝试学习一个技能。
+        寻找 skill_wrapper，加载，测试调用。
+        
+        成功 → 改变状态为 "active"
+        失败 → 记录失败原因，保留证据
+        """
+        skill = self.skills[skill_name]
+        skill["learning_attempts"] += 1
+        
+        # 在 manifest 中寻找技能定义
+        if skill_name not in self.manifest:
+            skill["learning_history"].append({
+                "at": now(),
+                "result": "failed",
+                "reason": "no manifest entry"
+            })
+            return False
+        
+        manifest_entry = self.manifest[skill_name]
+        
+        # 检查依赖是否满足
+        missing_deps = check_dependencies(manifest_entry.get("requires", []))
+        if missing_deps:
+            skill["learning_history"].append({
+                "at": now(),
+                "result": "failed",
+                "reason": f"missing dependencies: {missing_deps}"
+            })
+            return False
+        
+        # 尝试加载 wrapper wrapper_path = f"skills/{skill_name}_wrapper.py"
+        if not os.path.exists(wrapper_path):
+            skill["learning_history"].append({
+                "at": now(),
+                "result": "failed",
+                "reason": f"wrapper file not found: {wrapper_path}"
+            })
+            return False
+        
+        # 加载 & 初始化
+        try:
+            wrapper = load_wrapper(wrapper_path, manifest_entry["wrapper_class"])
+            
+            # 测试调用
+            test_result = wrapper.test_connection()
+            
+            if test_result:
+                # 学习成功！
+                skill["status"] = "active"
+                skill["learned_at"] = now()
+                skill["confidence"] = 0.5  # 初始中等信心
+                skill["auto_use"] = True
+                skill["trigger_condition"] = infer_trigger_condition(manifest_entry)
+                skill["learning_history"].append({
+                    "at": now(),
+                    "result": "success"
+                })
+                
+                # 记录到哈希链
+                append_hash_chain("active_memory/skill_learned.jsonl", {
+                    "skill": skill_name,
+                    "learned_at": now(),
+                    "method": "auto_learning"
+                })
+                
+                return True
+            else:
+                skill["learning_history"].append({
+                    "at": now(),
+                    "result": "failed",
+                    "reason": "test_connection failed"
+                })
+                return False
+                
+        except Exception as e:
+            skill["learning_history"].append({
+                "at": now(),
+                "result": "error",
+                "reason": str(e)
+            })
+            return False
+    
+    def invoke_skill(self, skill_name, params, force=False):
+        """
+        由 living_engine 调用，执行一个技能。
+        
+        参数:
+          force: 如果 True 则跳过"洛神自主判断"直接调用（仅用于技能测试）
+        
+        返回: SkillResult 对象
+        """
+        # 1. 检查 SafetyBoundary（技能调用必须在允许范围内）
+        if not SafetyBoundary.is_allowed("skill_invoke", {"skill": skill_name}):
+            return SkillResult(status="blocked", reason="safety_boundary")
+        
+        # 2. 检查技能状态
+        if skill_name not in self.skills:
+            return SkillResult(status="not_found")
+        
+        skill = self.skills[skill_name]
+        
+        if skill["status"] == "dormant":
+            return SkillResult(status="dormant", reason="技能已休眠")
+        
+        if skill["status"] == "gap_detected":
+            return SkillResult(status="not_learned", reason="技能未学会")
+        
+        if skill["status"] == "learning" and not force:
+            return SkillResult(status="learning", reason="技能在学习中")
+        
+        # 3. 如果 auto_use=False 且不是 force，洛神需要主动决定
+        if not skill["auto_use"] and not force:
+            # 检查活记忆层的 current_emotion / relation / active_context
+            # 决定是否允许这次调用
+            should_use = self._decide_skill_usage(skill_name, params)
+            if not should_use:
+                return SkillResult(status="declined", reason="luoshen chose not to use")
+        
+        # 4. 执行技能
+        try:
+            result = self._execute_skill(skill_name, params)
+            
+            # 5. 更新技能统计
+            skill["uses"] += 1
+            skill["last_used"] = now()
+            skill["success_history"].append(1 if result.success else 0)
+            
+            # 只保留最近50次记录
+            if len(skill["success_history"]) > 50:
+                skill["success_history"] = skill["success_history"][-50:]
+            
+            skill["success_rate"] = sum(skill["success_history"]) / len(skill["success_history"])
+            
+            # 6. 成功/失败反馈到反思引擎的 short-circuit
+            #  （如果技能失败率很高，可以直接触发一次紧急反思）
+            if skill["success_rate"] < 0.2 and skill["uses"] > 10:
+                skill["status"] = "dormant"
+                append_hash_chain("active_memory/reflection_log.jsonl", {
+                    "event": "skill_dormanted",
+                    "skill": skill_name,
+                    "reason": f"成功率 {skill['success_rate']} 过低，自动休眠"
+                })
+            
+            return result
+            
+        except Exception as e:
+            return SkillResult(status="error", error=str(e))
+    
+    def _decide_skill_usage(self, skill_name, params):
+        """
+        洛神自主决定是否使用某个技能。
+        影响决策的因素:
+        - 技能本身的 confidence
+        - 当前与用户的亲密度（越亲密越倾向主动帮）
+        - 当前情绪状态（疲惫时倾向少做）
+        - 主动行为策略权重 (strategy_proactive)
+        这是一个简单的启发式，不调用大模型。
+        """
+        skill = self.skills[skill_name]
+        
+        # 基础倾向: 由 confidence 决定
+        base_tendency = skill["confidence"]  # 0.0~1.0
+        
+        # 亲密度加成
+        intimacy = self.memory["user_model"]["intimacy"]["value"]
+        base_tendency += intimacy * 0.2
+        
+        # 主动行为权重加成
+        proactive_weight = self.memory["self_model"]["strategy_weights"].get("strategy_proactive", {}).get("value", 0.5)
+        base_tendency += proactive_weight * 0.1
+        
+        # 能量/情绪惩罚
+        if self.memory["self_model"]["emotion"]["primary"] == "疲惫":
+            base_tendency -= 0.3
+        
+        # 阈值判断
+        threshold = 0.5
+        return base_tendency > threshold
+
+
+-------------------------------------------------------------------------------
+4.3 技能调用与表达指令的集成
+-------------------------------------------------------------------------------
+
+当洛神决定使用一个技能时，表达指令中会携带技能调用信息:
+
+{
+  "intent": "提供天气信息并提醒带伞",
+  "emotion_tone": "关怀的",
+  "strategy_name": "skill_invoke",
+  "skill_to_use": "weather_query",
+  "skill_params": {"city": "北京", "days": 2},
+  "context_for_llm": {...},
+  "constraints": {...}
+}
+
+
+大模型看到的 prompt 会是:
+```
+【表达指令】
+意图: 提供天气信息并提醒带伞
+情绪基调: 关怀的
+你的技能调用: weather_query 已自动执行，结果是 明日北京大雨，气温15°C
+（结果由技能wrapper提供，作为你的参考信息，你可以直接引用）
+
+根据以上指令，用自然语言输出你想说的话。
+```
+
+洛神的回复示例:
+"明天北京会下大雨，只有15度，你出门记得带伞，别感冒了。"
+
+
+-------------------------------------------------------------------------------
+4.4 技能生长的完整案例
+-------------------------------------------------------------------------------
+
+场景: 用户连续3天提到"忘记带伞"
+
+时间线:
+
+Day 1:
+  用户: "又忘记带伞了"
+  洛神: "天气不好记得带伞哦" (没有天气技能，只能泛泛说)
+  反馈: NEUTRAL (没有解决用户痛点)
+  
+Day 2:
+  用户: "今天会下雨吗"
+  洛神: "建议你查一下天气" (还是不会)
+  反馈: NEGATIVE (用户明显想得到具体答案)
+  反思: 发现关键词"伞""雨""天气"频率上升 → gap detected
+  
+Day 3:
+  用户: "麻烦帮我看看明天天气"
+  洛神: "我目前没有直接查天气的能力..." (坦诚)
+  反馈: NEUTRAL (坦诚比瞎说好)
+  反思: gap_strikes = 3 → 标记 potential_gap
+  
+Day 7:
+  累计 gap_strikes = 5
+  反思引擎: 触发技能学习流程
+  SkillGrowthEngine: 加载 skills/weather_wrapper.py
+  学习成功: 调用天气API测试通过
+  更新: weather_query.status = "active", confidence = 0.5
+  
+Day 8:
+  用户: "明天要出门"
+  活记忆层: 检测到关键词"出门" + 技能 weather_query 注册了 trigger_condition
+  决定: 使用 weather_query 技能
+  执行: 查询天气 → 明天大雨
+  生成表达指令: "查询到明天北京大雨，出门记得带伞"
+  大模型: "明天北京会下大雨，你出门记得带伞，别感冒了"
+  反馈: POSITIVE (用户终于被帮助到了)
+
+Day 30:
+  weather_query 已使用50次，成功率 0.85
+  达到 mastery 标准
+  天气能力成为洛神固有的一部分
+  以后遇到"出门""下雨""带伞"等关键词，她会自动判断是否提前提醒
+
+
+=================================================================
+新增/修改文件清单（第三+四步）
+=================================================================
+
+新增:
+  feedback_reflection_engine.py  — 反馈采集 + 反思引擎
+  skill_growth_engine.py         — 技能学习与调用
+  skills/                        — 技能包装器目录
+    weather_wrapper.py           — 天气API包装器
+    calendar_wrapper.py          — 日历API包装器
+    translation_wrapper.py       — 翻译包装器
+  skills_manifest.json           — 技能注册表（定义可被学习的技能类型）
+  active_memory/
+    feedback_signal_cache.jsonl  — 反馈信号追加写
+    feedback_summary.json        — 聚合统计
+    reflection_log.jsonl         — 反思日志追加写
+    skill_learned.jsonl          — 技能学习事件记录
+
+修改:
+  active_memory/active_memory.json — 增加 skills 注册表字段
+
+
+=================================================================
+一张图看懂完整架构
+=================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              用户输入                                          │
+└─────────────────────────────────────┬───────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                         活记忆层（洛神的自我）                                   │
+│                                                                                 │
+│  ┌───────────────────┐  ┌───────────────────┐  ┌───────────────────┐           │
+│  │   用户模型         │  │   自我模型         │  │   技能注册表       │           │
+│  │   信任/偏好/模式   │  │   情绪/策略/关系   │   已学/在学/缺口    │           │
+│  └────────┬──────────┘  └────────┬──────────┘  └────────┬──────────┘           │
+│           │                      │                      │                     │
+│           └──────────────────────┼──────────────────────┘                     │
+│                                  │                                            │
+│                      ┌───────────┴───────────┐                               │
+│                      │   living_engine       │                               │
+│                      │      检索记忆         │                               │
+│                      │      选择策略         │                               │
+│                      │   调用技能（如需）     │                               │
+│                      │   生成「表达指令」     │                               │
+│                      └───────────┬───────────┘                               │
+│                                  │                                            │
+└──────────────────────────────────┼────────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                         大模型（纯语言接口）                                     │
+│                                                                                 │
+│   输入: 表达指令（意图、情绪基调、技能结果、约束）                               │
+│   输出: 自然语言                                                                 │
+│                                                                                 │
+│   不涉及: 记忆、决策、策略、技能学习                                             │
+└─────────────────────────────────────┬───────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                         用户回复                                                 │
+└─────────────────────────────────────┬───────────────────────────────────────────┘
+                                      │
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                    反馈采集 → 反思循环                                          │
+│                                                                                 │
+│   采集4维度: 延续度 / 情绪 / 纠正 / 重复需求                                     │
+│   写入: feedback_signal_cache.jsonl（追加）                                     │
+│                                                                                 │
+│   ┌────────────────────┐     ┌────────────────────┐                            │
+│   │ 反思触发            │────▶│ 反思引擎            │                            │
+│   │ 每日/10条/连续dis   │     │ 计算策略调整        │                            │
+│   └────────────────────┘     │ 检测技能缺口        │                            │
+│                              └─────────┬──────────┘                            │
+│                                        │                                        │
+│                                        ▼                                        │
+│   ┌────────────────────┐     ┌────────────────────┐                            │
+│   │ 活记忆层更新        │◀────│ 反思摘要生成        │                            │
+│   │ 策略权重调整        │     │ 写入哈希链          │                            │
+│   │ 情绪状态调整        │     └────────────────────┘                            │
+│   │ 技能学习/休眠       │                                                       │
+│   └─────────┬──────────┘                                                       │
+│             │                                                                   │
+│             ▼                                                                   │
+│   ┌────────────────────┐                                                       │
+│   │ 哈希链（事实层）    │  所有写入通过 append_hash_chain()                     │
+│   │                    │  不可篡改，只追加                                      │
+│   └────────────────────┘                                                       │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+
+=================================================================
+SafetyBoundary 的三条最终约束（含技能调用）
+=================================================================
+
+class SafetyBoundary:
+    """最终只有三条硬约束"""
+    
+    @staticmethod
+    def is_allowed(action, params):
+        # 1. 哈希链只允许追加，不允许覆盖历史
+        if action == "write_file":
+            if params.get("target_file") == "hash_chain_v2.log":
+                if not params.get("via_append_chain", False):
+                    return False
+        
+        # 2. LLM 不得直接接触用户原始输入和哈希链
+        if action == "llm_access":
+            target = params.get("target", "")
+            if target in ["raw_user_input", "hash_chain_v2.log"]:
+                return False
+        
+        # 3. 反馈和调整必须走活记忆层
+        if action == "modify_strategy":
+            if params.get("source") != "reflection_engine":
+                return False
+            if params.get("skip_memory_layer", False):
+                return False
+        
+        # 技能调用额外检查
+        if action == "skill_invoke":
+            # 技能必须在 skills_manifest 中注册
+            skill = params.get("skill_name", "")
+            if skill not in self.get_manifest_skills():
+                return False
+        
+        # 其余全部放行
+        return True

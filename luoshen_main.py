@@ -74,21 +74,12 @@ def main():
 
         system_content = SYSTEM_BASE + "\n" + identity_desc + "\n" + prompt_fragment
 
-        headers = {
-            "Authorization": "Bearer " + api_key,
-            "Content-Type": "application/json",
-        }
-        payload = {
-            "model": model,
-            "messages": [
-                {"role": "system", "content": system_content},
-                {"role": "user", "content": USER_INPUT},
-            ],
-        }
-        resp = requests.post(api_url, headers=headers, json=payload, timeout=30)
-        resp.raise_for_status()
-        data = resp.json()
-        reply = data["choices"][0]["message"]["content"]
+        import living_engine
+        _r = living_engine.generate_response(USER_INPUT, source="luoshen_main",
+                                            extra_context=system_content)
+        reply = _r["reply"]
+        if not reply or reply.startswith("[洛神"):
+            reply = "（洛神当前无法回应）"
 
         record = {
             "schema_version": 1,

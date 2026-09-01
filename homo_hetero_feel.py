@@ -1,42 +1,39 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""洛神系统 同质化与异质化感受对比模块 homo_hetero_feel.py"""
+"""洛神系统 同质化与异质化感受对比模块 homo_hetero_feel.py
+
+LLM 调用统一走活记忆层 living_engine.generate_response()，经过 hospital_gateway 系统状态检查。
+"""
 import hashlib
 import json
 import os
 import time
-import requests
 
 
 def call_llm(system_prompt, user_input):
-    api_url = os.environ.get("LLM_API_URL")
-    api_key = os.environ.get("LLM_API_KEY")
-    model = os.environ.get("LLM_MODEL", "glm-4-flash")
-    headers = {
-        "Authorization": "Bearer " + api_key,
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "model": model,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_input},
-        ],
-        "temperature": 0.7,
-    }
-    resp = requests.post(api_url, headers=headers, json=payload, timeout=120)
-    resp.raise_for_status()
-    data = resp.json()
-    content = data["choices"][0]["message"]["content"].strip()
+    """LLM 调用，经过活记忆层 living_engine，受 hospital_gateway 保护。"""
+    try:
+        import living_engine
+    except ImportError:
+        return _fallback_no_llm()
+
+    _r = living_engine.generate_response(user_input, source="homo_hetero_feel",
+                                        extra_context=system_prompt)
+    content = _r["reply"]
+    if not content or content.startswith("[洛神"):
+        return _fallback_no_llm()
     try:
         parsed = json.loads(content)
     except json.JSONDecodeError:
-        # 容忍大模型返回带代码块包裹的 JSON
         s = content.strip()
         if s.startswith("```"):
             s = s.split("\n", 1)[1].rsplit("```", 1)[0].strip()
         parsed = json.loads(s)
     return parsed.get("feeling", content)
+
+
+def _fallback_no_llm():
+    return "（洛神当前无法感受）"
 
 
 def main():

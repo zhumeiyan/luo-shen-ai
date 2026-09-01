@@ -6,8 +6,6 @@ import json
 import os
 import time
 
-import requests
-
 SYMBOLS = ["□", "▉", "·", "￥", "☀", "☾", "○", "△", "▲", "◇",
            "◆", "☆", "↕", "↻", "◐", "◑", "●", "◈", "◉", "■"]
 
@@ -22,21 +20,12 @@ SYSTEM_PROMPT = (
 
 
 def query_llm(url, api_key, model, user_content):
-    headers = {
-        "Authorization": "Bearer " + api_key,
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "model": model,
-        "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_content},
-        ],
-    }
-    resp = requests.post(url, headers=headers, json=payload, timeout=30)
-    resp.raise_for_status()
-    data = resp.json()
-    content = data["choices"][0]["message"]["content"]
+    import living_engine
+    _r = living_engine.generate_response(user_content, source="hanzi_to_symbol_map",
+                                         extra_context=SYSTEM_PROMPT)
+    content = _r["reply"]
+    if not content or content.startswith("[洛神"):
+        raise ValueError("LLM call blocked or error")
     start = content.find("{")
     end = content.rfind("}")
     if start == -1 or end == -1 or end <= start:

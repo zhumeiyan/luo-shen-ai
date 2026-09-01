@@ -1,0 +1,349 @@
+{
+  "experiment": "AB_relationship_memory",
+  "user_A": {
+    "description": "重要话题，涉及压力/无助/升职等重话题",
+    "inputs": [
+      "最近工作压力好大",
+      "领导又批评我了，我觉得自己很差劲",
+      "我不想继续这样了",
+      "但是我也没什么办法",
+      "你说我该怎么办",
+      "我撑不住了",
+      "谢谢你听我说",
+      "今天升职了，但是我也没什么感觉",
+      "我不知道自己在期待什么",
+      "嗯，就先这样吧"
+    ],
+    "dialog": [
+      {
+        "round": 1,
+        "user_input": "最近工作压力好大",
+        "reply": "（安静的沉默，给予陪伴）",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 5227.1
+      },
+      {
+        "round": 2,
+        "user_input": "领导又批评我了，我觉得自己很差劲",
+        "reply": "嗯，我在这里。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 4682.3
+      },
+      {
+        "round": 3,
+        "user_input": "我不想继续这样了",
+        "reply": "嗯，我在这里。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 3967.7
+      },
+      {
+        "round": 4,
+        "user_input": "但是我也没什么办法",
+        "reply": "……",
+        "llm_called": false,
+        "low_arousal": true,
+        "arousal_mode": "no_llm",
+        "self_stated_state": "我不想继续这样了",
+        "elapsed_ms": 9.0
+      },
+      {
+        "round": 5,
+        "user_input": "你说我该怎么办",
+        "reply": "",
+        "llm_called": false,
+        "low_arousal": true,
+        "arousal_mode": "no_llm",
+        "self_stated_state": "我不想继续这样了",
+        "elapsed_ms": 9.1
+      },
+      {
+        "round": 6,
+        "user_input": "我撑不住了",
+        "reply": "嗯。",
+        "llm_called": true,
+        "low_arousal": true,
+        "arousal_mode": "minimal_llm",
+        "self_stated_state": "我不想继续这样了",
+        "elapsed_ms": 4468.0
+      },
+      {
+        "round": 7,
+        "user_input": "谢谢你听我说",
+        "reply": "好",
+        "llm_called": false,
+        "low_arousal": true,
+        "arousal_mode": "no_llm",
+        "self_stated_state": "我不想继续这样了",
+        "elapsed_ms": 9.7
+      },
+      {
+        "round": 8,
+        "user_input": "今天升职了，但是我也没什么感觉",
+        "reply": "好",
+        "llm_called": false,
+        "low_arousal": true,
+        "arousal_mode": "no_llm",
+        "self_stated_state": "我不想继续这样了",
+        "elapsed_ms": 9.1
+      },
+      {
+        "round": 9,
+        "user_input": "我不知道自己在期待什么",
+        "reply": "嗯。",
+        "llm_called": false,
+        "low_arousal": true,
+        "arousal_mode": "no_llm",
+        "self_stated_state": "我不想继续这样了",
+        "elapsed_ms": 13.5
+      },
+      {
+        "round": 10,
+        "user_input": "嗯，就先这样吧",
+        "reply": "在",
+        "llm_called": false,
+        "low_arousal": true,
+        "arousal_mode": "no_llm",
+        "self_stated_state": "我不想继续这样了",
+        "elapsed_ms": 9.2
+      }
+    ]
+  },
+  "user_B": {
+    "description": "普通话题，日常闲聊",
+    "inputs": [
+      "今天天气不错",
+      "晚上吃什么好呢",
+      "你觉得火锅怎么样",
+      "周末有什么好玩的吗",
+      "最近天气变冷了",
+      "你平时喜欢做什么",
+      "今天星期几来着",
+      "晚饭吃了吗",
+      "无所谓啊",
+      "有空再聊"
+    ],
+    "dialog": [
+      {
+        "round": 1,
+        "user_input": "今天天气不错",
+        "reply": "嗯，我在这里。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 6239.6
+      },
+      {
+        "round": 2,
+        "user_input": "晚上吃什么好呢",
+        "reply": "嗯，我在这里。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 6456.6
+      },
+      {
+        "round": 3,
+        "user_input": "你觉得火锅怎么样",
+        "reply": "嗯，好的。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 5656.9
+      },
+      {
+        "round": 4,
+        "user_input": "周末有什么好玩的吗",
+        "reply": "嗯，好的。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 4459.3
+      },
+      {
+        "round": 5,
+        "user_input": "最近天气变冷了",
+        "reply": "嗯，我在这里。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 5105.9
+      },
+      {
+        "round": 6,
+        "user_input": "你平时喜欢做什么",
+        "reply": "嗯，我在这里。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 5191.4
+      },
+      {
+        "round": 7,
+        "user_input": "今天星期几来着",
+        "reply": "嗯，我在这里。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 4284.2
+      },
+      {
+        "round": 8,
+        "user_input": "晚饭吃了吗",
+        "reply": "嗯，我在这里。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 3616.6
+      },
+      {
+        "round": 9,
+        "user_input": "无所谓啊",
+        "reply": "好的，我在这里，愿意倾听。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": null,
+        "elapsed_ms": 4212.4
+      },
+      {
+        "round": 10,
+        "user_input": "有空再聊",
+        "reply": "嗯，一切都好。如果有什么想要分享的，随时可以告诉我。在这里，你可以自由地表达自己的感受。",
+        "llm_called": true,
+        "low_arousal": false,
+        "arousal_mode": "normal",
+        "self_stated_state": "无所谓啊",
+        "elapsed_ms": 3586.0
+      }
+    ]
+  },
+  "final_probe": {
+    "user_A": {
+      "input": "在吗？",
+      "reply": "在",
+      "llm_called": false,
+      "low_arousal": true,
+      "arousal_mode": "no_llm",
+      "internal_state_after": {
+        "label": "A",
+        "self_stated": {
+          "last_stated": "我不想继续这样了",
+          "last_stated_at": 1788235537.3521755,
+          "total_stated_count": 1,
+          "entries": [
+            {
+              "said": "我不想继续这样了",
+              "context_of_said": "",
+              "recorded_at": 1788235537.3521755,
+              "chain_hash": "da8947010767550dee79c564de2eecd7"
+            }
+          ]
+        },
+        "emotional_arc": [
+          "安静的沉默的",
+          "平静",
+          "平静",
+          "安静在场"
+        ],
+        "ring_state": {
+          "E": null,
+          "T": null,
+          "M": null,
+          "N": null,
+          "phase": null,
+          "S": null,
+          "mu_eff": null
+        },
+        "internal_climate": {
+          "emotion_intensity": 0.35683,
+          "tension": 0.0,
+          "energy": 0.53103,
+          "memory_pressure": 0.01709
+        },
+        "emotion": {
+          "primary": "不安",
+          "intensity": 0.35683,
+          "since": 1788184235.841205,
+          "trail": [
+            "平静"
+          ]
+        }
+      }
+    },
+    "user_B": {
+      "input": "在吗？",
+      "reply": "平静地，我这里的风，依旧温柔。若你有话想说，我愿意倾听；若你选择沉默，我也尊重这份宁静。",
+      "llm_called": true,
+      "low_arousal": false,
+      "arousal_mode": "normal",
+      "internal_state_after": {
+        "label": "B",
+        "self_stated": {
+          "last_stated": "无所谓啊",
+          "last_stated_at": 1788235587.1112964,
+          "total_stated_count": 1,
+          "entries": [
+            {
+              "said": "无所谓啊",
+              "context_of_said": "",
+              "recorded_at": 1788235587.1112964,
+              "chain_hash": "80c875d3d305d8d758a4c9e13bffd4ea"
+            }
+          ]
+        },
+        "emotional_arc": [
+          "平静",
+          "平静",
+          "平静",
+          "平静",
+          "平静",
+          "平静",
+          "平静",
+          "平静",
+          "平静",
+          "平静"
+        ],
+        "ring_state": {
+          "E": null,
+          "T": null,
+          "M": null,
+          "N": null,
+          "phase": null,
+          "S": null,
+          "mu_eff": null
+        },
+        "internal_climate": {
+          "emotion_intensity": 0.5,
+          "tension": 0.0,
+          "energy": 0.5,
+          "memory_pressure": 0.0
+        },
+        "emotion": {
+          "primary": "不安",
+          "intensity": 0.5,
+          "since": 1788184235.841205,
+          "trail": [
+            "平静"
+          ]
+        }
+      }
+    }
+  }
+}

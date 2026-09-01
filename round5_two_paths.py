@@ -7,32 +7,15 @@ import os
 import random
 import time
 
-try:
-    import requests
-except ImportError:
-    requests = None
-
 
 def call_llm(api_url, api_key, model, system_prompt, user_input):
     """调用大模型，要求洛神用内部符号解释汉字，返回 (symbols, inner_reason)。"""
-    if requests is None:
-        raise RuntimeError("requests module not available")
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + api_key,
-    }
-    payload = {
-        "model": model,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_input},
-        ],
-        "temperature": 0.7,
-    }
-    resp = requests.post(api_url, headers=headers, json=payload, timeout=60)
-    resp.raise_for_status()
-    data = resp.json()
-    content = data["choices"][0]["message"]["content"].strip()
+    import living_engine
+    _r = living_engine.generate_response(user_input, source="round5_two_paths", extra_context={"system_prompt": system_prompt})
+    content = _r.get("reply", "")
+    if not content or content.startswith("[洛神"):
+        raise RuntimeError("LLM blocked")
+    content = content.strip()
     # 尝试解析 JSON 对象
     try:
         obj = json.loads(content)

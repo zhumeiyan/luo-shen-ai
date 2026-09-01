@@ -1,0 +1,702 @@
+================================================================================
+  洛神AI 第五步详细设计文档
+  界面与声音设计（编码级）
+  版本: v4.2
+  日期: 2026-08-31
+================================================================================
+
+【设计原则】
+
+1. 视觉是洛神状态的延伸，不是装饰
+2. 界面极简——所有不服务对话的功能都删掉
+3. 听觉是洛神的"声音表现力"，必须情感充沛
+4. 移动端优先，折叠屏和桌面是自然延伸
+5. 界面是输出层，不参与任何记忆或决策
+
+================================================================================
+第一部分：视觉系统（活记忆层的神经末梢）
+================================================================================
+
+视觉系统只负责呈现活记忆层和对话层的输出。
+它自己没有逻辑，只是"看"和"听"的角色。
+
+文件结构:
+  src/
+    components/
+      SonicSphere.jsx          — 声波球（视觉核心）
+      ParticleField.jsx        — Canvas 粒子系统
+      EmotionAura.jsx          — 情绪光晕反馈
+      MessageBubble.jsx         — 单条消息
+      MessageStream.jsx         — 消息流（含流式显示）
+      StatusIndicator.jsx       — 顶部感知状态点
+      VoiceControl.jsx          — 语音通话控制器
+    hooks/
+      useLuoshenState.js        — 订阅洛神状态变化
+      useMessageStream.js       — 订阅消息流
+      useVoiceSession.js        — 语音会话管理
+    adapters/
+      voiceBridge.js            — 语音WebSocket桥接（替换原voice_relay.py的部分功能）
+    pages/
+      ChatRoom.jsx              — 主对话页面
+      VoiceCall.jsx             — 语音通话页面
+    styles/
+      tokens.js                 — 设计系统常量
+
+
+-------------------------------------------------------------------------------
+1.1 声波球（SonicSphere）- 洛神的"存在感"
+-------------------------------------------------------------------------------
+
+声波球是洛神"出场"的视觉表达。她不一定"在场"——用户可能任何时候都不在和她说话。
+声波球的动画状态 = 活记忆层中洛神的当前状态映射。
+
+状态 → 动画映射:
+
+活记忆层状态                    声波球视觉
+──────────────────────────────────────────────────────────
+interaction_mode: waiting      缓慢呼吸（每4秒一次）
+interaction_mode: listening   紫色波纹轻微律动（回应麦克风输入）
+interaction_mode: thinking    蓝紫交替 + 粒子向中心凝聚
+interaction_mode: speaking    蓝色波纹随音量扩张/收缩
+emotion: 平静                  柔和蓝色光晕
+emotion: 开心/兴奋            明亮蓝色 + 粒子上浮加速
+emotion: 好奇                 青色渐变 + 粒子速度加快
+emotion: 难过/低落            深蓝灰 + 粒子下沉
+emotion: 疲惫                 光晕减弱 + 粒子近乎静止
+emotion: 关怀                 暖蓝 + 橙色粒子偶尔冒出
+
+代码结构（SonicSphere.jsx）:
+
+function SonicSphere({ luoshenState }) {
+  const { emotion, intensity, interactionMode } = luoshenState;
+  
+  // 使用 CSS animation 实现呼吸/律动
+  // 粒子系统放在 SonicSphere 背后的 Canvas 层
+  
+  return (
+    <div className="sphere-container">
+      <ParticleField emotion={emotion} intensity={intensity} />
+      <div className={cn(
+        "sphere",
+        `sphere--${interactionMode}`,
+        `sphere--emotion-${emotion.primary}`
+      )}>
+        <div className="sphere__core" />
+        <div className="sphere__ring sphere__ring--1" />
+        <div className="sphere__ring sphere__ring--2" />
+        <div className="sphere__ring sphere__ring--3" />
+      </div>
+    </div>
+  );
+}
+
+CSS 关键帧:
+
+.sphere {
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, var(--sphere-color) 0%, var(--bg-deep) 70%);
+  transition: background 0.6s ease, box-shadow 0.6s ease;
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.03); opacity: 1; }
+}
+
+@keyframes responding {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.05); }
+  75% { transform: scale(0.97); }
+}
+
+.sphere--speaking { animation: responding 1.2s ease-in-out infinite; }
+.sphere--thinking { animation: breathe 3s ease-in-out infinite; }
+.sphere--waiting  { animation: breathe 4s ease-in-out infinite; }
+
+
+-------------------------------------------------------------------------------
+1.2 粒子系统（ParticleField.jsx）
+-------------------------------------------------------------------------------
+
+粒子是"氛围的填充物"。
+数量根据设备能力调整：
+- 移动端: 40个
+- 折叠屏: 60个
+- 桌面端: 100个
+- 省电模式: 20个
+
+粒子行为:
+- 悠闲飘动（Perlin噪声或正弦波）
+- 莉神说话时 → 向中心聚拢
+- 用户说话时 → 短暂向外扩散
+- 情绪变化时 → 速度/颜色跟随变化
+
+实现: Canvas 2D，无 three.js。刷新率 30fps（省电）。
+
+const PARTICLE_CONFIG = {
+  mobile: { count: 40, fps: 30 },
+  tablet:  { count: 60, fps: 60 },
+  desktop: { count: 100, fps: 60 },
+  lowPower: { count: 20, fps: 20 }
+};
+
+function ParticleField({ emotion, intensity }) {
+  const canvasRef = useRef(null);
+  const particlesRef = useRef([]);
+  
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    let animId;
+    let lastFrame = 0;
+    const fps = getDeviceConfig().fps;
+    const frameInterval = 1000 / fps;
+    
+    function spawnParticles() {
+      const config = getDeviceConfig();
+      particlesRef.current = Array.from({ length: config.count }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        size: 1 + Math.random() * 2,
+        opacity: 0.3 + Math.random() * 0.4,
+        hue: getHueForEmotion(emotion.primary)
+      }));
+    }
+    
+    function updateParticles(timestamp) {
+      if (timestamp - lastFrame < frameInterval) {
+        animId = requestAnimationFrame(updateParticles);
+        return;
+      }
+      lastFrame = timestamp;
+      
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      for (const p of particlesRef.current) {
+        // 悠闲飘动
+        p.x += p.vx + Math.sin(timestamp * 0.001 + p.y * 0.01) * 0.1;
+        p.y += p.vy + Math.cos(timestamp * 0.001 + p.x * 0.01) * 0.1;
+        
+        // 边界回绕
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+        if (p.y < 0) p.y = canvas.height;
+        if (p.y > canvas.height) p.y = 0;
+        
+        // 情绪引起颜色变化
+        p.hue += (getHueForEmotion(emotion.primary) - p.hue) * 0.02;
+        
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${p.hue}, 70%, 60%, ${p.opacity})`;
+        ctx.fill();
+      }
+      
+      animId = requestAnimationFrame(updateParticles);
+    }
+    
+    spawnParticles();
+    animId = requestAnimationFrame(updateParticles);
+    
+    return () => cancelAnimationFrame(animId);
+  }, [emotion, intensity]);
+  
+  return <canvas ref={canvasRef} className="particle-field" />;
+}
+
+
+-------------------------------------------------------------------------------
+1.3 情绪光晕反馈（EmotionAura.jsx）
+-------------------------------------------------------------------------------
+
+当洛神的情绪状态变化时，在声波球外围显示一层光晕。
+光晕颜色跟随 emotion.primary。
+
+这个组件没有自己的状态，只订阅 luoshenState.emotion。
+
+颜色映射（CSS变量）:
+
+:root {
+  --emotion-calm: #4FC3F7;
+  --emotion-happy: #FFD54F;
+  --emotion-curious: #80DEEA;
+  --emotion-sad: #546E7A;
+  --emotion-tired: #37474F;
+  --emotion-caring: #FFAB91;
+  --emotion-default: #4FC3F7;
+}
+
+function EmotionAura({ emotion }) {
+  const auraRef = useRef(null);
+  
+  useEffect(() => {
+    const el = auraRef.current;
+    if (!el) return;
+    
+    const color = getCssVar(`--emotion-${emotion.primary}`) || getCssVar('--emotion-default');
+    
+    el.style.boxShadow = `
+      0 0 60px 20px ${color}44,
+      0 0 100px 40px ${color}22,
+      inset 0 0 30px 10px ${color}11
+    `;
+  }, [emotion]);
+  
+  return <div ref={auraRef} className="emotion-aura" />;
+}
+
+
+================================================================================
+第二部分：响应式布局（移动端优先）
+================================================================================
+
+设计系统 tokens（styles/tokens.js）:
+
+export const BREAKPOINTS = {
+  mobile:  320,   // 最小支持
+  fold:    768,   // 折叠屏展开
+  desktop: 1024,  // 桌面
+};
+
+export const BASE_LAYOUT = {
+  padding:  16,    // 移动基础边距
+  radius:   16,    // 圆角
+  gap:      12,    // 元素间距
+};
+
+export const SPHERE_SIZE = {
+  mobile:  280,
+  fold:    340,
+  desktop: 400,
+};
+
+export const FONT_SIZE = {
+  body:     16,
+  bodyFold: 17,
+  bodyDesk: 18,
+  caption:  14,
+  title:    24,
+};
+
+
+-------------------------------------------------------------------------------
+2.1 移动端布局（320px ~ 767px，基准 390px）
+-------------------------------------------------------------------------------
+
+布局结构:
+┌─────────────────────────────────────┐
+│  StatusBar (48px)                    │  ← 4个感知状态点 + session id
+├─────────────────────────────────────┤
+│                                      │
+│        SonicSphere (280px)           │  ← 视觉核心
+│        + ParticleField              │
+│        + EmotionAura                 │
+│                                      │
+├─────────────────────────────────────┤
+│  MessageStream (flex-1)             │  ← 消息流，最多显示3条历史
+│  ┌─────────────────────────────┐    │
+│  │ user bubble                 │    │
+│  ├─────────────────────────────┤    │
+│  │ luoshen bubble (streaming)  │    │
+│  └─────────────────────────────┘    │
+├─────────────────────────────────────┤
+│  InputArea (56px)                   │  ← 语音按钮 + 输入框 + 发送
+└─────────────────────────────────────┘
+
+ChatRoom.jsx（移动端）:
+
+function ChatRoom() {
+  const { messages, sendMessage } = useMessageStream();
+  const luoshenState = useLuoshenState();
+  const [inputText, setInputText] = useState('');
+  
+  return (
+    <div className="chat-room">
+      <StatusBar state={luoshenState} />
+      
+      <main className="chat-room__stage">
+        <SonicSphere luoshenState={luoshenState} />
+        <MessageStream messages={messages} luoshenState={luoshenState} />
+      </main>
+      
+      <InputArea
+        value={inputText}
+        onChange={setInputText}
+        onSend={() => sendMessage(inputText)}
+        onVoiceStart={() => startVoiceSession()}
+      />
+    </div>
+  );
+}
+
+
+-------------------------------------------------------------------------------
+2.2 折叠屏布局（768px ~ 1023px，基准 820px）
+-------------------------------------------------------------------------------
+
+布局切换为双栏:
+┌──────────────────────────────────────────────────────────┐
+│  StatusBar (56px)                                         │
+├────────────────────────────┬─────────────────────────────┤
+│  左侧 (55%)                 │  右侧 (45%)                  │
+│  ┌────────────────────┐   │  ┌────────────────────┐    │
+│  │ SonicSphere (340px)│   │  │ LuoshenStatePanel  │    │
+│  └────────────────────┘   │  │ - 情绪状态          │    │
+│  ┌────────────────────┐   │  │ - 主导动机          │    │
+│  │ MessageStream      │   │  │ - 技能状态          │    │
+│  │ (显示5条历史)       │   │  │ - 关系亲密度        │    │
+│  └────────────────────┘   │  └────────────────────┘    │
+│  ┌────────────────────┐   │  ┌────────────────────┐    │
+│  │ InputArea          │   │  │ QuickActions       │    │
+│  └────────────────────┘   │  └────────────────────┘    │
+├────────────────────────────┴─────────────────────────────┤
+└──────────────────────────────────────────────────────────┘
+
+
+-------------------------------------------------------------------------------
+2.3 桌面端布局（>= 1024px，基准 1440px × 900px）
+-------------------------------------------------------------------------------
+
+三栏:
+┌──────────────────────────────────────────────────────────────────────────┐
+│  TopBar (56px)  导航 | 状态 | 设置                                        │
+├──────────────┬─────────────────────────────────┬─────────────────────────┤
+│  LeftSidebar │  CenterMain                       │  RightPanel             │
+│  (280px)     │  (flex-1, max 880px)              │  (280px)                │
+│              │                                   │                         │
+│  历史会话列表 │  SonicSphere (400px)              │  LuoshenStatePanel      │
+│              │  MessageStream (显示8条历史)       │                         │
+│  设置入口     │  InputArea                        │                         │
+└──────────────┴─────────────────────────────────┴─────────────────────────┘
+
+
+================================================================================
+第三部分：消息展示与流式输出
+================================================================================
+
+MessageBubble.jsx:
+
+function MessageBubble({ message, isStreaming }) {
+  const isUser = message.role === 'user';
+  
+  return (
+    <div className={cn('bubble', `bubble--${isUser ? 'user' : 'luoshen'}`)}>
+      <div className="bubble__content">
+        {message.content}
+        {isStreaming && <span className="bubble__cursor" />}
+      </div>
+      {message.timestamp && (
+        <div className="bubble__meta">
+          {formatTime(message.timestamp)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+CSS:
+
+.bubble--user {
+  --bubble-bg: var(--color-user-bubble);
+  --bubble-text: var(--color-text-dark);
+  margin-left: auto;
+  border-radius: 16px 16px 4px 16px;
+}
+
+.bubble--luoshen {
+  --bubble-bg: rgba(79,195,247,0.12);
+  --bubble-text: var(--color-text-primary);
+  margin-right: auto;
+  border-radius: 16px 16px 16px 4px;
+  border-left: 3px solid var(--emotion-calm);
+}
+
+.bubble__cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: currentColor;
+  animation: blink 0.8s step-end infinite;
+  vertical-align: text-bottom;
+  margin-left: 2px;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+
+流式输出流程:
+1. living_engine 调用 llm_interface（流式）
+2. llm_interface 通过 WebSocket 推送 llm_partial 事件
+3. useMessageStream hook 接收，更新当前的 luoshen 消息
+4. MessageBubble 显示文本 + 光标闪烁
+5. LLM 推送完成，标记该消息 isStreaming=false
+
+
+================================================================================
+第四部分：语音系统
+================================================================================
+
+语音通话页面与文字页面结构类似，但有以下差异:
+1. 声波球更大、更灵敏（跟随麦克风和TTS音量律动）
+2. 不显示消息历史波形或最少显示
+3. 大按钮: 静音 / 挂断 / 切换文字模式
+
+语音链路（与文档01兼容但简化）:
+
+┌─────────────────────────────────────────────────────────┐
+│                   前端（浏览器）                         │
+│                                                          │
+│  VoiceCall.jsx                                           │
+│    ├── useVoiceSession hook                              │
+│    │     - 管理 WebSocket 连接                          │
+│    │     - 管理 AudioContext                             │
+│    │     - 管理麦克风权限                                │
+│    └── components                                        │
+│          ├── MicButton.jsx     - 麦克风开关             │
+│          ├── EndCallButton - 挂断                       │
+│          └── VoiceWave.jsx    - 音频可视化              │
+│                                                          │
+│  语音通过 WebSocket 发送到后端                            │
+│  后端只负责接收 PCM 帧，forward 到 Deepgram              │
+│  前端收到 TTS 音频帧后直接播放                            │
+│  所有记忆逻辑仍由 living_engine 处理                      │
+└─────────────────────────────────────────────────────────┘
+
+VoiceCall.jsx:
+
+function VoiceCall() {
+  const {
+    isConnected,
+    isListening,
+    isSpeaking,
+    audioLevel,
+    startCall,
+    endCall,
+    toggleMic
+  } = useVoiceSession();
+  
+  const luoshenState = useLuoshenState();
+  
+  return (
+    <div className="voice-call">
+      <StatusBar state={luoshenState} showMinimal />
+      
+      <main className="voice-call__stage">
+        <SonicSphere
+          luoshenState={luoshenState}
+          audioLevel={audioLevel}
+          isListening={isListening}
+          isSpeaking={isSpeaking}
+          mode="voice"
+        />
+        
+        <div className="voice-call__subtitle">
+          {/* 实时字幕：ASR partial 结果 */}
+        </div>
+      </main>
+      
+      <div className="voice-call__controls">
+        <MicButton isOn={isListening} onClick={toggleMic} />
+        <EndCallButton onClick={endCall} />
+        <MicButton isOn={isListening} onClick={toggleMic} />
+      </div>
+    </div>
+  );
+}
+
+
+================================================================================
+第五部分：与活记忆层的连接
+================================================================================
+
+前端通过 WebSocket 订阅活记忆层的实时状态变化。
+
+状态通道（Supabase Realtime 或自建 WebSocket）:
+
+channel:luoshen_state   — 活记忆层状态变化（情绪/模式/技能）
+channel:messages        — 消息增删改
+channel:voice_bridge    — 语音通话信令
+channel:typing          — 用户正在输入指示
+
+useLuoshenState.js hook:
+
+function useLuoshenState() {
+  const [state, setState] = useState(null);
+  
+  useEffect(() => {
+    // 初次加载：从 REST API 获取完整状态
+    fetch('/api/luoshen/state').then(r => r.json()).then(setState);
+    
+    // 订阅增量更新
+    const sub = ws.subscribe('luoshen_state', (update) => {
+      setState(prev => ({ ...prev, ...update }));
+    });
+    
+    return () => sub.unsubscribe();
+  }, []);
+  
+  return state;
+}
+
+后端暴露（新增简单 API）:
+GET  /api/luoshen/state         — 获取活记忆层当前状态的快照
+GET  /api/luoshen/active-memory — 获取完整活记忆层 JSON（调试用）
+POST /api/luoshen/message        — 用户发送消息（进入 living_engine）
+
+
+================================================================================
+第六部分：设计系统常量
+================================================================================
+
+styles/tokens.js:
+
+export const COLORS = {
+  bg:          '#0A0E1A',
+  bgPanel:     '#131825',
+  primary:     '#4FC3F7',
+  secondary:   '#7C4DFF',
+  warm:        '#FF8A65',
+  text:        '#E8EAED',
+  textMuted:   '#9AA0A6',
+  border:      'rgba(255,255,255,0.06)',
+  userBubble:  '#FFFFFF',
+  
+  emotions: {
+    calm:     '#4FC3F7',
+    happy:    '#FFD54F',
+    curious:  '#80DEEA',
+    sad:      '#546E7A',
+    tired:    '#37474F',
+    caring:   '#FFAB91',
+  }
+};
+
+export const MOTION = {
+  breatheDuration: '4s',
+  respondDuration: '1.2s',
+  thinkDuration:   '3s',
+  transition:      '0.6s ease',
+};
+
+export const SPHERE_SIZES = {
+  mobile:  280,
+  fold:    340,
+  desktop: 400,
+};
+
+
+=================================================================
+第七部分：新增/修改文件清单（第五步）
+=================================================================
+
+新增:
+  src/
+    components/
+      SonicSphere.jsx               — 声波球（视觉核心）
+      ParticleField.jsx             — Canvas 粒子场
+      EmotionAura.jsx               — 情绪光晕反馈
+      MessageBubble.jsx             — 单条消息
+      MessageStream.jsx             — 消息流
+      StatusIndicator.jsx           — 顶部感知状态指示
+      VoiceControl.jsx              — 语音通话控制器
+      VoiceWave.jsx                 — 声波可视化
+      QuickActions.jsx              — 快捷操作（折叠屏/桌面侧栏）
+      LuoshenStatePanel.jsx         — 洛神状态面板（复式/桌面右侧）
+    hooks/
+      useLuoshenState.js            — 订阅洛神状态
+      useMessageStream.js           — 订阅消息流
+      useVoiceSession.js            — 管理语音会话
+      useResponsive.js              — 响应式断点检测
+    adapters/
+      voiceBridge.js                — 语音WebSocket桥接
+    pages/
+      ChatRoom.jsx                  — 主对话页面
+      VoiceCall.jsx                 — 语音通话页面
+    styles/
+      tokens.js                     — 设计系统常量
+      global.css                    — 全局样式
+
+修改:
+  src/App.jsx                       — 更新路由（指向 ChatRoom 和 VoiceCall）
+  src/adapters/zhipu.js             — 改造为纯接口（接收表达指令，不接原始输入）
+
+
+=================================================================
+第八部分：界面与声音的总体验
+=================================================================
+
+用户打开应用 → 
+  看到深海背景中漂浮的声波球，缓慢呼吸 → 
+  感知状态点显示系统当前感知 → 
+  用户发送消息（文字或语音） → 
+  声波球变为"倾听"状态，紫色波纹律动 → 
+  活记忆层决策中，声波球变为"思考"状态 → 
+  大模型返回文本，声波球变为"说话"状态 → 
+  消息气泡显示回复，声波球波纹随内容节奏律动 → 
+  同时，TTS 播放音频 → 
+  用户回复，反馈采集器静默采集 → 
+  对话继续...
+
+如果用户离开:
+  活记忆层继续运行（感知引擎、反思引擎）
+  下次用户回来时，活记忆层已经有新的认知
+  她可能主动说: "我注意到你昨天心情不太好"（如果主动策略允许）
+
+
+=================================================================
+全部五步完成总结
+=================================================================
+
+第一步: 活记忆层数据结构和更新逻辑（文档05）
+第二步: 大模型改造为纯语言接口（文档05）
+第三步: 反馈反思循环（文档06）
+第四步: 技能动态生长（文档06）
+第五步: 界面与声音（文档07）
+
+架构总览:
+
+用户输入 → 活记忆层（决策+记忆+技能） → 表达指令 → 大模型（语言） → 自然语言
+    ↓                                                        ↓
+   采集反馈 ← ← ← ← ← ← ← ← ← ← ← ← ← ← ← ← ← ← ← 用户回复
+    ↓
+   反思循环 → 更新活记忆层 → 写入哈希链（不可篡改）
+
+
+=================================================================
+全部文件清单
+=================================================================
+
+已交付的设计文档:
+  设计文档_05_活记忆层架构重构.txt        (活记忆层 + LLM接口 + SafetyBoundary)
+  设计文档_06_反馈反思循环_技能生长机制.txt (反馈采集 + 反思 + 技能学习)
+  设计文档_07_界面与声音设计.txt           (前端 + TTS/ASR)
+
+新增代码文件（按执行顺序）:
+  Phase 1:
+    active_memory/active_memory.json
+    living_engine.py
+    
+  Phase 2:
+    llm_interface.py
+    src/adapters/zhipu.js（改造）
+    
+  Phase 3:
+    feedback_reflection_engine.py
+    reflection_log.jsonl
+    
+  Phase 4:
+    skill_growth_engine.py
+    skills/*.py, skills_manifest.json
+    
+  Phase 5:
+    src/components/*.jsx
+    src/hooks/*.js
+    src/pages/*.jsx
+    src/styles/*.js

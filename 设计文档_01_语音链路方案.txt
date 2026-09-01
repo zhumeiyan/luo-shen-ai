@@ -1,0 +1,437 @@
+================================================================================
+  洛神AI 语音链路设计方案（Her/Samantha级别）
+  版本: v3.0
+  日期: 2026-08-31
+  状态: 待审核
+================================================================================
+
+【一、设计目标与原则】
+
+1.1 设计目标
+  - 实现全双工语音通话，延迟预算 <800ms（端到端）
+  - 支持实时打断与自然轮次切换
+  - 保留洛神现有感知系统（时间/空间/能量/自我）在语音交互中的一致性
+  - 触觉-听觉同步：声波视觉与语音内容节奏对齐
+
+1.2 设计原则
+  - 诚实原则（代码库既有原则）: 只上报系统实际能测量的指标
+  - 不假装人类: 语音输出应保留机械感，不做过度拟人化音色伪造
+  - 降级任何一环可独立失败: ASR/TTS/LLM任一服务故障时，其余环节仍可降级运行
+  - 所有状态写入哈希链: 每次语音交互需落盘到 hash_chain_v2.log
+
+
+【二、ASR方案选型（语音识别 / 听）】
+
+2.1 核心需求
+  - 流式识别（partial results），而非等用户说完再识别
+  - 支持中文普通话 + 英文混说（双语场景）
+  - 端点检测（VAD）准确，避免过早截断或过久等待
+  - 网络抖动容错（WebSocket断连重连）
+
+2.2 推荐方案: Deepgram Nova-2
+
+| 指标 | Deepgram Nova-2 | AssemblyAI | 阿里云 NLS | 腾讯 ASR |
+|------|-----------------|------------|-----------|---------|
+| 流式延迟 | ~150ms | ~200ms | ~250ms | ~250ms |
+| 中文准确率 | 95%+ | 94%+ | 96%+ | 95%+ |
+| 价格 | $0.0043/min | $0.015/min | ¥0.03/min | ¥0.03/min |
+| WebSocket原生 | 是 | 是 | 是 | 是 |
+| VAD内置 | 是（endpoint_detection）| 是 | 需自建 | 需自建 |
+| 说话人分离 | 支持 | 支持 | 支持 | 支持 |
+
+选择理由:
+  1) Deepgram Nova-2 是当前业界流式延迟最低的方案（公开benchmark ~150ms）
+  2) 原生 WebSocket 协议，客户端可直接连接，无需中转
+  3) 内置 endpoint_detection，自动检测语音结束，避免手动VAD
+  4) 价格约为AssemblyAI的1/3
+
+2.3 备选方案: 阿里云智能语音交互（NLS）
+  - 优势: 国内机房延迟更低（<100ms网络RTT），合规可控
+  - 劣势: API协议更复杂，需签名鉴权
+  - 适用场景: 若 Deepgram 在国内网络不稳定，切换至阿里云
+
+2.4 客户端ASR接入架构
+
+  [麦克风] → [getUserMedia] → [WebSocket → Deepgram Nova-2]
+                                      ↓
+                              {type: "Results", is_final: false, channel: {alternatives: [{transcript, confidence}]}}
+                                      ↓
+                               前端Web Worker解析
+                                      ↓
+                              分发至洛神对话管线
+
+2.5 流式ASR事件类型
+  - partial: 中间结果，用于前端实时字幕显示（不等LLM回复）
+  - final: 完整识别结果，触发洛神对话管线处理
+  - endpoint: Deepgram端点检测信号，表示用户说完了
+  - error: 识别错误，触发降级到文字输入或静默重试
+
+
+【三、TTS方案选型（语音合成 / 说）】
+
+3.1 核心需求
+  - 情感表达力: 能根据系统情绪状态（feelings字段）调整语气
+  - 流式合成: 不等待整段文本生成完毕，边生成边播放
+  - 音色一致性: 同一个session内声音特征稳定
+  - 唇形同步预留: 若后续接入视觉形象，需支持 viseme 输出
+
+3.2 推荐方案: ElevenLabs Turbo v2.5 + Azure Neural TTS 双引擎
+
+3.2.1 ElevenLabs（主引擎 — 情感充沛时）
+  - 优势: 情感表达业界最优，支持 style 参数调控（0-100 情感强度）
+  - 优势: 流式合成延迟 ~300ms（首字延迟）
+  - 劣势: 国内网络可能不稳定（有时需代理）
+  - 劣势: 价格较高（$33/10万字符）
+  - 适用场景: 高情感场景（关怀、好奇、感慨）
+
+  关键 API 参数:
+    voice_id: "21m00Tcm4TlvDq8ikWAM" (Rachel, 中性女声)
+    model_id: "eleven_turbo_v2.5" (最低延迟)
+    voice_settings:
+      stability: 0.45        （洛神性格：偏活跃而非沉稳）
+      similarity_boost: 0.75
+      style: 0.6            （情感强度，由feelings状态动态调整）
+
+3.2.2 Microsoft Azure Neural TTS（备引擎 — 日常对话）
+  - 优势: 国内Azure节点稳定
+  - 优势: 与现有 Edge TTS（luoshen_voice.py）有延续性
+  - 优势: 价格更低（$16/10万字符）
+  - 劣势: 情感表达力弱于ElevenLabs
+  - 适用场景: 日常问答、陈述事实
+
+  推荐发音人:
+    zh-CN-YunxiNeural（男声，沉稳）: 对应 GENE-002/004 主导时
+    zh-CN-XiaoxiaoNeural（女声，知性）: 对应 GENE-001 主导时
+    zh-CN-YunjianNeural（男声，热忱）: 对应 GENE-003 主导时
+
+3.3 TTS引擎调度决策（新增模块: tts_dispatcher.py）
+
+  feelings 状态 → 引擎选择 + 参数调整:
+  ----------------------------------------------------
+  feelings为空 或 ["平静"]    → Azure TTS (XiaoxiaoNeural)
+  feelings包含["开心","兴奋"]  → ElevenLabs (style=0.8, stability=0.3)
+  feelings包含["难过","低落"]  → Azure TTS (XiaoxiaoNeural, rate="-10%")
+  feelings包含["好奇","求知"]  → ElevenLabs (style=0.5, stability=0.6)
+  feelings包含["关怀","温暖"]  → ElevenLabs (style=0.7, stability=0.5)
+  feelings包含["疲惫"]         → Azure TTS 全部 rate="-15%"
+  error/fallback              → Edge TTS（现有 luoshen_voice.py）
+
+3.4 流式TTS输出协议
+
+  ElevenLabs 流式:
+    POST /v1/text-to-speech/{voice_id}/stream
+    Header: Accept: audio/mpeg
+    响应: chunked transfer，每个 chunk 为 ~100ms 音频数据
+
+  Azure 流式:
+    WebSocket: wss://{region}.tts.speech.microsoft.com/cognitiveservices/v1
+    输入: SSML 格式的 <speak> 文档
+    响应: 二进制音频流 (raw-16khz-16bit-mono-pcm)
+
+
+【四、后端中继与全双工架构】
+
+4.1 系统架构图（文本描述）
+
+  前端（浏览器）                    后端（新建: voice_relay.py）            外部服务
+  ┌──────────────┐               ┌────────────────────────┐
+  │ getUserMedia ├──WebSocket──→│ ASR Proxy              ├──WebSocket──→ Deepgram
+  │              │               │  (接收浏览器PCM转发)    │
+  │              │               │                        │
+  │              │               │ LLM Queue              ├──HTTP───────→ 智谱LLM
+  │              │               │  (消息队列+优先级)     │
+  │              │               │                        │
+  │ Audio Player │←─WebSocket───│ TTS Dispatcher         │←──────────── ElevenLabs
+  │ (流式播放)   │               │  (调度TTS引擎)         │←──────────── Azure TTS
+  └──────────────┘               └────────────────────────┘
+          │                                │
+          │    state sync via Supabase     │
+          └────────────────────────────────┘
+
+4.2 后端模块设计（voice_relay.py — 新建）
+
+4.2.1 ASR Proxy
+  职责:
+    1. 建立与 Deepgram 的 WebSocket 持久连接
+    2. 接收浏览器发送的 PCM 音频帧（48kHz, 16bit, 单声道）
+    3. 转发至 Deepgram，设置 SampleRate=48000
+    4. 接收 Deepgram partial/final 结果
+    5. final 结果触发 LLM 处理流
+
+4.2.2 LLM Queue（消息队列与打断处理）
+  职责:
+    1. 接收 ASR final 结果 → 生成 对话请求对象
+    2. 若 LLM 正在生成且 ASR 收到新输入（用户打断）:
+       a. 标记当前 LLM 响应为 "被中断"
+       b. 将已生成的 TTS 播放至当前句子结束（不突兀切断）
+       c. 清空 TTS 播放缓冲区
+       d. 立即处理新请求
+    3. 消息优先级: voice > text > proactive > background
+
+4.2.3 TTS Dispatcher
+  职责:
+    1. 接收 LLM 文本响应（流式 token）
+    2. 按标点切分子句（。！？；）
+    3. 逐子句调用 TTS 引擎
+    4. 首发子句使用低延迟引擎（ElevenLabs Turbo）
+    5. 后续子句可并行合成
+
+4.3 全双工打断机制（Barge-in）
+
+  条件触发:
+    前端检测到麦克风有输入能量（amplitude > threshold）
+    且后端 TTS 正在播放
+    → 前端发送 barge_in 信号
+
+  后端行为:
+    1. 立即暂停 TTS 发送
+    2. 记录已播放位置（用于后续统计）
+    3. 将未完成TTS对应的LLM响应标记为 "用户打断"
+    4. 不打断LLM计算（等待新ASR结果来决定是否取消）
+
+  特殊洛神特性:
+    若 self_core_state.feelings 包含 "耐心"、"关怀":
+      检测到打断后不立即停止说话，而是用更短句子说完当前子句
+      （体现洛神"给对方表达空间"的性格）
+
+
+【五、延迟预算分配】
+
+5.1 端到端延迟目标: <800ms
+  分解:
+  ---------------------------------------------------------
+  环节                     预算      说明
+  ---------------------------------------------------------
+  麦克风采集 + 编码         50ms     getUserMedia + Opus编码
+  前端→后端网络传输         100ms    WebSocket帧传输
+  ASR (Deepgram Nova-2)    150ms    流式，首字延迟
+  LLM首字响应              300ms    智谱GLM-4-Flash流式，首token
+  TTS首字合成              200ms    ElevenLabs Turbo v2.5流式首字
+  TTS音频→前端播放          50ms     WebSocket + AudioBuffer
+  ---------------------------------------------------------
+  合计                      850ms    理论最坏情况
+  优化后目标                <600ms   实际可达（并行流水线）
+
+5.2 优化策略
+  1. ASR与前端事件并行: 用户说话前端立即显示"识别中..."，不等后端
+  2. LLM与TTS流水线: LLM生成首句即可开始TTS，不等待全文完成
+  3. 预热连接: 进入语音页面时预先建立 Deepgram/ElevenLabs WebSocket
+  4. 边缘节点: 若部署至阿里云，TTS选用 region=cn-shanghai
+  5. Opus编码: 音频使用Opus编码（10ms帧），降低网络带宽
+
+
+【六、数据流与接口定义】
+
+6.1 语音会话生命周期
+
+  1. 用户进入语音页面 → 前端调用 POST /voice/session/init
+     → 后端创建 session_id
+     → 后端预建 Deepgram WebSocket
+     → 返回 {session_id, asr_endpoint, tts_credential}
+
+  2. 用户开始说话 → 前端采集麦克风 → PCM帧 → WebSocket发送
+     → 后端ASR Proxy接收 → 转发Deepgram
+     → Deepgram返回 partial → 浏览器实时显示字幕
+
+  3. 用户说完 → Deepgram endpoint触发 → 前端显示"洛神正在听..."
+     → 后端调用现有 luoshen_main_v3.py 对话管线（第二章详述）
+     → 后端获取 LLM 文本响应（流式）
+     → 后端逐句调用 TTS → 音频帧 → 浏览器播放
+
+  4. 用户打断 → 前端发送 barge_in 信号 → 后端暂停TTS
+     → 跳转步骤2（新请求覆盖）
+
+  5. 用户离开 → 前端发送 end → 后端关闭所有WebSocket
+     → 后端写入本次会话摘要到 hash_chain_v2.log
+
+6.2 WebSocket消息协议定义
+
+  前端 → 后端:
+  ------------------------------------------------------------
+  类型          格式                            触发条件
+  ------------------------------------------------------------
+  audio_data    {type:"audio", data: base64PCM}   每100ms发送
+  text_input    {type:"text", content: string}     文字模式下发送
+  barge_in      {type:"barge_in"}                 检测到打断
+  session_end   {type:"end"}                      用户挂断
+  state_sync    {type:"sync", feelings: [...],    同步状态用于
+                       energy: float}              TTS参数调整
+  ------------------------------------------------------------
+
+  后端 → 前端:
+  ------------------------------------------------------------
+  类型          格式                            说明
+  ------------------------------------------------------------
+  asr_partial   {type:"asr", partial: string,   中间识别结果
+                          is_final: false}
+  asr_final     {type:"asr", final: string,     识别完毕，触发LLM
+                          confidence: float}
+  llm_partial   {type:"llm", partial: string,   LLM流式token输出
+                          sentence_id: number}
+  tts_audio     {type:"tts", data: base64MP3,   流式TTS音频帧
+                          sentence_id: number,
+                          viseme: optional}
+  emotion_state {type:"emotion", feelings: [],   洛神当前情绪状态
+                          intensity: float}       前端视觉同步
+  error         {type:"error", code: int,       错误降级
+                          fallback: "text"}
+  ------------------------------------------------------------
+
+6.3 与现有系统的对接
+
+  关键对接点:
+  ┌─────────────────────────────────────────────────────────┐
+  │  新增 voice_relay.py                                    │
+  │       │                                                 │
+  │       ├─调用→ luoshen_main_v3.py:handle_message()       │
+  │       │   传入: {user_text, session_context, feelings}   │
+  │       │   返回: {response_text, new_feelings,            │
+  │       │         self_core_snapshot}                      │
+  │       │                                                 │
+  │       ├─读取→ perception_input/self_core_state.json     │
+  │       ├─读取→ gene_pool.jsonl (当前激活gene)            │
+  │       ├─读取→ spatial_awareness_log.jsonl              │
+  │       └─读取→ time_gap_log.jsonl                       │
+  └─────────────────────────────────────────────────────────┘
+
+
+【七、降级策略】
+
+7.1 ASR故障
+  - Deepgram不可用 → 切换至浏览器原生 SpeechRecognition（兜底）
+  - 降级提示: 前端右下角短暂显示"转本地识别（精度降低）"
+  - 日志记录到 hash_chain_v2.log: event="asr_fallback", reason="timeout"
+
+7.2 TTS故障
+  - ElevenLabs不可用 → 切换至 Azure Neural TTS
+  - Azure不可用 → 切换至 Edge TTS（现有luoshen_voice.py）
+  - 全部不可用 → 文字模式，当前端提示"语音暂不可用，以文字回复"
+
+7.3 LLM故障
+  - 智谱API超时(>5s) → 前端显示"洛神在思考中..."
+  - 智谱API 401 → 刷新token → 重试2次
+  - 智谱API限流(429) → 指数退避(1s→2s→4s)
+  - 全部失败 → 前端显示"洛神暂时无法响应，请稍后再试"
+
+7.4 网络故障
+  - WebSocket断连 → 3秒内自动重连
+  - 重连失败3次 → 提示"网络不稳定，已切换文字模式"
+  - 本地缓存: 未发送消息暂存到 localStorage，恢复后补发
+
+
+【八、安全与隐私】
+
+8.1 音频数据
+  - 不对音频做持久存储，仅流式处理
+  - Deepgram启用 ephemeral 模式（处理后不留存）
+  - 用户明确授权麦克风权限后才开始采集
+
+8.2 API密钥
+  - Deepgram/ElevenLabs密钥存储在后端环境变量
+  - 前端仅获取一次性临时代理凭证（类似 Supabase JWT）
+  - 不强如前端代码（与智谱API Key分开管理）
+
+8.3 审计
+  - 每次语音会话结束后，写入一条哈希链摘要:
+    {session_id, duration_bytes, asr_engine, tts_engine, hash}
+  - 不可反推具体对话内容，但可审计会话存在性
+
+
+【九、技术储备与服务账号清单】
+
+9.1 需要新申请的账号/密钥
+  - Deepgram API Key (https://deepgram.com，试用版$200免费额度)
+  - ElevenLabs API Key (https://elevenlabs.io，试用版1万字符/月)
+  - 阿里云智能语音交互 (若选阿里云方案，需 AccessKey)
+  - Azure Speech Service (若Azure为主，需 region + key)
+
+9.2 推荐测试验证顺序
+  1. 先用现有智谱API + Deepgram免费额度做集成测试
+  2. 稳定性验证 → 申请 ElevenLabs 付费套餐
+  3. 对比 Azure vs ElevenLabs A/B测试，选用户满意度更高的
+
+9.3 关键依赖安装（后端Python）
+  pip install deepgram-sdk==3.* elevenlabs==1.* websockets==12.*
+
+
+【十、实施步骤与验证】
+
+10.1 第一阶段（5天，MVP）
+  任务:
+    1. 搭建 Deepgram WebSocket 代理（voice_relay.py:ASR Proxy）
+    2. 实现前端音频采集 + WebSocket发送
+    3. 对接现有 luoshen_main_v3.py:handle_message()
+    4. 实现 LLM 响应 → Edge TTS 流式播放（先用现有能力）
+  验证:
+    - [ ] 语音输入可触发洛神回复
+    - [ ] 端到端延迟 < 1.5s (MVP放宽要求)
+    - [ ] 打断功能基本可用
+
+10.2 第二阶段（7天，优化）
+  任务:
+    1. 集成 ElevenLabs 流式TTS
+    2. 实现 TTS Dispatcher（根据feelings调度引擎）
+    3. 优化延迟至 <800ms
+    4. 前端增加实时字幕（partial结果展示）
+    5. 实现 barge_in 打断逻辑
+  验证:
+    - [ ] 延迟 < 800ms（抽样100次平均值）
+    - [ ] 打断响应 < 200ms
+    - [ ] 不同情绪状态TTS效果可区分
+
+10.3 第三阶段（5天，稳定性）
+  任务:
+    1. 三种降级策略测试与实现
+    2. WebSocket 自动重连
+    3. 会话摘要写入哈希链
+    4. 前端降级提示UI
+  验证:
+    - [ ] 任一外部服务故障不影响其余环节
+    - [ ] 网络断连3次后成功重连
+    - [ ] 所有异常均有降级提示
+
+10.4 第四阶段（3天，打磨）
+  任务:
+    1. 前端声波可视化（audio context analyser）
+    2. 玩家状态同步到洛神emotion_state
+    3. 收集初始用户反馈调优参数
+  验证:
+    - [ ] 声波随TTS节奏律动
+    - [ ] 洛神语音期间有"在说"状态指示
+
+
+【十一、涉及/新建文件清单】
+
+11.1 新建文件
+  voice_relay.py              — 主后端模块（ASR代理+LLM队列+TTS调度）
+  src/voice/VoiceSession.js   — 前端语音会话管理器
+  src/voice/AudioCapture.js   — 麦克风采集 + Opus编码
+  src/voice/AudioPlayer.js    — 流式音频缓冲 + 播放
+  src/voice/BargeInDetector.js — 打断检测逻辑
+  src/components/VoiceCall.jsx — 语音通话页面（重构现有VoiceCall.jsx）
+
+11.2 修改文件（如需）
+  src/adapters/zhipu.js       — 新增流式接口调用（streamChatWithLuoshen）
+
+11.3 重用的现有模块（零修改）
+  luoshen_main_v3.py          — 核心对话处理
+  luoshen_voice.py            — Edge TTS 降级引擎
+  gene_pool.jsonl             — 基因调度依据
+  perception_input/*           — 感知输入读取
+  hash_chain_v2.log           — 审计日志
+
+
+【十二、风险与缓解】
+
+| 风险 | 概率 | 影响 | 缓解措施 |
+|------|------|------|----------|
+| Deepgram国内网络不稳 | 中 | 高 | 备选阿里云NLS + 边缘代理 |
+| ElevenLabs成本高 | 高 | 中 | 高频对话用Azure，仅高情感用ElevenLabs |
+| 延迟超标（移动端） | 中 | 中 | 移动端优先用国内服务节点 |
+| 浏览器麦克风权限拒接 | 低 | 高 | 文字模式无缝降级 |
+| Opus编码兼容性 | 低 | 低 | 兜底使用PCM 16bit |
+
+================================================================================
+  文档01完 — 语音链路方案
+  下一文档: 设计文档_02_核心记忆与对话管线
+================================================================================
