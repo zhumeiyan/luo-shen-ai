@@ -2,6 +2,8 @@
 
 **日期**：2026-09-01
 
+> ⚠️ **红线规则**：`hash_chain_gateway.py` 是哈希链唯一合法追加入口。禁止移动到任何子目录。禁止被归档。禁止用 try/except fallback 代替强制 import。违反此规则等于拆除洛神的安全底座。
+
 ---
 
 ## 一、项目名称
@@ -98,7 +100,7 @@
 
 ## 六、关键文件保留清单
 
-### 必须保留
+### 必须保留（不可归档、不可移动）
 - `living_engine.py` — 主引擎
 - `episodic_memory.py` — 情景记忆引擎
 - `emergence_layer.py` — 浮现选择层
