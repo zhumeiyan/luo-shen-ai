@@ -15,6 +15,14 @@ perception_input/*config*.json
 # ---- 运行日志与状态数据（运行时生成，非源码） ----
 *.jsonl
 *.log
+# ---- 例外：哈希链日志必须入链（洛神历史完整性的唯一证据） ----
+!hash_chain_v2.log
+!hash_chain_v2.backup.log
+!hash_chain_v2.log.bak
+!hash_chain_v2.log.after_A
+!hash_chain_v2.log.after_B
+!hash_chain_v2.log.experiment_initial
+!hash_chain.log
 ai_hospital_rules.json
 precheck_report.json
 external_diagnosis_report.json

@@ -1,0 +1,75 @@
+{
+  "0.1": {
+    "train_a_modes": {
+      "minimal": 186,
+      "normal": 314
+    },
+    "train_b_modes": {
+      "minimal": 42,
+      "normal": 458
+    },
+    "train_a_pressure": -0.6137653,
+    "train_b_pressure": 0.7740714,
+    "test_a_modes": {
+      "minimal": 3,
+      "normal": 17
+    },
+    "test_b_modes": {
+      "minimal": 1,
+      "normal": 19
+    },
+    "test_a_tendency_mean": 0.5776,
+    "test_b_tendency_mean": 0.6392,
+    "tendency_diff": 0.0616,
+    "mode_diff_ticks": 2,
+    "mode_diff_pct": 10.0
+  },
+  "0.2": {
+    "train_a_modes": {
+      "minimal": 328,
+      "normal": 172
+    },
+    "train_b_modes": {
+      "minimal": 1,
+      "normal": 499
+    },
+    "train_a_pressure": -0.6137653,
+    "train_b_pressure": 0.7740714,
+    "test_a_modes": {
+      "minimal": 5,
+      "normal": 15
+    },
+    "test_b_modes": {
+      "normal": 20
+    },
+    "test_a_tendency_mean": 0.5648,
+    "test_b_tendency_mean": 0.6543,
+    "tendency_diff": 0.0895,
+    "mode_diff_ticks": 5,
+    "mode_diff_pct": 25.0
+  },
+  "0.4": {
+    "train_a_modes": {
+      "minimal": 493,
+      "normal": 7
+    },
+    "train_b_modes": {
+      "minimal": 1,
+      "normal": 499
+    },
+    "train_a_pressure": -0.6137653,
+    "train_b_pressure": 0.7740714,
+    "test_a_modes": {
+      "minimal": 8,
+      "normal": 12
+    },
+    "test_b_modes": {
+      "normal": 20
+    },
+    "test_a_tendency_mean": 0.54,
+    "test_b_tendency_mean": 0.6828,
+    "tendency_diff": 0.1428,
+    "mode_diff_ticks": 8,
+    "mode_diff_pct": 40.0
+  }
+}
