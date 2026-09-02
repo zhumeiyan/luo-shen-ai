@@ -32,6 +32,7 @@ AROUSAL_AGE_INVERT = 0.3      # sigmoid 反向点：age 越小，arousal 越高
 # pressure_ema ∈ 约 [-0.6, +0.6]（500 tick积累）
 K_PRESSURE_TONE = 0.25       # 压力对语气的调制强度（负压力 → 语气下沉）
 K_PRESSURE_AROUSAL = 0.15    # 压力对唤醒的调制强度（负压力 → 唤醒降低 → 更谨慎）
+K_PRESSURE_MEMORY = 0.07     # 压力对记忆激活度的连续调制（±5~6%，不压过记忆本身）
 
 # ─── 浮现叙事层参数 ───
 # 叙事势：由四个连续分量相乘构成，代表“来自历史的话头强度”
@@ -371,9 +372,13 @@ def compute_emergence(memories, now, cur_e, cur_t, cur_n, activations,
     # pressure_ema < 0（负向历史）→ 语气下沉 + 唤醒降低（更克制）
     # pressure_ema > 0（正向历史）→ 语气变轻 + 唤醒升高（更开放）
     # 连续线性，无 if-then，系数小确保不压倒记忆自身的信号
+    # 压力对记忆激活度的连续调制（不直接修改 activations，由调用方乘上）
+    # 正向历史 → 什么记忆都更容易浮起；负向历史 → 记忆更沉
+    _pressure_memory_mod = 1.0
     if pressure_ema is not None:
         tbias += K_PRESSURE_TONE * pressure_ema
         abias += K_PRESSURE_AROUSAL * pressure_ema
+        _pressure_memory_mod = 1.0 + K_PRESSURE_MEMORY * pressure_ema
 
     # 计算叙事势
     narrative = compute_narrative_potential(memories, cur_e, cur_t, cur_n, now)
@@ -384,6 +389,7 @@ def compute_emergence(memories, now, cur_e, cur_t, cur_n, activations,
         "length_bias": lbias,
         "tone_bias": tbias,
         "arousal_bias": abias,
+        "pressure_memory_mod": _pressure_memory_mod,
         "narrative_potential": narrative["potential"],
         "narrative_frame_weights": narrative["frame_weights"],
         "narrative_hints": narrative["structure_hints"],

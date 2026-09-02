@@ -1220,6 +1220,7 @@ def _compute_memory_emergence(memory):
             K_LENGTH_ALPHA,
             K_LENGTH_BETA,
             K_LENGTH_GAMMA,
+            K_PRESSURE_MEMORY,
         )
         from episodic_memory import activation
     except Exception:
@@ -1250,6 +1251,14 @@ def _compute_memory_emergence(memory):
     _ring_sm = memory.get("self_model", {}).get("ring_state", {})
     _pressure_ema = _ring_sm.get("relational_pressure_ema", None)
 
+    # ── 压力对记忆激活度的调制（关系痕迹改变"什么记忆更容易浮上来"） ──
+    # 正向历史 → 所有记忆更容易浮起；负向历史 → 记忆更沉
+    _pressure_memory_mod = 1.0
+    if _pressure_ema is not None:
+        _pressure_memory_mod = 1.0 + K_PRESSURE_MEMORY * _pressure_ema
+    # 应用调制到激活度（在 softmax 之前，影响权重分布）
+    activations = [a * _pressure_memory_mod for a in activations]
+
     # 调用浮现层（传入 pressure_ema，让浮现层能感知慢压力）
     result = compute_emergence(episodic, now, cur_e, cur_t, cur_n, activations,
                                pressure_ema=_pressure_ema)
@@ -1260,6 +1269,7 @@ def _compute_memory_emergence(memory):
         "length_bias": result["length_bias"],
         "tone_bias": result["tone_bias"],
         "arousal_bias": result["arousal_bias"],
+        "pressure_memory_mod": result.get("pressure_memory_mod", 1.0),
         "narrative_potential": result.get("narrative_potential", 0.0),
         "narrative_frame_weights": result.get(
             "narrative_frame_weights",
@@ -1355,10 +1365,13 @@ def idle_update_memory(memory):
     # 3. emotional_arc 不加新条目、不删旧条目，保持现状
     #    （沉默中无新事件，已存在的情绪继续保持其影响）
 
-    # 3b. 保留 relational_awareness（如果存在），静息时不变
+    # 3b. 保留 relational_awareness 和 self_awareness_signal（如果存在），静息时不变
     _ra = memory.get("self_model", {}).get("relational_awareness", None)
     if _ra is not None and "self_model" in memory:
         memory["self_model"]["relational_awareness"] = _ra
+    _sas = memory.get("self_model", {}).get("self_awareness_signal", None)
+    if _sas is not None and "self_model" in memory:
+        memory["self_model"]["self_awareness_signal"] = _sas
 
     # 4. 保存并落链
     _save_json_atomic("active_memory/active_memory.json", memory)
@@ -2514,6 +2527,13 @@ def _update_luoshen_coupled(memory, env, tick_id=0):
     _rpe = _ring_sm.get("relational_pressure_ema", 0.0)
     _new_ring_state["relational_pressure_ema"] = _rpe
     memory["self_model"]["ring_state"] = _new_ring_state
+
+    # ── 连续自我觉察信号（不进入 prompt，不生成文本） ──
+    # self_awareness_signal = tanh(relational_awareness * 1.5)
+    # 把慢压力映射到 (-1, 1) 区间，作为内部状态量
+    _ra = memory.get("self_model", {}).get("relational_awareness", 0.0)
+    _sas = math.tanh(_ra * 1.5)
+    memory["self_model"]["self_awareness_signal"] = round(_sas, 7)
 
     # 观察：last_stated 时刻的环相位（不形成规则），只记录一次
     last_stated = memory.get("self_model", {}).get("self_stated_state", {}).get("last_stated")
