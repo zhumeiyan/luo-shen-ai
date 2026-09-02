@@ -403,6 +403,10 @@ def cold_start_if_needed():
                 "mu_core": 0.5,
                 "ema_S": 0.0,
                 "relational_pressure_ema": 0.0,
+                "ema_amp": 0.3,
+                "ema_ratio": 0.3,
+                "ema_pv": 0.0,
+                "ema_pv2": 0.0,
             },
         },
         "active_context": {
@@ -1735,6 +1739,19 @@ def _emergence_log(memory):
 # 因为 narrative_potential 通常 0.05-0.2，需较大 boost 才能跨过 0.55 行为门槛
 _NARRATIVE_TENDENCY_BOOST = 5.0
 
+# ── 关系地貌向量 R (r_intensity, r_historicity, r_coherence) 参数 ──
+_R_ALPHA_ENERGY = 0.005            # r_intensity EMA 平滑系数（~200 tick 窗口）
+_R_ALPHA_HIST = 0.005              # r_historicity EMA 平滑系数
+_R_ALPHA_COH = 0.0025              # r_coherence 相位速度 EMA（~400 tick 窗口）
+_R_K_INT = 6.0                     # r_intensity sigmoid 斜率
+_R_TH_INT = 0.4                    # r_intensity sigmoid 偏移
+_R_K_HIST = 4.0                    # r_historicity sigmoid 斜率
+_R_TH_HIST = 0.5                   # r_historicity sigmoid 偏移
+_R_K_COH = -3.0                    # r_coherence: 方差↑ → coherence↓
+_R_TH_COH = 0.05                   # r_coherence sigmoid 偏移
+_R_K_HIST_R = 0.6                  # 载重对压力敏感度的调制强度
+_R_K_COH_R = 0.8                  # 定型度对叙事增强的调制强度
+
 # 用户历史慢压力 → 行为选择层系数（校准后：0.1→10%, 0.2→25%, 0.4→40% 差异）
 _PRESSURE_K = 0.4
 _PRESSURE_QUALITY_SCALE = 1.5     # rp_ema → pressure_quality 缩放
@@ -1765,14 +1782,22 @@ def _select_behavior(memory, emergence):
     _phase = _ring_state.get("phase", 0.0)
     _phase_bias = 0.03 * math.sin(_phase)   # k=0.03，极小偏移
 
-    # 慢压力项：用户输入历史的指数平均唤醒（修复断点二）
-    # 系数 _PRESSURE_K（模块顶部可配置），不引入 if-then，直接线性叠加
-    _pressure_ema = _ring_state.get("relational_pressure_ema", 0.0)
-    _pressure_term = _PRESSURE_K * _pressure_ema
+    # 读取关系地貌向量 R（ring_state 中积累的三个慢变量）
+    _rint = _ring_state.get("r_intensity", 0.5)
+    _rhist = _ring_state.get("r_historicity", 0.5)
+    _rcoh = _ring_state.get("r_coherence", 0.5)
 
-    # 连续叠加叙事势 + 相位偏置 + 慢压力：不引入 if-then，直接加到 pre-activation 上
+    # 慢压力项：用户输入历史的指数平均唤醒
+    _pressure_ema = _ring_state.get("relational_pressure_ema", 0.0)
+    # 乘性调制 ①：载重 r_historicity 放大/衰减压力敏感度
+    _pressure_term = _PRESSURE_K * _pressure_ema * (1.0 + _R_K_HIST_R * (_rhist - 0.5))
+
+    # 乘性调制 ②：定型度 r_coherence 调节叙事增强强度
+    _narr_boost = _NARRATIVE_TENDENCY_BOOST * (1.0 + _R_K_COH_R * (_rcoh - 0.5))
+
+    # 连续叠加叙事势 + 相位偏置 + 慢压力（双调制全部为乘性，无新加性偏置）
     response_pre = (arousal_bias + 0.5 * tone_bias
-                    + _NARRATIVE_TENDENCY_BOOST * narrative_potential
+                    + _narr_boost * narrative_potential
                     + _phase_bias
                     + _pressure_term)
     response_tendency = 1.0 / (1.0 + math.exp(-response_pre))
@@ -1801,6 +1826,9 @@ def _select_behavior(memory, emergence):
         "max_tokens": max_tokens,
         "pressure_ema": round(_pressure_ema, 6),
         "pressure_quality": round(pq, 4),
+        "r_intensity": round(_rint, 6),
+        "r_historicity": round(_rhist, 6),
+        "r_coherence": round(_rcoh, 6),
     }
 
 
@@ -2505,14 +2533,39 @@ def _update_luoshen_coupled(memory, env, tick_id=0):
     memory["internal_climate"] = climate
     memory["self_model"]["emotion"]["intensity"] = climate["emotion_intensity"]
 
+    # ── 关系地貌向量 R 的慢变量 EMA 累积（~200 tick 窗口） ──
+    _amp_raw = math.sqrt(E_new * E_new + T_new * T_new) if (E_new is not None and T_new is not None) else 0.3
+    _prev_ema_amp = _ring_sm.get("ema_amp", 0.3)
+    _ema_amp_new = _R_ALPHA_ENERGY * _amp_raw + (1 - _R_ALPHA_ENERGY) * _prev_ema_amp
+
+    _ratio_raw = M_new / (_amp_raw + 0.01)
+    _prev_ema_ratio = _ring_sm.get("ema_ratio", 0.3)
+    _ema_ratio_new = _R_ALPHA_HIST * _ratio_raw + (1 - _R_ALPHA_HIST) * _prev_ema_ratio
+
+    _phase_raw = math.atan2(T_new, E_new)
+    _prev_phase = _ring_sm.get("phase", 0.0)
+    _pdelta = _phase_raw - _prev_phase
+    # 分支自由的 [-π, π] 包裹
+    _pdelta = _pdelta - 2 * math.pi * round(_pdelta / (2 * math.pi))
+    _pv = _pdelta / 0.8
+    _prev_pv = _ring_sm.get("ema_pv", 0.0)
+    _prev_pv2 = _ring_sm.get("ema_pv2", 0.0)
+    _ema_pv_new = _R_ALPHA_COH * _pv + (1 - _R_ALPHA_COH) * _prev_pv
+    _ema_pv2_new = _R_ALPHA_COH * (_pv * _pv) + (1 - _R_ALPHA_COH) * _prev_pv2
+
+    # R 三维归一化（sigmoid 直接内联，无嵌套函数）
+    _r_intensity = round(1.0 / (1.0 + math.exp(-_R_K_INT * (_ema_amp_new - _R_TH_INT))), 7)
+    _r_historicity = round(1.0 / (1.0 + math.exp(-_R_K_HIST * (_ema_ratio_new - _R_TH_HIST))), 7)
+    _var_pv = max(0.0, _ema_pv2_new - _ema_pv_new * _ema_pv_new)
+    _r_coherence = round(1.0 / (1.0 + math.exp(-_R_K_COH * (_var_pv - _R_TH_COH))), 7)
+
     # 环状态写入活记忆层（仅记录，不驱动对话行为）
-    phase = math.atan2(T_new, E_new)
     _new_ring_state = {
         "E": climate["emotion_intensity"],
         "T": climate["tension"],
         "N": climate["energy"],
         "M": climate["memory_pressure"],
-        "phase": round(phase, 5),
+        "phase": round(_phase_raw, 5),
         "mu_eff": round(mu_eff, 5),
         "mu_core": round(_mu_core_new, 7),
         "ema_S": round(_ema_S_new, 7),
@@ -2521,6 +2574,13 @@ def _update_luoshen_coupled(memory, env, tick_id=0):
         "S_drive": round(_total_drive_S, 5),
         "F": round(_F, 6),
         "F_mem": round(_total_act, 6),
+        "ema_amp": round(_ema_amp_new, 7),
+        "ema_ratio": round(_ema_ratio_new, 7),
+        "ema_pv": round(_ema_pv_new, 7),
+        "ema_pv2": round(_ema_pv2_new, 7),
+        "r_intensity": _r_intensity,
+        "r_historicity": _r_historicity,
+        "r_coherence": _r_coherence,
     }
     # 保留由 _apply_input_pressure 积累的 relational_pressure_ema（不能被环境 tick 冲刷）
     # 修复：无论 _rpe 是否为 0.0，必须保留；否则 environment_tick 会把中性用户的字段剥除
