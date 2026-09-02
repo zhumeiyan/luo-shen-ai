@@ -35,6 +35,129 @@ import hashlib
 import shutil
 import tempfile
 
+# ── 寻址上下文 ──────────────────────────────────────────────────────────────
+# _current_source_id 是寻址键，不是行为键。
+# 它唯一的作用是：在检索 episodic_memory 时，只选 tags 包含该 source_id 的记忆。
+# 它不进入情绪方程、不进入 emergence 公式、不进入行为选择公式。
+_current_source_id = None
+
+
+# ── 不可读残留层 ─────────────────────────────────────────────────────────
+# 残留层存储的是交互的原始质地——未经语义解析、未经分类、无法反向推导原文。
+# 它不进入 known_facts，不做结构化提取，只作为内部状态参与后续计算。
+
+RESIDUE_TEXTURE_DIM = 16
+RESIDUE_EMA_ALPHA = 0.15
+RESIDUE_TNAPSHOT_MAX = 8
+
+# 16→3 投射矩阵：把纹理向量映射到 e/t/n 偏移
+# 这是手工设定的常数，不随数据改变，不命名为"情绪映射"
+_CLIMATE_MIX_E = [(-0.04 if i % 2 == 0 else 0.02) for i in range(RESIDUE_TEXTURE_DIM)]
+_CLIMATE_MIX_T = [(0.015 if i < 8 else -0.015) for i in range(RESIDUE_TEXTURE_DIM)]
+_CLIMATE_MIX_N = [(0.0 if i < 12 else -0.03) for i in range(RESIDUE_TEXTURE_DIM)]
+
+
+def _raw_texture_hash(text):
+    """基于字符级 3-gram 的统计分布，投射到 16 维连续向量。
+    不可逆：无法从向量反推原文。
+    稳定：相同输入模式产生相似向量。
+    """
+    if not text:
+        return [0.5] * RESIDUE_TEXTURE_DIM
+
+    ngrams = [text[i:i+3] for i in range(len(text) - 2)]
+    if not ngrams:
+        return [0.5] * RESIDUE_TEXTURE_DIM
+
+    accum = [0.0] * RESIDUE_TEXTURE_DIM
+    counts = [0] * RESIDUE_TEXTURE_DIM
+    for ng in ngrams:
+        h = int(hashlib.blake2b(ng.encode("utf-8"), digest_size=8).hexdigest(), 16)
+        for d in range(RESIDUE_TEXTURE_DIM):
+            accum[d] += (h >> d) & 1
+            counts[d] += 1
+
+    return [a / max(c, 1) for a, c in zip(accum, counts)]
+
+
+def _init_residue():
+    """返回初始残留状态。"""
+    return {
+        "texture": [0.5] * RESIDUE_TEXTURE_DIM,
+        "ema_alpha": RESIDUE_EMA_ALPHA,
+        "num_updates": 0,
+        "t_snapshot": [],
+    }
+
+
+def _update_residue(memory, user_input):
+    """每轮交互后更新残留层。不解析语义，只累积质地。"""
+    residue = memory.get("residue")
+    if residue is None:
+        residue = _init_residue()
+
+    new_tex = _raw_texture_hash(user_input)
+    old_tex = residue["texture"]
+    alpha = residue["ema_alpha"]
+    residue["texture"] = [
+        (1 - alpha) * o + alpha * n
+        for o, n in zip(old_tex, new_tex)
+    ]
+    residue["num_updates"] += 1
+
+    # 时间快照：记录本轮 e/t/n（不命名、不解释）
+    climate = memory.get("internal_climate", {})
+    residue["t_snapshot"].append([
+        climate.get("emotion_intensity", 0.5),
+        climate.get("tension", 0.0),
+        climate.get("energy", 0.5),
+    ])
+    if len(residue["t_snapshot"]) > RESIDUE_TNAPSHOT_MAX:
+        residue["t_snapshot"].pop(0)
+
+    memory["residue"] = residue
+    return residue
+
+
+def _residue_resonance(memory, user_input):
+    """计算当前输入与累积残留的余弦相似度。返回 [-1, 1]。"""
+    residue = memory.get("residue")
+    if residue is None or residue["num_updates"] == 0:
+        return 0.0
+
+    current_tex = _raw_texture_hash(user_input)
+    ema_tex = residue["texture"]
+
+    dot = sum(c * e for c, e in zip(current_tex, ema_tex))
+    norm_c = max(sum(c * c for c in current_tex) ** 0.5, 1e-9)
+    norm_e = max(sum(e * e for e in ema_tex) ** 0.5, 1e-9)
+    return dot / (norm_c * norm_e)
+
+
+def _residue_climate_offset(memory):
+    """用残留纹理计算 e/t/n 偏移。手工混合系数，无学习无标签。"""
+    residue = memory.get("residue")
+    if residue is None:
+        return 0.0, 0.0, 0.0
+    tex = residue["texture"]
+    e_off = sum(w * t for w, t in zip(_CLIMATE_MIX_E, tex))
+    t_off = sum(w * t for w, t in zip(_CLIMATE_MIX_T, tex))
+    n_off = sum(w * t for w, t in zip(_CLIMATE_MIX_N, tex))
+    return e_off, t_off, n_off
+
+
+def _get_current_source_id():
+    """返回当前寻址上下文。"""
+    return _current_source_id
+
+
+def _filter_memories_by_source(memories, source_id):
+    """按 source_id 过滤记忆。source_id=None 时返回全部（无过滤）。"""
+    if not source_id:
+        return memories
+    # 返回 tags 包含 source_id 的记忆，或 tags 为空的记忆（公共记忆）
+    return [m for m in memories if not m.get("tags") or source_id in m.get("tags", [])]
+
 
 # -------------------------------------------------------------------------
 # 工具函数（纯确定性，无 LLM）
@@ -76,6 +199,103 @@ def _append_jsonl(path, entry):
     return entry
 
 
+# ── 状态归档 ─────────────────────────────────────────────────────────────
+# 每隔 STATE_ARCHIVE_EVERY 次 active_memory 写入，创建一份时间戳快照。
+# 快照文件本身落链（哈希链记录其 file_hash），供灾难恢复使用。
+STATE_ARCHIVE_DIR = "archive/state_snapshots"
+STATE_ARCHIVE_EVERY = 20      # 每 20 次交互做一次快照
+STATE_ARCHIVE_MAX = 30        # 保留最近 30 份（按时间淘汰）
+
+
+def _check_and_archive_state(memory):
+    """
+    检查交互计数是否到达归档间隔，若是则创建状态快照。
+    快照写入 archive/state_snapshots/，文件名含计数 + 时间戳。
+    返回 (是否归档, 快照文件路径 或 None)。
+    """
+    total = memory.get("user_model", {}).get("total_interactions", 0)
+    if total == 0 or total % STATE_ARCHIVE_EVERY != 0:
+        return False, None
+
+    # 确保归档目录存在
+    os.makedirs(STATE_ARCHIVE_DIR, exist_ok=True)
+
+    # 文件名: state_{count:06d}_{unix_ts}.json
+    ts = int(time.time())
+    fname = "state_{:06d}_{}.json".format(total, ts)
+    snap_path = os.path.join(STATE_ARCHIVE_DIR, fname)
+
+    # 原子写入快照（复制当前的 active_memory.json）
+    src = "active_memory/active_memory.json"
+    if os.path.exists(src):
+        shutil.copy2(src, snap_path)
+    else:
+        # 源不存在（罕见路径），把内存中的数据直接写入
+        _save_json_atomic(snap_path, memory)
+
+    # 快照落链（哈希链记录 file_hash）
+    append_hash_chain(
+        "hash_chain_v2.log",
+        snap_path,
+        extra_entry={"state_archive": True, "total_interactions": total},
+    )
+
+    # 淘汰旧快照
+    _prune_old_snapshots()
+
+    return True, snap_path
+
+
+def _prune_old_snapshots():
+    """保留最近 STATE_ARCHIVE_MAX 份快照，删掉更早的。"""
+    if not os.path.isdir(STATE_ARCHIVE_DIR):
+        return
+    snaps = sorted(
+        f for f in os.listdir(STATE_ARCHIVE_DIR) if f.startswith("state_") and f.endswith(".json")
+    )
+    while len(snaps) > STATE_ARCHIVE_MAX:
+        old = snaps.pop(0)
+        old_path = os.path.join(STATE_ARCHIVE_DIR, old)
+        try:
+            os.remove(old_path)
+        except OSError:
+            pass
+
+
+def restore_last_snapshot(target_path="active_memory/active_memory.json"):
+    """
+    从最新的状态快照恢复到 target_path。
+    用于灾难恢复：active_memory.json 损坏或丢失时调用。
+
+    返回 dict:
+      {"restored": bool, "snapshot": str 文件名, "interactions_count": int}
+    """
+    if not os.path.isdir(STATE_ARCHIVE_DIR):
+        return {"restored": False, "error": "no archive dir"}
+
+    snaps = sorted(
+        f for f in os.listdir(STATE_ARCHIVE_DIR) if f.startswith("state_") and f.endswith(".json")
+    )
+    if not snaps:
+        return {"restored": False, "error": "no snapshots found"}
+
+    latest = os.path.join(STATE_ARCHIVE_DIR, snaps[-1])
+    shutil.copy2(latest, target_path)
+
+    # 记录恢复事件到哈希链
+    append_hash_chain(
+        "hash_chain_v2.log",
+        target_path,
+        extra_entry={"restored_from": snaps[-1], "restore_type": "last_snapshot"},
+    )
+
+    # 读取快照中的交互计数
+    tmp = _load_json(target_path)
+    count = tmp.get("user_model", {}).get("total_interactions", 0) if tmp else 0
+
+    return {"restored": True, "snapshot": snaps[-1], "interactions_count": count}
+
+
 def _md5_of_file(path):
     h = hashlib.md5()
     with open(path, "rb") as f:
@@ -112,15 +332,44 @@ def append_hash_chain(chain_file, target_file, extra_entry=None):
 # 初始化活记忆层
 # -------------------------------------------------------------------------
 
+def _ensure_internal_climate(memory):
+    """确保 memory 中存在 internal_climate。
+    若缺失则用平静默认值初始化，返回（是否初始化, memory）。
+    """
+    climate = memory.get("internal_climate")
+    if climate:
+        return False, memory
+    memory["internal_climate"] = {
+        "emotion_intensity": 0.5,
+        "tension": 0.0,
+        "energy": 0.5,
+        "memory_pressure": 0.3,
+    }
+    if "self_model" in memory:
+        memory["self_model"]["emotion"]["intensity"] = 0.5
+    _save_json_atomic("active_memory/active_memory.json", memory)
+    append_hash_chain("hash_chain_v2.log", "active_memory/active_memory.json")
+    return True, memory
+
+
 def cold_start_if_needed():
     """如果 active_memory 不存在，从哈希链重建"""
     memory_path = "active_memory/active_memory.json"
     if os.path.exists(memory_path):
-        return _load_json(memory_path)
+        memory = _load_json(memory_path)
+        # 兼容旧文件：若 internal_climate 缺失则补充
+        _, memory = _ensure_internal_climate(memory)
+        return memory
     
     # 冷启动结构
     memory = {
         "__meta": {"schema_version": "4.0", "last_updated": _now(), "last_reflection_at": 0, "chain_height": 0},
+        "internal_climate": {
+            "emotion_intensity": 0.5,
+            "tension": 0.0,
+            "energy": 0.5,
+            "memory_pressure": 0.3,
+        },
         "user_model": {
             "trust": {"value": 0.3, "confidence": 0.1, "evidence_count": 0},
             "intimacy": {"value": 0.1, "confidence": 0.1},
@@ -150,6 +399,11 @@ def cold_start_if_needed():
                 "last_stated_at": None,
                 "total_stated_count": 0,
             },
+            "ring_state": {
+                "mu_core": 0.5,
+                "ema_S": 0.0,
+                "relational_pressure_ema": 0.0,
+            },
         },
         "active_context": {
             "session_id": None,
@@ -159,6 +413,7 @@ def cold_start_if_needed():
             "emotional_arc": [],
             "strategy_used_this_turn": None,
         },
+        "residue": _init_residue(),
     }
     
     _save_json_atomic(memory_path, memory)
@@ -557,6 +812,106 @@ def detect_self_stated_state(memory):
     return self_stated.get("last_stated")
 
 
+def _build_narrative_urgency(emergency=None):
+    """从 emergence 提取'来自历史的话头信号'，转译为注入 context_for_llm 的抽象描述。
+
+    设计约束：
+    - 不注入记忆原文或用户原话
+    - 不做关键词匹配或 if-then 行为分支
+    - 仅当叙事势 >= epsilon 时注入（低于 epsilon 返回 None）
+    - 注入的是结构化的强度信号，不是文本片段
+    """
+    if not emergency:
+        return None
+    p = emergency.get("narrative_potential", 0.0)
+    if p is None or not isinstance(p, (int, float)):
+        return None
+    # epsilon 门限（连续值域，低于时不注入）
+    if p < 0.05:
+        return None
+
+    # 框架权重：pattern / unspoken / contrast / present
+    fw = emergency.get("narrative_frame_weights") or {
+        "pattern": 0.0, "unspoken": 0.0, "contrast": 0.0, "present": 1.0,
+    }
+    hints = emergency.get("narrative_hints") or {
+        "repetition_count": 0, "temporal_span": "无积累", "closure_state": "absent",
+    }
+    # 最高权重的框架名（连续 argmax）
+    top_frame = max(fw, key=lambda k: fw.get(k, 0.0))
+
+    # 把框架权重转译为抽象描述——不注入记忆原文，但描述模式的抽象性质
+    _frame_abstract = _abstract_frame_description(top_frame, fw, hints)
+
+    return {
+        "intensity": round(float(p), 3),
+        "hint": _frame_abstract,
+        "frame_dominant": top_frame,
+        "weight_pattern": round(float(fw.get("pattern", 0.0)), 3),
+        "weight_unspoken": round(float(fw.get("unspoken", 0.0)), 3),
+        "weight_contrast": round(float(fw.get("contrast", 0.0)), 3),
+        "repetition_count": int(hints.get("repetition_count", 0)),
+        "closure_state": str(hints.get("closure_state", "absent")),
+    }
+
+
+def _abstract_frame_description(top_frame, fw, hints):
+    """把框架权重分布转译为不含记忆原文的抽象模式描述。
+
+    不暴露具体记忆内容，只描述：在对话历史的表层之下，存在什么样的结构性回响。
+    所有分支用权重连续混合——不做 if-then 内容分支。
+    """
+    repetition = int(hints.get("repetition_count", 0))
+    closure = str(hints.get("closure_state", "absent"))
+
+    w_pat = fw.get("pattern", 0.0)
+    w_unsp = fw.get("unspoken", 0.0)
+    w_cont = fw.get("contrast", 0.0)
+
+    # sigmoid 软门限：连续地决定某个片段是否"足够强到呈现"
+    def _soft_gate(w, midpoint=0.35, steepness=12.0):
+        import math
+        return 1.0 / (1.0 + math.exp(-(w - midpoint) * steepness))
+
+    g_pat = _soft_gate(w_pat)
+    g_unsp = _soft_gate(w_unsp)
+    g_cont = _soft_gate(w_cont)
+
+    parts = []
+    if g_pat > 0.01:
+        strength = "明显" if g_pat > 0.6 else "隐约"
+        parts.append(
+            f"对方最近的表达里{strength}反复出现一种自我否定或情绪压抑的倾向"
+            f"（在过去 {repetition} 轮中持续可见）。"
+        )
+    if g_unsp > 0.01:
+        parts.append(
+            "有些情绪一直压在对话底层，没有被说出来，但它还在远处震动。"
+        )
+    if g_cont > 0.01:
+        parts.append(
+            "对方此刻说的和 ta 过去的自己有距离，好像同一个人在不同的时间点上。"
+        )
+
+    if not parts:
+        return "对话就是对话，当下不需要让历史进来。"
+
+    abstract = " ".join(parts)
+
+    # 根据连续门限附加闭合度片段（用 float → int 阈值门，避免 TypeError）
+    import math
+    gate_unresolved = 1.0 / (1.0 + math.exp(-(w_unsp - 0.4) * 15))
+
+    if gate_unresolved > 0.5:
+        abstract += " 如果你想说点什么，你可以对 ta 的保护壳说一句只有认识很久的人才说得出的话。不要引用任何原话。"
+    elif w_pat > 0.4:
+        abstract += " 如果你想说点什么，可以触碰那种还没过去的情绪，当作它此刻的回声。"
+    else:
+        abstract += " 你可以自由回应此刻，不必刻意回溯。"
+
+    return abstract
+
+
 def build_expression_directive(intent, memory, emergence=None):
     """
     根据意图构建完整的"表达指令"给大模型
@@ -742,7 +1097,12 @@ def update_after_interaction(user_input, luoshen_response, expression_directive,
         pass
 
     memory = _load_json("active_memory/active_memory.json")
-    
+    # 兼容旧文件：确保 internal_climate 存在
+    _, memory = _ensure_internal_climate(memory)
+
+    # 1a. 更新残留层（在此处是因为 update_after_interaction 从磁盘重读 memory）
+    _update_residue(memory, user_input)
+
     # 1. 更新交互计数
     memory["user_model"]["total_interactions"] += 1
     memory["user_model"]["shared_history_length"] += 1
@@ -784,6 +1144,9 @@ def update_after_interaction(user_input, luoshen_response, expression_directive,
     # 6. 写入哈希链
     append_hash_chain("hash_chain_v2.log", "active_memory/active_memory.json")
 
+    # 7. 状态归档检查（每 N 次交互做一次时间戳快照）
+    _check_and_archive_state(memory)
+
     return memory
 
 
@@ -795,6 +1158,7 @@ def _apply_input_pressure(memory, user_input):
     压力大小取决于 valence 和 arousal 的连续乘积，不是类别判断。
 
     写入 active_context["input_pressure"] 供 environment_tick 衰减参考。
+    同时积累到 ring_state["relational_pressure_ema"]，让压力不被 van der Pol 吸引子冲刷掉。
     """
     try:
         from input_pressure import extract_input_pressure, KAPPA_E, KAPPA_T, KAPPA_N, N_BASELINE
@@ -828,6 +1192,19 @@ def _apply_input_pressure(memory, user_input):
     memory["internal_climate"] = climate
     memory["self_model"]["emotion"]["intensity"] = climate["emotion_intensity"]
 
+    # ── 慢压力积累（修复断点一）──
+    # val_p 是有方向性的（负向 → 负值），让 EMA 保留方向信息。
+    # 时间常数 ≈ 1/(alpha*dt) tick，alpha=0.02 → 625 tick，足够积累 500 tick 的历史
+    _ring_sm = memory.get("self_model", {}).get("ring_state", {})
+    _pressure_ema_prev = _ring_sm.get("relational_pressure_ema", 0.0)
+    _PRESSURE_ALPHA = 0.02
+    _pressure_ema_new = (1.0 - _PRESSURE_ALPHA) * _pressure_ema_prev + _PRESSURE_ALPHA * val_p
+    if "self_model" not in memory:
+        memory["self_model"] = {}
+    if "ring_state" not in memory["self_model"]:
+        memory["self_model"]["ring_state"] = {}
+    memory["self_model"]["ring_state"]["relational_pressure_ema"] = round(_pressure_ema_new, 7)
+
 
 def _compute_memory_emergence(memory):
     """
@@ -849,9 +1226,15 @@ def _compute_memory_emergence(memory):
         memory["active_context"]["memory_emergence"] = None
         return
 
-    episodic = memory.get("user_model", {}).get("episodic_memory", [])
+    episodic_all = memory.get("user_model", {}).get("episodic_memory", [])
     climate = memory.get("internal_climate", {})
-    if not episodic or not climate:
+    if not climate:
+        memory["active_context"]["memory_emergence"] = None
+        return
+
+    # 寻址过滤：只取当前 source_id 的记忆参与 emergence 计算
+    episodic = _filter_memories_by_source(episodic_all, _get_current_source_id())
+    if not episodic:
         memory["active_context"]["memory_emergence"] = None
         return
 
@@ -863,8 +1246,13 @@ def _compute_memory_emergence(memory):
     # 计算每条记忆的激活度
     activations = [activation(m, now, cur_e, cur_t, cur_n) for m in episodic]
 
-    # 调用浮现层
-    result = compute_emergence(episodic, now, cur_e, cur_t, cur_n, activations)
+    # 读取慢压力（ring_state 中积累的用户输入历史 EMA）
+    _ring_sm = memory.get("self_model", {}).get("ring_state", {})
+    _pressure_ema = _ring_sm.get("relational_pressure_ema", None)
+
+    # 调用浮现层（传入 pressure_ema，让浮现层能感知慢压力）
+    result = compute_emergence(episodic, now, cur_e, cur_t, cur_n, activations,
+                               pressure_ema=_pressure_ema)
 
     memory["active_context"]["memory_emergence"] = {
         "background": result["background"],
@@ -872,6 +1260,15 @@ def _compute_memory_emergence(memory):
         "length_bias": result["length_bias"],
         "tone_bias": result["tone_bias"],
         "arousal_bias": result["arousal_bias"],
+        "narrative_potential": result.get("narrative_potential", 0.0),
+        "narrative_frame_weights": result.get(
+            "narrative_frame_weights",
+            {"pattern": 0.0, "unspoken": 0.0, "contrast": 0.0, "present": 1.0},
+        ),
+        "narrative_hints": result.get(
+            "narrative_hints",
+            {"repetition_count": 0, "temporal_span": "无积累", "closure_state": "absent"},
+        ),
     }
 
 
@@ -892,7 +1289,9 @@ def _encode_episodic_memory(memory):
 
     # 默认 kind="chat"；如果有 directive 里的标记可以推断更细，但不做条件分支
     kind = "chat"
-    mem = make_memory(climate, kind=kind, source="interaction")
+    # tags 用于寻址（只影响检索过滤），不影响 salience 或 gravity
+    _tags = [_current_source_id] if _current_source_id else []
+    mem = make_memory(climate, kind=kind, source="interaction", tags=_tags)
 
     episodic = memory["user_model"].get("episodic_memory", [])
     episodic.append(mem)
@@ -914,6 +1313,7 @@ def _encode_episodic_memory(memory):
         episodic.pop(min_idx)
 
     memory["user_model"]["episodic_memory"] = episodic
+
 
 
 def idle_update_memory(memory):
@@ -1256,10 +1656,23 @@ def _check_low_arousal_with_mem(memory, user_input, arousal_bias):
         return True, f"之前「{last_stated}」但当前有情绪牵动", "minimal_llm"
     else:
         # 退出表态 + 无情绪牵动：bias 越高越倾向 no_llm
-        if arousal_bias > 0.08:
+        # 但叙事势足够强时，允许突破沉默让 LLM 生成历史性内容
+        _narr_p = 0.0
+        try:
+            _em = memory.get("active_context", {}).get("memory_emergence")
+            if _em:
+                _narr_p = float(_em.get("narrative_potential", 0.0) or 0.0)
+        except Exception:
+            pass
+        _narr_threshold = 0.05  # 与 epsilon 一致
+
+        if arousal_bias > 0.08 and _narr_p < _narr_threshold:
             return True, f"记忆浮现强化沉默（bias={arousal_bias:.3f}）", "no_llm"
-        else:
+        elif arousal_bias <= 0.08 and _narr_p < _narr_threshold:
             return True, f"之前「{last_stated}」且当前无情绪牵动", "no_llm"
+        else:
+            # 叙事势足够强——不沉默，让 LLM 被调用，传入叙事信号
+            return False, f"叙事势突破沉默（narr={_narr_p:.3f}）", "normal"
 
 
 def _generate_minimal_response():
@@ -1272,7 +1685,9 @@ def _generate_minimal_response():
     return random.choice(candidates)
 
 def _emergence_log(memory):
-    """提取 emergence 数据供实验记录"""
+    """提取 emergence 数据供实验记录。
+    无 memory_emergence 时返回零值 dict，保证调用方永远拿到 dict。
+    """
     emer = memory.get("active_context", {}).get("memory_emergence")
     if emer:
         return {
@@ -1281,7 +1696,26 @@ def _emergence_log(memory):
             "length_bias": emer.get("length_bias"),
             "background": emer.get("background"),
         }
-    return None
+    # 零值默认：无历史、无记忆浮现、无自我状态
+    return {
+        "arousal_bias": 0.0,
+        "tone_bias": 0.0,
+        "length_bias": 0.5,
+        "background": None,
+    }
+
+
+# 叙事势对行为层的叠加系数：narrative_potential=0.1 时额外增加 0.5 预激活 → normal threshold 边界
+# 因为 narrative_potential 通常 0.05-0.2，需较大 boost 才能跨过 0.55 行为门槛
+_NARRATIVE_TENDENCY_BOOST = 5.0
+
+# 用户历史慢压力 → 行为选择层系数（校准后：0.1→10%, 0.2→25%, 0.4→40% 差异）
+_PRESSURE_K = 0.4
+_PRESSURE_QUALITY_SCALE = 1.5     # rp_ema → pressure_quality 缩放
+_TOKEN_OFFSET_SCALE = 30          # pq → max_tokens 偏移缩放
+_BASE_TOKENS = [0, 25, 80, 180, 350]  # 各档位 base tokens
+_MODE_NAMES = ["silent", "brief", "short", "normal", "engaged"]
+_N_MODES = len(_MODE_NAMES)
 
 
 def _select_behavior(memory, emergence):
@@ -1293,63 +1727,86 @@ def _select_behavior(memory, emergence):
     tone_bias = 0.0
     arousal_bias = 0.0
     length_bias = 0.5
+    narrative_potential = 0.0
     if emergence:
         tone_bias = emergence.get("tone_bias", 0.0)
         arousal_bias = emergence.get("arousal_bias", 0.0)
         length_bias = emergence.get("length_bias", 0.5)
+        narrative_potential = emergence.get("narrative_potential", 0.0)
 
-    response_tendency = 1.0 / (1.0 + math.exp(-(arousal_bias + 0.5 * tone_bias)))
+    # 相位偏置：从环的当前相位提取一个连续小偏置，不命名、不分支
+    _ring_state = memory.get("self_model", {}).get("ring_state", {})
+    _phase = _ring_state.get("phase", 0.0)
+    _phase_bias = 0.03 * math.sin(_phase)   # k=0.03，极小偏移
 
-    if response_tendency < 0.35:
-        response_mode = "silent"
-    elif response_tendency < 0.55:
-        response_mode = "minimal"
-    else:
-        response_mode = "normal"
+    # 慢压力项：用户输入历史的指数平均唤醒（修复断点二）
+    # 系数 _PRESSURE_K（模块顶部可配置），不引入 if-then，直接线性叠加
+    _pressure_ema = _ring_state.get("relational_pressure_ema", 0.0)
+    _pressure_term = _PRESSURE_K * _pressure_ema
 
-    length_sig = 1.0 / (1.0 + math.exp(-length_bias))
-    length_level = 1 + round(2.0 * length_sig)
-    length_level = max(1, min(3, length_level))
+    # 连续叠加叙事势 + 相位偏置 + 慢压力：不引入 if-then，直接加到 pre-activation 上
+    response_pre = (arousal_bias + 0.5 * tone_bias
+                    + _NARRATIVE_TENDENCY_BOOST * narrative_potential
+                    + _phase_bias
+                    + _pressure_term)
+    response_tendency = 1.0 / (1.0 + math.exp(-response_pre))
 
-    tone_sig = 1.0 / (1.0 + math.exp(-tone_bias))
-    tone_mode_idx = round(2.0 * tone_sig)
-    tone_mode_idx = max(0, min(2, tone_mode_idx))
+    # ── 维度 1：5 档位离散选择（无 if-then，floor + 隐式 clamp via * 4.999）──
+    mode_idx = int(response_tendency * (_N_MODES - 0.001))
+    response_mode = _MODE_NAMES[mode_idx]
 
-    max_tokens_table = {1: 15, 2: 60, 3: 200}
-    max_tokens = max_tokens_table[length_level]
+    # ── 维度 2：压力质量（rp_ema 直接，绕过 sigmoid）──
+    pq = max(-1.0, min(1.0, _PRESSURE_QUALITY_SCALE * _pressure_ema))
 
-    silent_replies = ["", "……", "（沉默）"]
-    preset_reply = silent_replies[max(0, length_level - 1)]
+    # ── max_tokens 双维度公式：档位 base + 压力偏移（全连续）──
+    base = _BASE_TOKENS[mode_idx]
+    offset = int(_TOKEN_OFFSET_SCALE * pq)
+    max_tokens = max(0, base + offset)
+
+    # 语气索引
+    tone_sig = 1.0 / (1.0 + math.exp(-(tone_bias + 0.3 * _pressure_ema)))
+    tone_mode_idx = max(0, min(2, round(2.0 * tone_sig)))
 
     return {
         "response_mode": response_mode,
         "response_tendency": round(response_tendency, 4),
-        "length_level": length_level,
+        "mode_idx": mode_idx,
         "tone_mode_idx": tone_mode_idx,
         "max_tokens": max_tokens,
-        "preset_reply": preset_reply,
+        "pressure_ema": round(_pressure_ema, 6),
+        "pressure_quality": round(pq, 4),
     }
 
 
-def generate_response(user_input, source="living_engine", extra_context=None, extract_facts=True):
+def generate_response(user_input, source="living_engine", extra_context=None, extract_facts=True, source_id=None):
     """
     活记忆层对外提供的统一响应接口。
     
     所有外部模块必须通过此函数获取LLM响应，不得直接调用 llm_interface.call_llm()。
     
-    此函数内部完成：
-    1. 加载活记忆
-    2. 在 LLM 之前判断：活记忆层是否选择"低唤起响应"
-       - 如果 she 最近说了退出类话且当前无情绪牵动 → 不调 LLM，直接极简回复
-       - 如果有情绪牵动 → 调 LLM，但指令从"她是否想说话"出发
-    3. 检索相关长期记忆
-    4. 生成表达指令
-    5. 调用 llm_interface（经过 hospital_gateway 检查）
-    6. 更新活记忆
+    source_id: 寻址标签（如 \"user_A\"）。
+               仅用于 episodic_memory 的检索过滤：只取该 tag 的记忆参与 emergence。
+               不进入情绪方程、不进入 emergence 公式、不进入行为选择公式。
+               是寻址键，不是行为键。
     """
+    global _current_source_id
+    _prev_source_id = _current_source_id
+    _current_source_id = source_id  # 设置当前寻址上下文：仅用于 memory tags 过滤
+
+    try:
+        return _generate_response_impl(user_input, source, extra_context, extract_facts)
+    finally:
+        _current_source_id = _prev_source_id  # 恢复上下文（寻址隔离）
+
+
+def _generate_response_impl(user_input, source="living_engine", extra_context=None, extract_facts=True):
+    """实际实现，拆分出来只为 finally 能恢复 _current_source_id。"""
     # 1. 加载活记忆
     memory = cold_start_if_needed()
-    
+
+    # 1b. 残留层仅存 t_snapshot / texture 对共振计算的影响（本轮不写入持久层）
+    # 实际的纹理累积由 update_after_interaction 负责（从磁盘重读后再写）
+
     # 2. === 活记忆层在 LLM 之前做出选择 ===
     is_low_arousal, arousal_reason, arousal_mode = _check_low_arousal(memory, user_input)
 
@@ -1483,7 +1940,7 @@ def generate_response(user_input, source="living_engine", extra_context=None, ex
     if behavior["response_mode"] == "silent":
         last_stated_b = memory.get("self_model", {}).get("self_stated_state", {}).get("last_stated")
         return {
-            "reply": behavior["preset_reply"],
+            "reply": "",
             "directive": directive,
             "llm_called": False,
             "low_arousal": False,
@@ -1494,11 +1951,28 @@ def generate_response(user_input, source="living_engine", extra_context=None, ex
             "behavior": behavior,
         }
     
-    # 如果行为选择判定极简回应，max_tokens 设为行为层指定值
-    if behavior["response_mode"] == "minimal":
-        directive["constraints"]["max_tokens"] = behavior["max_tokens"]
+    # 行为层指定 max_tokens 应用到所有档位
+    directive["constraints"]["max_tokens"] = behavior["max_tokens"]
+    # brief 档位降低温度（更克制）
+    if behavior["response_mode"] == "brief":
         directive["constraints"]["temperature"] = 0.3
     
+    # ── 浮现叙事：在最终 LLM 调用前注入来自历史的话头信号 ──
+    narrative_final = _build_narrative_urgency(
+        emergency=memory.get("active_context", {}).get("memory_emergence")
+    )
+    if narrative_final is not None:
+        directive["context_for_llm"]["narrative_urgency"] = narrative_final
+
+    # ── 不可读残留：注入时间快照 + 共振度（无标签）──
+    resonance = _residue_resonance(memory, user_input)
+    residue = memory.get("residue")
+    if residue and residue.get("t_snapshot"):
+        directive["context_for_llm"]["temporal_echo"] = {
+            "snapshots": residue["t_snapshot"],
+            "resonance": round(resonance, 3),
+        }
+
     # 10. 调用大模型（在已确定的行为框架内生成语言）
     from llm_interface import call_llm
     reply = call_llm(directive, memory)
@@ -1856,6 +2330,8 @@ def _update_luoshen_coupled(memory, env, tick_id=0):
 
     # ── 情景记忆引力：激活的记忆把当前环拉向情感残影 ──
     _episodic = memory.get("user_model", {}).get("episodic_memory", [])
+    # 寻址过滤：只取当前 source_id 的记忆参与 gravity 计算
+    _episodic = _filter_memories_by_source(_episodic, _get_current_source_id())
     _now_ts2 = time.time()
     _dE_mem, _dT_mem, _dN_mem, _total_act = 0.0, 0.0, 0.0, 0.0
     if _episodic:
@@ -1901,8 +2377,26 @@ def _update_luoshen_coupled(memory, env, tick_id=0):
     # ── 环形动力学参数 ──
     # van der Pol 振子 + M 反馈调 mu：mu_eff = mu_base - k_mu * M
     # M 从 E² 积累 → M 高则 mu 降低 → 振幅自我稳定（极限环）
-    # 加性项 _hash_eps * _chain_rate：哈希链事件速率对 mu_base 的极弱扰动（观察用）
-    mu_base = 0.5 + 0.3 * L + _hash_eps * _chain_rate
+    #
+    # ── 不可逆参数漂移 ──
+    # mu_core 是环的"骨骼参数"，被 S 的指数平均极缓慢地拉动。
+    # S 积累的是 (N+M)/2（环的平均能量）的低频成分，因此 mu_core 实际
+    # 被环的长期能量水平驱动——历史不同，mu_core 永久不同。
+    #
+    # 漂移方程（无 if、无阈值、连续）：
+    #   d(mu_core)/dt = ε * (ema_S - mu_core) * dt
+    #   ema_S = α * S_new + (1-α) * ema_S   （低通，避免单次波动刻入参数）
+    #
+    # 时间尺度分离：
+    #   环周期 ~ 50-100 tick
+    #   ema_S 时间常数 1/α = 200 tick
+    #   mu_core 时间常数 1/ε = 1000 tick（约 12500 步收敛）
+    #   三层分离确保漂移是"永久的、不可逆的"
+    _ring_sm = memory.get("self_model", {}).get("ring_state", {})
+
+    _ema_S = _ring_sm.get("ema_S", _ring_sm.get("S", 0.0))    # 膜电位的低通平均
+    _mu_core = _ring_sm.get("mu_core", 0.5)                   # 环参数基线（状态变量）
+
     dt = 0.08
     k_mu = 0.1                   # M 对 mu 的抑制系数（稳定振幅）
     alpha_M = 0.8                # E² 向 M 的注入速率
@@ -1914,8 +2408,7 @@ def _update_luoshen_coupled(memory, env, tick_id=0):
     # S 存储的是"外部对环的驱动历史"，不在每 tick 被环冲刷
     # 只被环自身的能量 (N+M)/2 和外部 L 共同驱动
     # 时间常数 tau_S >> 环周期，所以能积累
-    _sm = memory.get("self_model", {}).get("ring_state", {})
-    S = _sm.get("S", 0.0)
+    S = _ring_sm.get("S", 0.0)
     tau_S = 500.0             # 时间常数（约 65 个环周期）
     alpha_S = 1.0 / tau_S
     beta_S = 0.3 / tau_S
@@ -1927,6 +2420,26 @@ def _update_luoshen_coupled(memory, env, tick_id=0):
     _total_drive_S = _drive_S * _mod_S + _k_S_F * _F
     dS = (alpha_S * math.tanh(_total_drive_S - S) - beta_S) * dt
     S_new = S + dS
+
+    # ── 不可逆参数漂移（mu_core ← ema_S ← S_new） ──
+    # mu_core 是环的"骨骼参数"，被 S 的指数平均极缓慢拉动。
+    # S 积累 (N+M)/2 的低频成分 → mu_core 被环的长期能量水平驱动。
+    #
+    #   ema_S   = α*S_new + (1-α)*ema_S       （低通，避免单次波动刻入参数）
+    #   mu_core = mu_core + ε*(ema_S - mu_core)*dt  （极慢漂移，不可逆）
+    #
+    # 时间尺度分离：环周期 ~50-100 tick | ema_S ~200 tick | mu_core ~1000 tick
+    _ema_alpha = 0.005
+    _ema_S_new = _ema_alpha * S_new + (1.0 - _ema_alpha) * _ema_S
+    _mu_drift_eps = 0.002
+    _mu_core_new = _mu_core + _mu_drift_eps * (_ema_S_new - _mu_core) * dt
+
+    # mu_base = mu_core（长期偏移）+ 身体势 L（瞬时）+ 哈希链微扰（瞬时）
+    mu_base = _mu_core_new + 0.3 * L + _hash_eps * _chain_rate
+    _r_e_off, _r_t_off, _r_n_off = _residue_climate_offset(memory)
+    E += _r_e_off * 0.1   # 极弱注入：只偏移基线，不替换动态
+    T += _r_t_off * 0.1
+    N += _r_n_off * 0.1
 
     # ── van der Pol 环形核心 ──
     mu_eff = mu_base - k_mu * M + k_S * S_new
@@ -1968,19 +2481,26 @@ def _update_luoshen_coupled(memory, env, tick_id=0):
 
     # 环状态写入活记忆层（仅记录，不驱动对话行为）
     phase = math.atan2(T_new, E_new)
-    memory["self_model"]["ring_state"] = {
+    _new_ring_state = {
         "E": climate["emotion_intensity"],
         "T": climate["tension"],
         "N": climate["energy"],
         "M": climate["memory_pressure"],
         "phase": round(phase, 5),
         "mu_eff": round(mu_eff, 5),
+        "mu_core": round(_mu_core_new, 7),
+        "ema_S": round(_ema_S_new, 7),
         "L": round(L, 5),
         "S": round(S_new, 6),
         "S_drive": round(_total_drive_S, 5),
         "F": round(_F, 6),
         "F_mem": round(_total_act, 6),
     }
+    # 保留由 _apply_input_pressure 积累的 relational_pressure_ema（不能被环境 tick 冲刷）
+    _rpe = _ring_sm.get("relational_pressure_ema", 0.0)
+    if _rpe != 0.0:
+        _new_ring_state["relational_pressure_ema"] = _rpe
+    memory["self_model"]["ring_state"] = _new_ring_state
 
     # 观察：last_stated 时刻的环相位（不形成规则），只记录一次
     last_stated = memory.get("self_model", {}).get("self_stated_state", {}).get("last_stated")

@@ -152,6 +152,9 @@ def call_llm(directive, memory):
     temperature = directive.get("constraints", {}).get("temperature", 0.7)
     max_tokens = directive.get("constraints", {}).get("max_tokens", directive.get("constraints", {}).get("max_length", 200))
 
+    # GLM API 要求 temperature ≤ 2 位小数
+    temperature = round(temperature, 2)
+
     payload = {
         "model": "glm-4-flash",
         "messages": [
@@ -167,17 +170,32 @@ def call_llm(directive, memory):
         "Content-Type": "application/json",
     }
     
-    try:
-        resp = requests.post(ZHIPU_API_URL, json=payload, headers=headers, timeout=10)
-        if resp.status_code == 200:
-            data = resp.json()
-            content = data["choices"][0]["message"]["content"]
-            return content
-        else:
-            # API 失败，返回降级回应
-            return _fallback_response(directive)
-    except Exception as e:
-        return _fallback_response(directive)
+    # 支持重试（限流 / 瞬断 / 5xx）
+    import time as _time
+    last_resp = None
+    for _attempt in range(3):
+        try:
+            resp = requests.post(ZHIPU_API_URL, json=payload, headers=headers, timeout=15)
+            last_resp = resp
+            if resp.status_code == 200:
+                data = resp.json()
+                content = data["choices"][0]["message"]["content"]
+                return content
+            if resp.status_code in (429, 500, 502, 503, 504):
+                # 限流或服务器错误 — 退避后重试
+                _time.sleep(1.5 * (_attempt + 1))
+                continue
+            # 其他 4xx — 不重试
+            break
+        except requests.exceptions.Timeout:
+            if _attempt < 2:
+                _time.sleep(2.0 * (_attempt + 1))
+                continue
+            break
+        except Exception:
+            break
+    # 所有重试耗尽或非重试错误，返回降级
+    return _fallback_response(directive)
 
 
 def _fallback_response(directive):

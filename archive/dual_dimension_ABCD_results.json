@@ -1,0 +1,133 @@
+{
+  "experiment": "ABCD_dual_dimension_stability",
+  "timestamp": "2026-09-02",
+  "code_ref": "living_engine.py:_select_behavior (5-mode + max_tokens)",
+  "purpose": "验证双维度行为层在 A/B/C/D 四组下的区分能力",
+  "method": "500 tick 训练 + 20 tick 测试（raw primitive，零 LLM 调用）",
+  "code_constants": {
+    "_N_MODES": 5,
+    "_PRESSURE_QUALITY_SCALE": 1.5,
+    "_TOKEN_OFFSET_SCALE": 30,
+    "_BASE_TOKENS": [
+      0,
+      25,
+      80,
+      180,
+      350
+    ],
+    "_MODE_NAMES": [
+      "silent",
+      "brief",
+      "short",
+      "normal",
+      "engaged"
+    ]
+  },
+  "results": {
+    "train_final_state": {
+      "A_negative": {
+        "rp_ema": -0.642831,
+        "mu_core": 0.462539
+      },
+      "B_positive": {
+        "rp_ema": 0.39362,
+        "mu_core": 0.462458
+      },
+      "C_mixed": {
+        "rp_ema": -0.002181,
+        "mu_core": 0.462433
+      },
+      "D_neutral": {
+        "rp_ema": 0.0,
+        "mu_core": 0.462405
+      }
+    },
+    "test_20tick_summary": {
+      "A_negative": {
+        "mode_distribution": {
+          "short": 20
+        },
+        "mode_idx": 2,
+        "max_tokens_range": [
+          52,
+          61
+        ],
+        "max_tokens_mean": 56.9,
+        "pressure_quality_range": [
+          -0.945,
+          -0.644
+        ],
+        "tendency_range": [
+          0.444,
+          0.46
+        ]
+      },
+      "B_positive": {
+        "mode_distribution": {
+          "short": 20
+        },
+        "mode_idx": 2,
+        "max_tokens_range": [
+          91,
+          97
+        ],
+        "max_tokens_mean": 94.0,
+        "pressure_quality_range": [
+          0.394,
+          0.579
+        ],
+        "tendency_range": [
+          0.519,
+          0.535
+        ]
+      },
+      "C_mixed": {
+        "mode_distribution": {
+          "short": 20
+        },
+        "mode_idx": 2,
+        "max_tokens_range": [
+          80,
+          80
+        ],
+        "max_tokens_mean": 80.0,
+        "pressure_quality_range": [
+          -0.003,
+          -0.002
+        ],
+        "tendency_range": [
+          0.493,
+          0.503
+        ]
+      },
+      "D_neutral": {
+        "mode_distribution": {
+          "short": 20
+        },
+        "mode_idx": 2,
+        "max_tokens_range": [
+          80,
+          80
+        ],
+        "max_tokens_mean": 80.0,
+        "pressure_quality_range": [
+          0.0,
+          0.0
+        ],
+        "tendency_range": [
+          0.493,
+          0.503
+        ]
+      }
+    }
+  },
+  "key_findings": {
+    "all_groups_same_mode": "short (mode_idx=2) — 四组 response_tendency ∈ [0.44, 0.58]，都在档位 2 区间",
+    "max_tokens_differentiation": "A=57 / B=94 / C=80 / D=80 — A/B 间距 37 tokens（A 被抑制，B 被延展）",
+    "A_vs_B_gap": "37 tokens — 仍显著分离",
+    "C_vs_D_identical": "80 = 80 — C 混合情感几乎抵消，与 D 中性一致",
+    "conclusion": "双维度方案有效：离散模式统一（均为 short），连续 max_tokens 提供差异性"
+  },
+  "behavior_formula": "max_tokens = _BASE_TOKENS[mode_idx] + int(_TOKEN_OFFSET_SCALE * pressure_quality)",
+  "pressure_quality_formula": "clamp(_PRESSURE_QUALITY_SCALE * rp_ema, -1, 1)"
+}

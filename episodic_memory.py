@@ -33,13 +33,15 @@ SALIENCE = {                  # 经历类型的固有显著度
 MAX_MEMORIES = 50             # 超过后丢弃最老且激活度最低的记忆
 
 
-def make_memory(climate, kind="unknown", source=None):
+def make_memory(climate, kind="unknown", source=None, tags=None):
     """
     活记忆层调用：根据当前环状态创建一条记忆残影。
 
     climate: living_engine 的 internal_climate 字典
     kind: 经历类型（决定 salience_base）
     source: 来源标签（调试用，可为 None）
+    tags: 寻址标签列表（如 ["user_A", "user_B"]），用于记忆分区检索。
+          不参与 salience、activation、gravity 的计算——只用于检索过滤。
 
     返回一个字典，不含文本。
     """
@@ -52,6 +54,7 @@ def make_memory(climate, kind="unknown", source=None):
         "salience": float(salience),
         "kind": kind,
         "source": source,
+        "tags": list(tags) if tags else [],
     }
 
 

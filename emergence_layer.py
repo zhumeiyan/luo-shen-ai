@@ -27,6 +27,20 @@ DOMINANT_AMP = 8.0            # (e_bg - 中性点) 的放大倍数
 NEUTRAL_E = 0.5               # E 的中性参考点
 AROUSAL_AGE_INVERT = 0.3      # sigmoid 反向点：age 越小，arousal 越高
 
+# ─── 慢压力感知参数 ───
+# 让浮现层能"感知"ring_state中的relational_pressure_ema
+# pressure_ema ∈ 约 [-0.6, +0.6]（500 tick积累）
+K_PRESSURE_TONE = 0.25       # 压力对语气的调制强度（负压力 → 语气下沉）
+K_PRESSURE_AROUSAL = 0.15    # 压力对唤醒的调制强度（负压力 → 唤醒降低 → 更谨慎）
+
+# ─── 浮现叙事层参数 ───
+# 叙事势：由四个连续分量相乘构成，代表“来自历史的话头强度”
+NARRATIVE_DECAY_TAU = 3600.0       # 未闭合情感衰减：1 小时半衰
+NARRATIVE_EPSILON = 0.05           # 门限：低于此值不注入 LLM
+NARRATIVE_MAX_AGE = 604800.0       # 7 天加权最大记忆年龄
+NARRATIVE_SIGMA = 0.12             # 高斯混合带宽（E/T/N 空间距离）
+NARRATIVE_OPEN_SALIENCE_THRESH = 0.7  # 闭合判定阈值（连续软化）
+
 
 def softmax_weights(activations):
     """
@@ -166,9 +180,165 @@ def arousal_bias(background):
     return K_AROUSAL_DELTA * background["dominance"] * age_sigmoid
 
 
-def compute_emergence(memories, now, cur_e, cur_t, cur_n, activations):
+# ─── 浮现叙事层 ───
+# 四个分量连续计算，全部 [0, 1]
+
+
+def _affective_cluster_density(memories):
     """
-    一次调用，把记忆列表映射为"主导记忆背景 + 三个偏置输出"。
+    分量 A：情感聚集密度。
+    对 E/T/N 空间做软高斯混合，找最密的聚集区。
+    """
+    if len(memories) < 2:
+        # 1 条记忆：聚集度连续地低（1/N 归一化）
+        return 1.0 / max(1.0, len(memories))
+
+    # 以记忆点自身为聚类中心候选
+    best_density = 0.0
+    two_sigma_sq = 2.0 * (NARRATIVE_SIGMA ** 2)
+    for j, mj in enumerate(memories):
+        density_j = 0.0
+        ej, tj, nj = mj["e_s"], mj["t_s"], mj["n_s"]
+        for i, mi in enumerate(memories):
+            de = mi["e_s"] - ej
+            dt = mi["t_s"] - tj
+            dn = mi["n_s"] - nj
+            dist_sq = de * de + dt * dt + dn * dn
+            density_j += math.exp(-dist_sq / two_sigma_sq)
+        if density_j > best_density:
+            best_density = density_j
+
+    # 归一化到 [0, 1]：除以聚集点数（完全聚集时 = 1）
+    return best_density / len(memories)
+
+
+def _temporal_focus(memories, now):
+    """
+    分量 B：时间焦点。
+    记忆的归一化时间聚集度（标准差越小 → 越聚集 → 值越高）。
+    """
+    if len(memories) < 2:
+        return 0.5  # 1 条：中性的聚集度
+
+    ages = [max(0.0, now - m["timestamp"]) for m in memories]
+    mean_age = sum(ages) / len(ages)
+    var_age = sum((a - mean_age) ** 2 for a in ages) / len(ages)
+    std_age = math.sqrt(var_age)
+    # 归一化：std_age / max_age ∈ [0, 1] → 聚焦度 = 1 - 归一化
+    norm_std = min(1.0, std_age / NARRATIVE_MAX_AGE)
+    return 1.0 - norm_std
+
+
+def _open_arousal_residual(memories, now):
+    """
+    分量 C：未闭合情感残留。
+    高 salience 但从未被洛神回应的记忆，按时间衰减求和。
+    使用连续软化（sigmoid）代替硬阈值。
+    """
+    residual = 0.0
+    for m in memories:
+        # 软化判定：salience 在阈值附近的连续权重
+        salience_factor = 1.0 / (1.0 + math.exp(
+            -(m["salience"] - NARRATIVE_OPEN_SALIENCE_THRESH) * 10
+        ))
+        age = max(0.0, now - m["timestamp"])
+        decay = math.exp(-age / NARRATIVE_DECAY_TAU)
+        residual += salience_factor * decay
+
+    # 压缩到 [0, 1] 用 tanh
+    return math.tanh(residual / 1.5)
+
+
+def _present_past_contrast(memories, cur_e, cur_t, cur_n):
+    """
+    分量 D：今昔反差。
+    当前环状态与记忆重心的欧氏距离 → [0, 1]。n
+    """
+    if not memories:
+        return 0.0
+    # 记忆重心
+    mean_e = sum(m["e_s"] for m in memories) / len(memories)
+    mean_t = sum(m["t_s"] for m in memories) / len(memories)
+    mean_n = sum(m["n_s"] for m in memories) / len(memories)
+
+    d_e = cur_e - mean_e
+    d_t = cur_t - mean_t
+    d_n = cur_n - mean_n
+    # 归一化距离：除以 √(3)（最大可能距离）
+    raw_dist = min(1.0, math.sqrt(d_e**2 + d_t**2 + d_n**2) / math.sqrt(3.0))
+    return raw_dist
+
+
+def compute_narrative_potential(memories, cur_e, cur_t, cur_n, now):
+    """
+    计算叙事势：当前记忆中“来自历史的话头强度”。
+
+    返回 dict:
+      potential: float [0, 1]
+      frame_weights: dict 四个连续框架权重
+      structure_hints: dict 抽象结构提示
+    """
+    if not memories or len(memories) < 2:
+        return {
+            "potential": 0.0,
+            "frame_weights": {
+                "pattern": 0.0,
+                "unspoken": 0.0,
+                "contrast": 0.0,
+                "present": 1.0,
+            },
+            "structure_hints": {
+                "repetition_count": len(memories),
+                "temporal_span": "无积累",
+                "closure_state": "absent",
+            },
+        }
+
+    A = _affective_cluster_density(memories)
+    B = _temporal_focus(memories, now)
+    C = _open_arousal_residual(memories, now)
+    D = _present_past_contrast(memories, cur_e, cur_t, cur_n)
+
+    potential = A * B * C * D
+    potential = max(0.0, min(1.0, potential))
+
+    w_pattern = A * C
+    w_unspoken = C * D
+    w_contrast = D * (1.0 - B)
+    w_present = (1.0 - A) * (1.0 - C)
+
+    w_sum = max(1e-10, w_pattern + w_unspoken + w_contrast + w_present)
+    frame_weights = {
+        "pattern": w_pattern / w_sum,
+        "unspoken": w_unspoken / w_sum,
+        "contrast": w_contrast / w_sum,
+        "present": w_present / w_sum,
+    }
+
+    closure_state = "resolved" if C < 0.2 else ("lingering" if C < 0.5 else "unresolved")
+
+    structure_hints = {
+        "repetition_count": len(memories),
+        "temporal_span": "最近 {:d} 轮".format(len(memories)),
+        "closure_state": closure_state,
+    }
+
+    return {
+        "potential": potential,
+        "frame_weights": frame_weights,
+        "structure_hints": structure_hints,
+    }
+
+
+def compute_emergence(memories, now, cur_e, cur_t, cur_n, activations,
+                      pressure_ema=None):
+    """
+    一次调用，把记忆列表映射为"主导记忆背景 + 三个偏置 + 叙事势"。
+
+    pressure_ema: 可选，ring_state["relational_pressure_ema"]。
+                  用户提供时，用它线性调制 tone_bias 和 arousal_bias，
+                  让浮现层能感知用户输入历史积累的"关系压力"。
+                  无压力数据时（默认 None）退化为纯记忆驱动。
     """
     if not activations or all(a < 1e-10 for a in activations):
         zero_bg = {"e_bg": 0.0, "t_bg": 0.0, "n_bg": 0.0,
@@ -179,6 +349,16 @@ def compute_emergence(memories, now, cur_e, cur_t, cur_n, activations):
             "length_bias": 0.5,
             "tone_bias": 0.0,
             "arousal_bias": 0.0,
+            "narrative_potential": 0.0,
+            "narrative_frame_weights": {
+                "pattern": 0.0, "unspoken": 0.0,
+                "contrast": 0.0, "present": 1.0,
+            },
+            "narrative_hints": {
+                "repetition_count": 0,
+                "temporal_span": "无积累",
+                "closure_state": "absent",
+            },
         }
 
     weights = softmax_weights(activations)
@@ -187,10 +367,24 @@ def compute_emergence(memories, now, cur_e, cur_t, cur_n, activations):
     tbias = tone_bias(bg)
     abias = arousal_bias(bg)
 
+    # ─── 慢压力感知调制 ───
+    # pressure_ema < 0（负向历史）→ 语气下沉 + 唤醒降低（更克制）
+    # pressure_ema > 0（正向历史）→ 语气变轻 + 唤醒升高（更开放）
+    # 连续线性，无 if-then，系数小确保不压倒记忆自身的信号
+    if pressure_ema is not None:
+        tbias += K_PRESSURE_TONE * pressure_ema
+        abias += K_PRESSURE_AROUSAL * pressure_ema
+
+    # 计算叙事势
+    narrative = compute_narrative_potential(memories, cur_e, cur_t, cur_n, now)
+
     return {
         "background": bg,
         "weights": weights,
         "length_bias": lbias,
         "tone_bias": tbias,
         "arousal_bias": abias,
+        "narrative_potential": narrative["potential"],
+        "narrative_frame_weights": narrative["frame_weights"],
+        "narrative_hints": narrative["structure_hints"],
     }
