@@ -135,6 +135,8 @@ def tick_in_memory(memory, tick_id):
     env = dict(SYNTHETIC_ENV)
     env['_phase'] = (tick_id % 86400) / 86400.0
     _update_luoshen_coupled(memory, env, tick_id=tick_id)
+    from living_engine import _encode_episodic_memory
+    _encode_episodic_memory(memory)
 
 
 def compute_emergence_in_memory(memory):
