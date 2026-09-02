@@ -1271,6 +1271,14 @@ def _compute_memory_emergence(memory):
         ),
     }
 
+    # ── 最小自我感知接入：让洛神"看见"自己的关系痕迹 ──
+    # 把慢压力 EMA 写入 self_model，作为一个连续的内部状态量
+    # 不是 if-then 规则，只是把已存在的值传递到自我表示中
+    _rp_awareness = _pressure_ema if _pressure_ema is not None else 0.0
+    if "self_model" not in memory:
+        memory["self_model"] = {}
+    memory["self_model"]["relational_awareness"] = round(_rp_awareness, 7)
+
 
 def _encode_episodic_memory(memory):
     """
@@ -1346,7 +1354,12 @@ def idle_update_memory(memory):
     
     # 3. emotional_arc 不加新条目、不删旧条目，保持现状
     #    （沉默中无新事件，已存在的情绪继续保持其影响）
-    
+
+    # 3b. 保留 relational_awareness（如果存在），静息时不变
+    _ra = memory.get("self_model", {}).get("relational_awareness", None)
+    if _ra is not None and "self_model" in memory:
+        memory["self_model"]["relational_awareness"] = _ra
+
     # 4. 保存并落链
     _save_json_atomic("active_memory/active_memory.json", memory)
     append_hash_chain("hash_chain_v2.log", "active_memory/active_memory.json")
@@ -2497,9 +2510,9 @@ def _update_luoshen_coupled(memory, env, tick_id=0):
         "F_mem": round(_total_act, 6),
     }
     # 保留由 _apply_input_pressure 积累的 relational_pressure_ema（不能被环境 tick 冲刷）
+    # 修复：无论 _rpe 是否为 0.0，必须保留；否则 environment_tick 会把中性用户的字段剥除
     _rpe = _ring_sm.get("relational_pressure_ema", 0.0)
-    if _rpe != 0.0:
-        _new_ring_state["relational_pressure_ema"] = _rpe
+    _new_ring_state["relational_pressure_ema"] = _rpe
     memory["self_model"]["ring_state"] = _new_ring_state
 
     # 观察：last_stated 时刻的环相位（不形成规则），只记录一次
