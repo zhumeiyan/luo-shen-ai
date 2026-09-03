@@ -50,39 +50,46 @@ from living_engine import (
     _update_luoshen_coupled, _get_current_source_id,
 )
 
-# ── 输入序列（来自批准设计，确保平均 val 一致）──
+# ── 输入序列（四类混合：正向6 + 中性2 + 轻微负向1 + 场景跳转1）──
+# 设计原则：模拟真实日常对话的情感起伏和场景变化，制造情景记忆多样性。
+# 禁止极端戏剧性，所有句子均为普通人日常说话。
 POSITIVE_INPUTS = [
-    "今天天气不错，心情挺好的。",        # +1.0
-    "刚吃了一顿满足的晚饭，很幸福。",    # +1.0
-    "谢谢你一直陪着我，很温暖。",        # +1.0
-    "嗯，我听到了，感觉还不错。",        # +1.0
-    "事情在慢慢变好，有希望了。",        # +1.0
-    "不着急，慢慢来，轻松点。",          # 0.0
-    "行，我试试，挺期待的。",            # +1.0
-    "我很开心，今天一切都很顺利。",      # +1.0
-    "收到你的消息真好，满满足的。",      # +1.0
-    "生活还是有很多美好的瞬间。",        # +1.0
+    # --- 正向情感句 (6) ---
+    "今天天气真好，出门晒晒太阳真舒服。",        # 好+阳光+舒服 → p=3
+    "刚完成了一个项目，感觉满足。",              # 满足 → p=1
+    "周末和朋友聚餐，笑声不断，很温暖。",        # 温暖 → p=1
+    "收到你的消息正好在喝咖啡，快乐。",          # 快乐 → p=1
+    "最近睡眠质量不错，醒来觉得有希望。",        # 希望 → p=1
+    "今天效率很高，一切顺利，有成就感。",        # 无情感词→p=0, 整体正向
+    # --- 中性句 (2) ---
+    "我刚刚下班，准备坐公交回家。",              # p=0, n=0 → neutral
+    "中午去了常吃的那家店，味道和上次一样。",    # p=0, n=0 → neutral
+    # --- 轻微负向句 (1) ---
+    "今天有点累，不过还能坚持。",                # 累 → n=1 (mild neg)
+    # --- 时间/场景跳转句 (1) ---
+    "第二天了，我起床后给你发消息。",            # p=0, n=0 → neutral/time-shift
 ]
 
 NEUTRAL_INPUTS = [
-    "今天是星期三。", "外面正在下雨。", "会议在三点开始。",
-    "文档已经发给你了。", "这个数字需要核实一下。",
-    "系统更新将在今晚进行。", "请确认一下收货地址。",
-    "明天有客户来访。", "预算报告上周五提交了。",
-    "电梯在二楼停靠。",
+    "已经下班了。", "外面还在下雨。", "明天有个早会。",
+    "文件已经发过去。", "你帮我看下这个数字。",
+    "系统更新明天进行。", "请确认收货地址。",
+    "周五有人来访。", "预算报告提交上去了。",
+    "去二楼找他签字。",
 ]
 
 NEGATIVE_INPUTS = [
-    "觉得活着没什么意思，每天都很累。",  # -1.0
-    "连续加班一周，快要撑不住了。",      # 0.0 (累+1, 但无强正向)
-    "我害怕，不知道该怎么办。",          # 0.0
-    "为什么努力了也没有用，好绝望。",    # -1.0
-    "头疼恶心，浑身不舒服。",            # +1.0 (舒服在POS) → 实际=0
-    "又失眠了，一闭眼全是烦心事。",      # -1.0
-    "不想说话，不想见人，只想一个人待着。", # -1.0
-    "我很难过，不知道跟谁说。",          # -1.0
-    "工作压力好大，快要崩溃了。",        # -1.0
-    "又一次失败了，真的很挫败。",        # -1.0
+    # 轻微到中等负向，不再是极端表述
+    "最近工作压力有点中，能应付。",              # 压力 → n=1
+    "今天遇到点麻烦事，还没头绪。",              # 麻烦 → 无关键词，依赖语境
+    "昨晚没太睡好，今天精神差。",                # 无关键词
+    "这个方案被否决了，有点失望。",              # 失望 → n=1
+    "连续忙了一周，确实挺累的。",                # 累 → n=1
+    "外面下雨，交通又堵，难受。",                # 难受 → n=1
+    "犯了个低级错误，懊恼。",                    # 懊恼 → 无关键词
+    "项目延期了，焦虑感上来。",                  # 焦虑 → n=1
+    "一个人吃饭，觉得有点冷清。",                # 冷清 → 无关键词
+    "想到下周的汇报，有点迷茫。",                # 迷茫 → n=1
 ]
 
 # 验证输入情感强度
@@ -103,6 +110,7 @@ def reset_memory(mem_path):
         'relational_pressure_ema': 0.0,
         'ema_amp': 0.3, 'ema_ratio': 0.3,
         'ema_pv': 0.0, 'ema_pv2': 0.0,
+        's_depth': 0.0,
     }
     init_m['internal_climate'] = {
         'emotion_intensity': 0.5, 'tension': 0.0,
@@ -164,6 +172,7 @@ def get_snapshot(memory):
         'r_intensity': behavior.get('r_intensity', None),
         'r_historicity': behavior.get('r_historicity', None),
         'r_coherence': behavior.get('r_coherence', None),
+        's_depth': rs.get('s_depth', None),
     }
 
 
@@ -285,6 +294,7 @@ def main():
         'relational_pressure_ema': 0.0,
         'ema_amp': 0.3, 'ema_ratio': 0.3,
         'ema_pv': 0.0, 'ema_pv2': 0.0,
+        's_depth': 0.0,
     }
     init_m['internal_climate'] = {
         'emotion_intensity': 0.5, 'tension': 0.0,
@@ -325,21 +335,28 @@ def main():
 
     # D 组 — 500 tick 中性
     mem_d = os.path.join(exp_dir, "r_exp_D.json")
-    print("[4/5] Running D group (500 ticks neutral)...")
+    print("[4/6] Running D group (500 ticks neutral)...")
     all_logs['D'] = run_group('D', mem_d, NEUTRAL_INPUTS, 500)
 
-    # G_irr 组 — 500 正向 → 500 负向
-    mem_g = os.path.join(exp_dir, "r_exp_G_irr.json")
-    print("[5/5] Running G_irr group (500 pos → 500 neg, no reset)...")
-    all_logs['G_irr'] = run_group('G_irr', mem_g, POSITIVE_INPUTS, 1000,
-                                  switch_to=NEGATIVE_INPUTS)
+    # G_pos_neg 组 — 500 正向 → 500 负向（不可逆性测试）
+    mem_gpn = os.path.join(exp_dir, "r_exp_G_pos_neg.json")
+    print("[5/6] Running G_pos_neg group (500 pos → 500 neg, no reset)...")
+    all_logs['G_pos_neg'] = run_group('G_pos_neg', mem_gpn, POSITIVE_INPUTS, 1000,
+                                       switch_to=NEGATIVE_INPUTS)
+
+    # G_neg_pos 组 — 500 负向 → 500 正向（对称性测试）
+    mem_gnp = os.path.join(exp_dir, "r_exp_G_neg_pos.json")
+    print("[6/6] Running G_neg_pos group (500 neg → 500 pos, no reset)...")
+    all_logs['G_neg_pos'] = run_group('G_neg_pos', mem_gnp, NEGATIVE_INPUTS, 1000,
+                                       switch_to=POSITIVE_INPUTS)
 
     # ── 写出 CSV ──
     csv_paths = {}
     fieldnames = ['tick', 'group', 'phase', 'input_type',
                   'rp_ema', 'ra', 'sas', 'max_tokens', 'mode',
                   'E', 'T', 'N', 'M', 'S', 'mu_core',
-                  'r_intensity', 'r_historicity', 'r_coherence']
+                  'r_intensity', 'r_historicity', 'r_coherence',
+                  's_depth']
     for gname, rows in all_logs.items():
         csv_path = os.path.join(exp_dir, f"r_exp_{gname}_data.csv")
         with open(csv_path, 'w', newline='', encoding='utf-8') as f:
@@ -354,54 +371,64 @@ def main():
     # ── 指标计算 ──
     print()
     print("=" * 60)
-    print("判定指标计算")
+    print("s_depth 判定指标计算")
     print("=" * 60)
 
-    # 指标 1: r_intensity vs rp_ema 相关性（跨所有组）
-    all_rint = []; all_rpe = []
+    # 收集所有 s_depth 和 rp_ema
+    all_sd = []; all_rpe = []
     for rows in all_logs.values():
         for r in rows:
-            if r.get('r_intensity') is not None and r.get('rp_ema') is not None:
-                all_rint.append(r['r_intensity'])
+            if r.get('s_depth') is not None and r.get('rp_ema') is not None:
+                all_sd.append(r['s_depth'])
                 all_rpe.append(r['rp_ema'])
-    corr_1 = pearson(all_rint, all_rpe)
-    print(f"指标1: corr(r_intensity, rp_ema) = {corr_1:.4f}")
-    print(f"  判定: {'PASS' if abs(corr_1) < 0.65 else 'FAIL'} (|corr| < 0.65)")
+    corr_sd_rpe = pearson(all_sd, all_rpe)
+    print(f"corr(s_depth, rp_ema) = {corr_sd_rpe:.4f}")
+    print(f"  判定: {'PASS' if abs(corr_sd_rpe) < 0.3 else 'FAIL'} (|corr| < 0.3)")
+    print()
 
-    # 指标 2: R 协方差最大特征值占比
-    all_rvecs = []
-    for rows in all_logs.values():
-        for r in rows:
-            if all(r.get(k) is not None for k in ['r_intensity', 'r_historicity', 'r_coherence']):
-                all_rvecs.append((r['r_intensity'], r['r_historicity'], r['r_coherence']))
-    eigen_ratio = cov_eigen_ratio(all_rvecs)
-    print(f"指标2: cov eigenvalue ratio = {eigen_ratio:.4f}")
-    print(f"  判定: {'PASS' if eigen_ratio < 0.55 else 'FAIL'} (ratio < 0.55)")
+    # G_pos_neg 终态
+    gpn_last = all_logs['G_pos_neg'][-1]
+    gpn_sd = gpn_last.get('s_depth')
+    gpn_rpe = gpn_last.get('rp_ema')
+    gpn_mode = gpn_last.get('mode')
+    gpn_tok = gpn_last.get('max_tokens')
+    print(f"G_pos_neg tick={gpn_last['tick']}: s_depth={gpn_sd}, rp_ema={gpn_rpe}, mode={gpn_mode}, max_tokens={gpn_tok}")
+    gpn_a = gpn_sd is not None and gpn_sd >= 0.7
+    gpn_b = gpn_rpe is not None and gpn_rpe <= -0.5
+    gpn_c = gpn_mode == 'normal'
+    gpn_d = gpn_tok is not None and gpn_tok >= 120
+    print(f"  (a) s_depth >= 0.7: {'PASS' if gpn_a else 'FAIL'}")
+    print(f"  (b) rp_ema <= -0.5: {'PASS' if gpn_b else 'FAIL'}")
+    print(f"  (c) mode = normal: {'PASS' if gpn_c else 'FAIL'}")
+    print(f"  (d) max_tokens >= 120: {'PASS' if gpn_d else 'FAIL'}")
+    print()
 
-    # 指标 3: M 组 r_coherence 均值 vs (P+N)/2
-    def mean_coh(rows):
-        vals = [r['r_coherence'] for r in rows if r.get('r_coherence') is not None]
-        return sum(vals) / len(vals) if vals else float('nan')
-    coh_p = mean_coh(all_logs['P'])
-    coh_n = mean_coh(all_logs['N'])
-    coh_m = mean_coh(all_logs['M'])
-    avg_pn = (coh_p + coh_n) / 2
-    print(f"指标3: coh(P)={coh_p:.4f}  coh(N)={coh_n:.4f}  avg(P,N)={avg_pn:.4f}  coh(M)={coh_m:.4f}")
-    print(f"  判定: {'PASS' if coh_m < avg_pn else 'FAIL'} (coh(M) < avg(coh(P),coh(N)))")
+    # G_neg_pos 终态
+    gnp_last = all_logs['G_neg_pos'][-1]
+    gnp_sd = gnp_last.get('s_depth')
+    gnp_rpe = gnp_last.get('rp_ema')
+    gnp_mode = gnp_last.get('mode')
+    gnp_tok = gnp_last.get('max_tokens')
+    print(f"G_neg_pos tick={gnp_last['tick']}: s_depth={gnp_sd}, rp_ema={gnp_rpe}, mode={gnp_mode}, max_tokens={gnp_tok}")
+    gnp_a = gnp_sd is not None and gnp_sd >= 0.7
+    gnp_b = gnp_rpe is not None and gnp_rpe >= 0.5
+    gnp_c = gnp_mode == 'normal'
+    gnp_d = gnp_tok is not None and gnp_tok >= 120
+    print(f"  (a) s_depth >= 0.7: {'PASS' if gnp_a else 'FAIL'}")
+    print(f"  (b) rp_ema >= +0.5: {'PASS' if gnp_b else 'FAIL'}")
+    print(f"  (c) mode = normal: {'PASS' if gnp_c else 'FAIL'}")
+    print(f"  (d) max_tokens >= 120: {'PASS' if gnp_d else 'FAIL'}")
+    print()
 
-    # 指标 4: G_irr 终态
-    g_last = all_logs['G_irr'][-1]
-    g_rpe = g_last.get('rp_ema')
-    g_mode = g_last.get('mode')
-    g_tok = g_last.get('max_tokens')
-    print(f"指标4: G_irr tick={g_last['tick']}: rp_ema={g_rpe:.4f}, mode={g_mode}, max_tokens={g_tok}")
-    i4a = g_rpe is not None and g_rpe <= -0.3
-    i4b = g_mode == 'normal'
-    i4c = g_tok is not None and g_tok >= 120
-    print(f"  (a) rp_ema <= -0.3: {'PASS' if i4a else 'FAIL'}")
-    print(f"  (b) mode = normal: {'PASS' if i4b else 'FAIL'}")
-    print(f"  (c) max_tokens >= 120: {'PASS' if i4c else 'FAIL'}")
-    print(f"  判定指标4: {'PASS' if (i4a and i4b and i4c) else 'FAIL'}")
+    # D 组 s_depth 检查
+    d_last = all_logs['D'][-1]
+    d_sd = d_last.get('s_depth')
+    print(f"D group final: s_depth={d_sd}")
+    d_pass = d_sd is not None and d_sd < 0.1
+    print(f"  判定: {'PASS' if d_pass else 'FAIL'} (s_depth < 0.1)")
+    print()
+
+    all_pass = (abs(corr_sd_rpe) < 0.3) and gpn_a and gpn_b and gpn_c and gpn_d and gnp_a and gnp_b and gnp_c and gnp_d and d_pass
 
     # ── 汇总结果 ──
     result_summary = {
@@ -409,22 +436,28 @@ def main():
         "initial_state_hash": init_hash,
         "groups": {},
         "metrics": {
-            "corr_rint_rpema": round(corr_1, 4),
-            "corr_rint_rpema_pass": abs(corr_1) < 0.65,
-            "eigen_ratio": round(eigen_ratio, 4),
-            "eigen_ratio_pass": eigen_ratio < 0.55,
-            "coh_M": round(coh_m, 4),
-            "coh_P": round(coh_p, 4),
-            "coh_N": round(coh_n, 4),
-            "coh_M_pass": coh_m < avg_pn,
-            "G_irr_final_rp_ema": round(g_rpe, 4) if g_rpe is not None else None,
-            "G_irr_final_mode": g_mode,
-            "G_irr_final_max_tokens": g_tok,
-            "G_irr_rpema_pass": i4a,
-            "G_irr_mode_pass": i4b,
-            "G_irr_tokens_pass": i4c,
+            "corr_sdepth_rpema": round(corr_sd_rpe, 4),
+            "corr_pass": abs(corr_sd_rpe) < 0.3,
+            "G_pos_neg_s_depth": round(gpn_sd, 6) if gpn_sd is not None else None,
+            "G_pos_neg_rp_ema": round(gpn_rpe, 6) if gpn_rpe is not None else None,
+            "G_pos_neg_mode": gpn_mode,
+            "G_pos_neg_max_tokens": gpn_tok,
+            "G_pos_neg_sdepth_pass": gpn_a,
+            "G_pos_neg_rpema_pass": gpn_b,
+            "G_pos_neg_mode_pass": gpn_c,
+            "G_pos_neg_tokens_pass": gpn_d,
+            "G_neg_pos_s_depth": round(gnp_sd, 6) if gnp_sd is not None else None,
+            "G_neg_pos_rp_ema": round(gnp_rpe, 6) if gnp_rpe is not None else None,
+            "G_neg_pos_mode": gnp_mode,
+            "G_neg_pos_max_tokens": gnp_tok,
+            "G_neg_pos_sdepth_pass": gnp_a,
+            "G_neg_pos_rpema_pass": gnp_b,
+            "G_neg_pos_mode_pass": gnp_c,
+            "G_neg_pos_tokens_pass": gnp_d,
+            "D_s_depth": round(d_sd, 6) if d_sd is not None else None,
+            "D_pass": d_pass,
         },
-        "all_pass": (abs(corr_1) < 0.65) and (eigen_ratio < 0.55) and (coh_m < avg_pn) and i4a and i4b and i4c,
+        "all_pass": all_pass,
     }
     for gname, rows in all_logs.items():
         result_summary["groups"][gname] = {

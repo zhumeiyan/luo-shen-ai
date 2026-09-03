@@ -407,6 +407,7 @@ def cold_start_if_needed():
                 "ema_ratio": 0.3,
                 "ema_pv": 0.0,
                 "ema_pv2": 0.0,
+                "s_depth": 0.0,
             },
         },
         "active_context": {
@@ -1789,13 +1790,15 @@ def _select_behavior(memory, emergence):
 
     # 慢压力项：用户输入历史的指数平均唤醒
     _pressure_ema = _ring_state.get("relational_pressure_ema", 0.0)
-    # 乘性调制 ①：载重 r_historicity 放大/衰减压力敏感度
-    _pressure_term = _PRESSURE_K * _pressure_ema * (1.0 + _R_K_HIST_R * (_rhist - 0.5))
+    # 读取 s_depth（不可逆深度积累量）
+    _s_depth = _ring_state.get("s_depth", 0.0)
+    # s_depth 调制压力敏感度：深度积累后，同等压力产生更强的行为偏移
+    _pressure_term = _PRESSURE_K * _pressure_ema * (1.0 + 1.5 * _s_depth)
 
     # 乘性调制 ②：定型度 r_coherence 调节叙事增强强度
     _narr_boost = _NARRATIVE_TENDENCY_BOOST * (1.0 + _R_K_COH_R * (_rcoh - 0.5))
 
-    # 连续叠加叙事势 + 相位偏置 + 慢压力（双调制全部为乘性，无新加性偏置）
+    # 连续叠加叙事势 + 相位偏置 + 慢压力（s_depth 已乘入 pressure_term）
     response_pre = (arousal_bias + 0.5 * tone_bias
                     + _narr_boost * narrative_potential
                     + _phase_bias
@@ -1809,8 +1812,9 @@ def _select_behavior(memory, emergence):
     # ── 维度 2：压力质量（rp_ema 直接，绕过 sigmoid）──
     pq = max(-1.0, min(1.0, _PRESSURE_QUALITY_SCALE * _pressure_ema))
 
-    # ── max_tokens 双维度公式：档位 base + 压力偏移（全连续）──
-    base = _BASE_TOKENS[mode_idx]
+    # ── max_tokens 双维度公式：档位 base + 压力偏移 + s_depth 偏移（全连续）──
+    # s_depth 贡献一个稳定的 base 偏移：深度积累后，即便是相同档位也能说更多
+    base = _BASE_TOKENS[mode_idx] + int(40 * _s_depth)
     offset = int(_TOKEN_OFFSET_SCALE * pq)
     max_tokens = max(0, base + offset)
 
@@ -2488,6 +2492,18 @@ def _update_luoshen_coupled(memory, env, tick_id=0):
     _mu_drift_eps = 0.002
     _mu_core_new = _mu_core + _mu_drift_eps * (_ema_S_new - _mu_core) * dt
 
+    # ── 亲密度深度积累 (s_depth) ──
+    # s_depth 积累速率 ∝ rp_ema²（正负输入对称贡献），衰减极慢（gamma_decay = 0.00002）
+    # 方程：s_depth += alpha_accum * engagement - gamma_decay * s_depth，clamp 到 [0, 1]
+    _s_depth = _ring_sm.get("s_depth", 0.0)
+    _rpe_local = _ring_sm.get("relational_pressure_ema", 0.0)
+    _engagement = _rpe_local * _rpe_local
+    _alpha_accum = 0.002
+    _gamma_decay_s = 0.00002
+    _s_depth_new = _s_depth + _alpha_accum * _engagement * dt - _gamma_decay_s * _s_depth * dt
+    _s_depth_new = min(1.0, max(0.0, _s_depth_new))
+    _s_depth_new = round(_s_depth_new, 7)
+
     # mu_base = mu_core（长期偏移）+ 身体势 L（瞬时）+ 哈希链微扰（瞬时）
     mu_base = _mu_core_new + 0.3 * L + _hash_eps * _chain_rate
     _r_e_off, _r_t_off, _r_n_off = _residue_climate_offset(memory)
@@ -2581,6 +2597,7 @@ def _update_luoshen_coupled(memory, env, tick_id=0):
         "r_intensity": _r_intensity,
         "r_historicity": _r_historicity,
         "r_coherence": _r_coherence,
+        "s_depth": round(_s_depth_new, 7),
     }
     # 保留由 _apply_input_pressure 积累的 relational_pressure_ema（不能被环境 tick 冲刷）
     # 修复：无论 _rpe 是否为 0.0，必须保留；否则 environment_tick 会把中性用户的字段剥除
