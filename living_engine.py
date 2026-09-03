@@ -1285,6 +1285,7 @@ def _compute_memory_emergence(memory):
             {"repetition_count": 0, "temporal_span": "无积累", "closure_state": "absent"},
         ),
     }
+    return memory["active_context"]["memory_emergence"]
 
     # ── 最小自我感知接入：让洛神"看见"自己的关系痕迹 ──
     # 把慢压力 EMA 写入 self_model，作为一个连续的内部状态量
