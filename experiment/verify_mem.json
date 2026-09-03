@@ -1,0 +1,751 @@
+{
+  "__meta": {
+    "schema_version": "4.0",
+    "last_updated": 1788354467.7121575,
+    "last_reflection_at": 0,
+    "chain_height": 0
+  },
+  "internal_climate": {
+    "emotion_intensity": 0.40641,
+    "tension": -0.53179,
+    "energy": 0.59917,
+    "memory_pressure": 7.71756
+  },
+  "user_model": {
+    "trust": {
+      "value": 0.3,
+      "confidence": 0.1,
+      "evidence_count": 0
+    },
+    "intimacy": {
+      "value": 0.1,
+      "confidence": 0.1
+    },
+    "shared_history_length": 0,
+    "first_seen": 1788354467.7121587,
+    "total_interactions": 0,
+    "emotional_patterns": [],
+    "preferences": [],
+    "known_facts": {},
+    "episodic_memory": [
+      {
+        "timestamp": 1788391776.471833,
+        "e_s": 0.45227,
+        "t_s": -0.46801,
+        "n_s": 0.56965,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391776.5463738,
+        "e_s": 0.45952,
+        "t_s": -0.46204,
+        "n_s": 0.57303,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391776.6204615,
+        "e_s": 0.46588,
+        "t_s": -0.45828,
+        "n_s": 0.57582,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391776.6943724,
+        "e_s": 0.47138,
+        "t_s": -0.45622,
+        "n_s": 0.57817,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391776.7724156,
+        "e_s": 0.47608,
+        "t_s": -0.45546,
+        "n_s": 0.58022,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391777.2174025,
+        "e_s": 0.44344,
+        "t_s": -0.48904,
+        "n_s": 0.57403,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391777.2921362,
+        "e_s": 0.45044,
+        "t_s": -0.48286,
+        "n_s": 0.57744,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391777.3664565,
+        "e_s": 0.45654,
+        "t_s": -0.47889,
+        "n_s": 0.58023,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391777.440556,
+        "e_s": 0.46176,
+        "t_s": -0.47662,
+        "n_s": 0.58257,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391777.5151796,
+        "e_s": 0.46616,
+        "t_s": -0.47565,
+        "n_s": 0.58458,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391777.5888307,
+        "e_s": 0.46973,
+        "t_s": -0.47565,
+        "n_s": 0.58633,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391777.6631582,
+        "e_s": 0.47265,
+        "t_s": -0.47638,
+        "n_s": 0.58791,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391777.738147,
+        "e_s": 0.47502,
+        "t_s": -0.47764,
+        "n_s": 0.58936,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391777.8127093,
+        "e_s": 0.47677,
+        "t_s": -0.47928,
+        "n_s": 0.59067,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391777.8868115,
+        "e_s": 0.47815,
+        "t_s": -0.48116,
+        "n_s": 0.59193,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391777.9609597,
+        "e_s": 0.43187,
+        "t_s": -0.50789,
+        "n_s": 0.57826,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391778.03533,
+        "e_s": 0.43871,
+        "t_s": -0.50147,
+        "n_s": 0.5817,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391778.1168058,
+        "e_s": 0.44461,
+        "t_s": -0.49726,
+        "n_s": 0.58448,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391778.1917584,
+        "e_s": 0.44961,
+        "t_s": -0.49475,
+        "n_s": 0.58679,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391778.265381,
+        "e_s": 0.45377,
+        "t_s": -0.49354,
+        "n_s": 0.58876,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391778.3393056,
+        "e_s": 0.4571,
+        "t_s": -0.49329,
+        "n_s": 0.59046,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391778.413366,
+        "e_s": 0.45977,
+        "t_s": -0.49377,
+        "n_s": 0.59198,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391778.4870243,
+        "e_s": 0.46186,
+        "t_s": -0.49479,
+        "n_s": 0.59337,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391778.560623,
+        "e_s": 0.46334,
+        "t_s": -0.49617,
+        "n_s": 0.59461,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391778.6344292,
+        "e_s": 0.46442,
+        "t_s": -0.49781,
+        "n_s": 0.59579,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391778.709382,
+        "e_s": 0.41803,
+        "t_s": -0.52427,
+        "n_s": 0.58218,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391778.783717,
+        "e_s": 0.42474,
+        "t_s": -0.51759,
+        "n_s": 0.58563,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391778.8579545,
+        "e_s": 0.43052,
+        "t_s": -0.51313,
+        "n_s": 0.58841,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391778.933639,
+        "e_s": 0.43536,
+        "t_s": -0.51036,
+        "n_s": 0.59069,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391779.0084338,
+        "e_s": 0.43935,
+        "t_s": -0.5089,
+        "n_s": 0.59262,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391779.0832267,
+        "e_s": 0.44256,
+        "t_s": -0.50842,
+        "n_s": 0.59429,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391779.1582377,
+        "e_s": 0.44502,
+        "t_s": -0.50864,
+        "n_s": 0.59574,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391779.233703,
+        "e_s": 0.44688,
+        "t_s": -0.50939,
+        "n_s": 0.59705,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391779.3083372,
+        "e_s": 0.44825,
+        "t_s": -0.51052,
+        "n_s": 0.59826,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391779.3829737,
+        "e_s": 0.4492,
+        "t_s": -0.51191,
+        "n_s": 0.5994,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391779.4576652,
+        "e_s": 0.40266,
+        "t_s": -0.53811,
+        "n_s": 0.58581,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391779.5339928,
+        "e_s": 0.40924,
+        "t_s": -0.53117,
+        "n_s": 0.58926,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391779.6096137,
+        "e_s": 0.41488,
+        "t_s": -0.52644,
+        "n_s": 0.59201,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391779.684744,
+        "e_s": 0.41961,
+        "t_s": -0.52342,
+        "n_s": 0.59426,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391779.7595723,
+        "e_s": 0.42344,
+        "t_s": -0.52168,
+        "n_s": 0.59612,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391779.8339205,
+        "e_s": 0.42649,
+        "t_s": -0.52092,
+        "n_s": 0.59771,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391779.908341,
+        "e_s": 0.42885,
+        "t_s": -0.52089,
+        "n_s": 0.59911,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391779.9828656,
+        "e_s": 0.43061,
+        "t_s": -0.52139,
+        "n_s": 0.60037,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391780.0576582,
+        "e_s": 0.43187,
+        "t_s": -0.52226,
+        "n_s": 0.60153,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391780.132636,
+        "e_s": 0.43271,
+        "t_s": -0.52339,
+        "n_s": 0.60262,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391780.2063155,
+        "e_s": 0.38605,
+        "t_s": -0.54931,
+        "n_s": 0.58904,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391780.2798567,
+        "e_s": 0.39251,
+        "t_s": -0.5421,
+        "n_s": 0.59247,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391780.3540065,
+        "e_s": 0.39803,
+        "t_s": -0.53709,
+        "n_s": 0.59517,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391780.4281483,
+        "e_s": 0.40265,
+        "t_s": -0.53379,
+        "n_s": 0.59736,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788391780.502707,
+        "e_s": 0.40641,
+        "t_s": -0.53179,
+        "n_s": 0.59917,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      }
+    ]
+  },
+  "self_model": {
+    "emotion": {
+      "primary": "平静",
+      "intensity": 0.40641,
+      "since": 1788354467.7121594,
+      "trail": [
+        "平静"
+      ]
+    },
+    "relation": {
+      "description": "",
+      "asymmetry": 0.0
+    },
+    "strategy_weights": {
+      "strategy_give_advice": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      },
+      "strategy_show_empathy": {
+        "value": 0.6,
+        "initial": 0.6,
+        "adjustments": []
+      },
+      "strategy_ask_question": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      },
+      "strategy_share_info": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      },
+      "strategy_remain_silent": {
+        "value": 0.3,
+        "initial": 0.3,
+        "adjustments": []
+      },
+      "strategy_self_expression": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      }
+    },
+    "skills": {},
+    "self_stated_state": {
+      "entries": [],
+      "last_stated": null,
+      "last_stated_at": null,
+      "total_stated_count": 0
+    },
+    "ring_state": {
+      "E": 0.40641,
+      "T": -0.53179,
+      "N": 0.59917,
+      "M": 7.71756,
+      "phase": -0.91825,
+      "mu_eff": -0.07817,
+      "mu_core": 0.4625981,
+      "ema_S": 0.0346579,
+      "L": 0.7667,
+      "S": 0.055047,
+      "S_drive": 5.61551,
+      "F": 0.0,
+      "F_mem": 149.954862,
+      "ema_amp": 0.5464764,
+      "ema_ratio": 13.4703959,
+      "ema_pv": -0.000776,
+      "ema_pv2": 0.001425,
+      "r_intensity": 0.7065856,
+      "r_historicity": 1.0,
+      "r_coherence": 0.5363674,
+      "relational_pressure_ema": 0.8092058
+    },
+    "self_awareness_signal": 0.836988,
+    "relational_awareness": 0.8092058
+  },
+  "active_context": {
+    "session_id": null,
+    "current_topic": null,
+    "interaction_mode": "waiting",
+    "last_interaction_ts": 1788354467.7121618,
+    "emotional_arc": [],
+    "strategy_used_this_turn": null,
+    "input_pressure": {
+      "valence": 1.0,
+      "arousal": 0.9,
+      "applied_at": 1788391780.4295805
+    },
+    "memory_emergence": {
+      "background": {
+        "e_bg": 0.44153637139503593,
+        "t_bg": -0.5028372124136808,
+        "n_bg": 0.5893326987193047,
+        "age_bg": 3.0696245354010184e-06,
+        "sal_bg": 0.9999999999999999,
+        "dominance": 0.02021387265011672
+      },
+      "weights": [
+        0.01988521742589863,
+        0.019844062809605524,
+        0.0198095019650295,
+        0.019782092260917226,
+        0.019761544120143148,
+        0.019985580729577974,
+        0.01995518185664496,
+        0.01992823145700143,
+        0.01990606441264958,
+        0.019888931149531917,
+        0.01987679520293648,
+        0.019868783199812574,
+        0.01986412134930638,
+        0.019862772441412303,
+        0.01986334559524212,
+        0.02005393436455692,
+        0.020034792726753892,
+        0.020016037035677513,
+        0.019999659465436886,
+        0.019986459190443614,
+        0.019976697343303446,
+        0.019969947435320223,
+        0.01996582503493648,
+        0.019964187802043072,
+        0.019964194108792632,
+        0.020091152632362844,
+        0.020083610188843335,
+        0.020073445061206237,
+        0.020063296122431993,
+        0.020054450380622302,
+        0.020047420399170807,
+        0.020042377343632553,
+        0.02003909069821478,
+        0.020037243464658225,
+        0.02003656656032209,
+        0.020099207855529568,
+        0.02010319590735266,
+        0.020101805560278553,
+        0.02009815782159146,
+        0.020093996339468092,
+        0.02009018695026856,
+        0.020087104254003722,
+        0.0200848394336812,
+        0.02008331399973842,
+        0.02008241146493382,
+        0.020080867550424472,
+        0.020095976255203166,
+        0.02010324119134341,
+        0.02010619095063728,
+        0.020106891131106083
+      ],
+      "length_bias": 0.1,
+      "tone_bias": 0.19284723925372427,
+      "arousal_bias": 0.12426914760859949,
+      "pressure_memory_mod": 1.056644406,
+      "narrative_potential": 0.02592955369187688,
+      "narrative_frame_weights": {
+        "pattern": 0.9725368059421151,
+        "unspoken": 0.02746314227378982,
+        "contrast": 5.178409497920469e-08,
+        "present": 0.0
+      },
+      "narrative_hints": {
+        "repetition_count": 50,
+        "temporal_span": "最近 50 轮",
+        "closure_state": "unresolved"
+      }
+    }
+  },
+  "residue": {
+    "texture": [
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5
+    ],
+    "ema_alpha": 0.15,
+    "num_updates": 0,
+    "t_snapshot": []
+  },
+  "__coupling_history": {
+    "E": [
+      0.3925080504384159,
+      0.3980336254696147,
+      0.40264517857921106,
+      0.40640828525289824
+    ],
+    "T": [
+      -0.5420968485670887,
+      -0.5370939442379524,
+      -0.5337898525956308,
+      -0.5317896328474484
+    ],
+    "N": [
+      0.5924682241038789,
+      0.5951740735803127,
+      0.5973553233653794,
+      0.5991680523261719
+    ],
+    "M": [
+      7.722509479889651,
+      7.720454312573115,
+      7.71883050281027,
+      7.717562795837112
+    ]
+  }
+}

@@ -1,0 +1,211 @@
+{
+  "__meta": {
+    "schema_version": "4.0",
+    "last_updated": 1788354467.7121575,
+    "last_reflection_at": 0,
+    "chain_height": 0
+  },
+  "internal_climate": {
+    "emotion_intensity": 1.69693,
+    "tension": -0.37162,
+    "energy": 5.44713,
+    "memory_pressure": 2.36233
+  },
+  "user_model": {
+    "trust": {
+      "value": 0.3,
+      "confidence": 0.1,
+      "evidence_count": 0
+    },
+    "intimacy": {
+      "value": 0.1,
+      "confidence": 0.1
+    },
+    "shared_history_length": 0,
+    "first_seen": 1788354467.7121587,
+    "total_interactions": 0,
+    "emotional_patterns": [],
+    "preferences": [],
+    "known_facts": {},
+    "episodic_memory": [
+      {
+        "e_s": 0.5,
+        "t_s": 0.0,
+        "n_s": 0.5,
+        "salience": 0.6,
+        "kind": "interaction",
+        "timestamp": 1788360262.592399,
+        "source_id": null
+      }
+    ]
+  },
+  "self_model": {
+    "emotion": {
+      "primary": "平静",
+      "intensity": 1.69693,
+      "since": 1788354467.7121594,
+      "trail": [
+        "平静"
+      ]
+    },
+    "relation": {
+      "description": "",
+      "asymmetry": 0.0
+    },
+    "strategy_weights": {
+      "strategy_give_advice": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      },
+      "strategy_show_empathy": {
+        "value": 0.6,
+        "initial": 0.6,
+        "adjustments": []
+      },
+      "strategy_ask_question": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      },
+      "strategy_share_info": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      },
+      "strategy_remain_silent": {
+        "value": 0.3,
+        "initial": 0.3,
+        "adjustments": []
+      },
+      "strategy_self_expression": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      }
+    },
+    "skills": {},
+    "self_stated_state": {
+      "entries": [],
+      "last_stated": null,
+      "last_stated_at": null,
+      "total_stated_count": 0
+    },
+    "ring_state": {
+      "E": 1.69693,
+      "T": -0.37162,
+      "N": 5.44713,
+      "M": 2.36233,
+      "phase": -0.21559,
+      "mu_eff": 0.50186,
+      "mu_core": 0.4316519,
+      "ema_S": 0.0877609,
+      "L": 1.0,
+      "S": 0.109885,
+      "S_drive": 5.28887,
+      "F": 0.0,
+      "F_mem": 0.60308,
+      "ema_amp": 2.2434846,
+      "ema_ratio": 1.2141898,
+      "ema_pv": -0.0809829,
+      "ema_pv2": 0.0091328,
+      "r_intensity": 0.9999843,
+      "r_historicity": 0.945667,
+      "r_coherence": 0.5355092,
+      "relational_pressure_ema": -0.6412851
+    },
+    "self_awareness_signal": -0.7415921,
+    "relational_awareness": -0.6412851
+  },
+  "active_context": {
+    "session_id": null,
+    "current_topic": null,
+    "interaction_mode": "waiting",
+    "last_interaction_ts": 1788354467.7121618,
+    "emotional_arc": [],
+    "strategy_used_this_turn": null,
+    "input_pressure": {
+      "valence": -1.0,
+      "arousal": 0.9,
+      "applied_at": 1788360338.3740728
+    },
+    "memory_emergence": {
+      "background": {
+        "e_bg": 0.5,
+        "t_bg": 0.0,
+        "n_bg": 0.5,
+        "age_bg": 0.00012542779798860903,
+        "sal_bg": 0.6,
+        "dominance": 1.0
+      },
+      "weights": [
+        1.0
+      ],
+      "length_bias": 0.9,
+      "tone_bias": -0.160321275,
+      "arousal_bias": 0.04668484958347684,
+      "pressure_memory_mod": 0.955110043,
+      "narrative_potential": 0.0,
+      "narrative_frame_weights": {
+        "pattern": 0.0,
+        "unspoken": 0.0,
+        "contrast": 0.0,
+        "present": 1.0
+      },
+      "narrative_hints": {
+        "repetition_count": 1,
+        "temporal_span": "无积累",
+        "closure_state": "absent"
+      }
+    }
+  },
+  "residue": {
+    "texture": [
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5
+    ],
+    "ema_alpha": 0.15,
+    "num_updates": 0,
+    "t_snapshot": []
+  },
+  "__coupling_history": {
+    "E": [
+      1.9037474191760722,
+      1.8497144283908296,
+      1.7801561357095375,
+      1.6969302333451457
+    ],
+    "T": [
+      0.14774927591719414,
+      -0.04670786799541918,
+      -0.21828428886051782,
+      -0.37162016140929877
+    ],
+    "N": [
+      5.597439639750135,
+      5.550874297472904,
+      5.5006106846692235,
+      5.447126431674958
+    ],
+    "M": [
+      2.178377410143082,
+      2.2579818479586007,
+      2.3199358781886312,
+      2.3623264173377816
+    ]
+  }
+}

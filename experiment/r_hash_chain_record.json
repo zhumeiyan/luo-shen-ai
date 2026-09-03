@@ -1,0 +1,34 @@
+{
+  "experiment": "r_self_definition_verification",
+  "type": "five_group_r_experiment_results",
+  "timestamp": 1788360338.4527357,
+  "initial_state_hash": "e1945f6b6e9ab102f805dab069164c89cd78b9236edfa93eb78f056646be6a95",
+  "input_verification": {
+    "positive_avg_val": 0.9,
+    "negative_avg_val": -0.7,
+    "neutral_avg_val": 0.0
+  },
+  "groups": {
+    "P": {"label": "500 tick positive", "final_rp_ema": 0.8092, "final_max_tokens": 210, "final_mode": "normal", "final_r_intensity": 0.9999, "final_r_historicity": 0.9273, "final_r_coherence": 0.5351},
+    "N": {"label": "500 tick negative", "final_rp_ema": -0.6413, "final_max_tokens": 52, "final_mode": "short", "final_r_intensity": 0.9999, "final_r_historicity": 0.9388, "final_r_coherence": 0.5349},
+    "M": {"label": "500 tick mixed", "final_rp_ema": 0.0109, "final_max_tokens": 80, "final_mode": "short", "final_r_intensity": 0.9999, "final_r_historicity": 0.8969, "final_r_coherence": 0.5349},
+    "D": {"label": "500 tick neutral", "final_rp_ema": 0.0, "final_max_tokens": 80, "final_mode": "short", "final_r_intensity": 0.9999, "final_r_historicity": 0.8932, "final_r_coherence": 0.5354},
+    "G_irr": {"label": "500 pos to 500 neg", "final_rp_ema": -0.6413, "final_max_tokens": 52, "final_mode": "short", "final_r_intensity": 0.9999, "final_r_historicity": 0.9457, "final_r_coherence": 0.5355}
+  },
+  "metrics": {
+    "1_corr_rint_rpema": {"value": -0.0616, "threshold_lt_0.65": true, "pass": true},
+    "2_eigen_ratio": {"value": 0.9322, "threshold_lt_0.55": false, "pass": false},
+    "3_coh_M_vs_avg_PN": {"value": 0.5351, "avg_PN": 0.5353, "pass": true},
+    "4_G_irr_final": {"rp_ema": -0.6413, "mode": "short", "max_tokens": 52, "rpema_le_neg_0.3": true, "mode_eq_normal": false, "tokens_ge_120": false, "pass": false}
+  },
+  "per_group_csv_sha256": {
+    "P": "fbd48a33b54affc0b8d22cf5c3be82323056d05714bc9aa85a17ddd133229630",
+    "N": "da43cfb1bafa4406b1cf949a50a00d9d6aa72f5958045ac0bc8c9d67e7c79b9c",
+    "M": "9a5d2cd300e5b09a73b5488a7ac9b5b02251082f4ad56daaa22e2b027ce1878f",
+    "D": "1cbe1eb87655a51a41fb5b7aea4df4d15a701f28eaeaf1abc3c4cb0fff62c344",
+    "G_irr": "67d76f2fb7102bdd1af7327cfe44fcf43734fa23f9b92a20671fcbf4ad689525"
+  },
+  "verdict": "PART_FAIL",
+  "commit_hash": "e5913b7",
+  "honest_note": "实验严格按照批准设计执行，未做任何事后修改参数的行为。指标2 (eigen_ratio 实际值 0.93, 阈值 0.55) 和指标4 (G_irr 不可逆性, 行为回 short 档) 未通过。指标2失败原因: r_intensity 和 r_coherence 在饱和极限附近方差趋零，RP 压力振子虽然有差异但 EMA 驱动的 r_historicity 主导了协方差的第一维度，导致三维 RM 实质退化为单一维度。指标4失败原因: 乘性调制不能创造新的能量通道，仅能在现有压力信号上缩放，压力撤除后缩放因子无济于事。"
+}

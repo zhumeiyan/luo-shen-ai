@@ -1,0 +1,49 @@
+{
+  "schema_version": 2,
+  "timestamp": 1788391828.608544,
+  "event_type": "memory_fix_verification",
+  "test": "Path_B_500_tick_positive",
+  "fix": "Added _encode_episodic_memory call to tick_in_memory",
+  "file": "experiment/run_r_experiment.py",
+  "git_commit": "5207f50",
+  "result": {
+    "final_memory_count": 50,
+    "final_narrative_potential": 0.02593,
+    "final_rp_ema": 0.809206,
+    "memory_accumulating": true,
+    "above_max": "reached MAX_MEMORIES=50",
+    "narrative_potential_above_0.3": false
+  },
+  "samples": [
+    {
+      "tick": 1,
+      "mem": 2,
+      "npot": 0.009197
+    },
+    {
+      "tick": 10,
+      "mem": 11,
+      "npot": 0.072228
+    },
+    {
+      "tick": 50,
+      "mem": 50,
+      "npot": 0.062755
+    },
+    {
+      "tick": 100,
+      "mem": 50,
+      "npot": 0.061277
+    },
+    {
+      "tick": 250,
+      "mem": 50,
+      "npot": 0.05757
+    },
+    {
+      "tick": 500,
+      "mem": 50,
+      "npot": 0.02593
+    }
+  ]
+}
