@@ -1296,68 +1296,9 @@ def _compute_memory_emergence(memory):
     memory["self_model"]["relational_awareness"] = round(_rp_awareness, 7)
 
 
-def _generate_self_reflection(memory):
-    """
-    从洛神自身历史生成一句自我观察。
-    设计说明：这是'状态到文本的映射'，不是真正的自我反思。
-    洛神从固定句子里按连续函数索引选择，不是自己组织出来的。
-
-    数据源：最近 10 轮 max_tokens + emotional_arc E + rp_ema
-    禁止：if-then、随机加性偏置、LLM。
-    允许：连续值 → int 取整索引到固定句子列表（数学运算，非分支）。
-    """
-    rs = memory.get("self_model", {}).get("ring_state", {})
-    recent_tokens = memory.get("self_model", {}).get("_recent_tokens", [])
-    emotional_arc = memory.get("__coupling_history", {}).get("E", [])
-
-    # 连续量
-    _n = min(len(recent_tokens), 10)
-    openness = (sum(recent_tokens[-_n:]) / max(_n, 1)) / 200.0
-    openness = max(0.0, min(1.0, openness))
-    _ne = min(len(emotional_arc), 10)
-    emo_trend = sum(emotional_arc[-_ne:]) / max(_ne, 1)
-    emo_trend = max(-1.0, min(1.0, emo_trend))
-    pressure = rs.get("relational_pressure_ema", 0.0)
-
-    # 句子片段库（4 档 / 4 档 / 3 档）
-    OPEN_PHRASES = [
-        "我最近话不多。",
-        "我保持简洁。",
-        "我更愿意表达了。",
-        "我最近变得倾诉很多。",
-    ]
-    EMOTION_PHRASES = [
-        "我似乎有点低落。",
-        "我感觉平静。",
-        "我感觉还不错。",
-        "我感到一种明亮的涌动。",
-    ]
-    PRESS_PHRASES = [
-        "压力轻盈。",
-        "有一些分量压在心上。",
-        "心头沉甸甸的。",
-    ]
-
-    # 连续函数→索引（int 取整是数学运算，不是 if-then 分支）
-    idx_o = min(int(openness * 3.99), 3)
-    idx_e = min(int((emo_trend + 1.0) * 1.99), 3)
-    idx_p = min(int((pressure + 1.0) * 1.49), 2)
-
-    sentence = OPEN_PHRASES[idx_o] + EMOTION_PHRASES[idx_e] + PRESS_PHRASES[idx_p]
-
-    return {
-        "text": sentence,
-        "openness": round(openness, 4),
-        "emo_trend": round(emo_trend, 4),
-        "pressure": round(pressure, 4),
-        "idx": (idx_o, idx_e, idx_p),
-    }
-
-
 def _encode_episodic_memory(memory):
     """
     每次交互后，把当前环状态编码为一条情景记忆残影。
-    同时生成并写入一条自我观察记忆（kind="self_reflection"）。
     记忆不含文本——只有 E/T/N 快照、经历类型、基础显著度。
     超过 MAX_MEMORIES 条时，丢弃最老且激活度最低的记忆。
     """
@@ -1370,27 +1311,6 @@ def _encode_episodic_memory(memory):
     if not climate:
         return
 
-    # ── ★ 自我观察记忆 ──
-    _ref = _generate_self_reflection(memory)
-    memory["self_model"]["self_reflection_latest"] = _ref["text"]
-    _smem = make_memory(climate,
-                        kind="self_reflection",
-                        source="self",
-                        tags=[])  # tags=[] 表示公共记忆，不过滤；任何 source 都能读到
-    _ic = climate
-    _smem["e_s"] = float(_ic.get("emotion_intensity", 0.5))
-    _smem["t_s"] = float(_ic.get("tension", 0.0))
-    _smem["n_s"] = float(_ic.get("energy", 0.5))
-    # 设 salience=1.0 与 chat 相同，确保在同一时间窗口内不被有偏向地驱逐
-    _smem["salience"] = 1.0
-    _smem["text"] = _ref["text"]
-    _smem["reflection_meta"] = {
-        "openness": _ref["openness"],
-        "emo_trend": _ref["emo_trend"],
-        "pressure": _ref["pressure"],
-        "idx": _ref["idx"],
-    }
-
     # 默认 kind="chat"；如果有 directive 里的标记可以推断更细，但不做条件分支
     kind = "chat"
     # tags 用于寻址（只影响检索过滤），不影响 salience 或 gravity
@@ -1399,7 +1319,6 @@ def _encode_episodic_memory(memory):
 
     episodic = memory["user_model"].get("episodic_memory", [])
     episodic.append(mem)
-    episodic.append(_smem)  # 自我观察记忆一并写入
 
     # 超过上限时，丢弃最老且激活度最低的
     now = time.time()
@@ -2075,13 +1994,7 @@ def _generate_response_impl(user_input, source="living_engine", extra_context=No
     # LLM 只在这个框架内填充语言，差异不会被采样随机性淹没
     emergence_for_behavior = emergence_for_directive if emergence_for_directive else _emergence_log(memory)
     behavior = _select_behavior(memory, emergence_for_behavior)
-
-    # 追踪最近 N 轮的 max_tokens（供自我反思记忆读取，纯计算/存储，不修改任何行为接入）
-    _rt_list = memory.get("self_model", {}).setdefault("_recent_tokens", [])
-    _rt_list.append(behavior["max_tokens"])
-    if len(_rt_list) > 10:
-        _rt_list.pop(0)
-
+    
     # 如果行为选择判定沉默，直接返回
     if behavior["response_mode"] == "silent":
         last_stated_b = memory.get("self_model", {}).get("self_stated_state", {}).get("last_stated")
