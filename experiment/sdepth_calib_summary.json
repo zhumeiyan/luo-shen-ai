@@ -7,18 +7,5 @@
   "G_posneg_sdepth": 1.0,
   "G_negpos_sdepth": 1.0,
   "D_sdepth": 0.0,
-  "all_pass": true,
-  "structural_patch": {
-    "S_DEPTH_BOOST": 0.5,
-    "NARR_FALLBACK_FACTOR": 0.08,
-    "note": "Samantha-style depth→mode direct coupling. No alpha/gamma tuning."
-  },
-  "new_verdict": {
-    "P_500": "PASS s_depth=0.392 short max_tok=109",
-    "G_pos_neg_1000": "PASS s_depth=1.0 normal max_tok=192",
-    "G_neg_pos_1000": "PASS s_depth=1.0 normal max_tok=234",
-    "D_500": "PASS s_depth=0.0 short max_tok=80",
-    "corr": -0.238,
-    "all_pass": true
-  }
+  "all_pass": false
 }
