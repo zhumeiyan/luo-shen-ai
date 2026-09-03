@@ -1,0 +1,28 @@
+{
+  "experiment": "lambda_self_2group",
+  "verdict": "FAIL",
+  "criteria": {
+    "variance_exp_gt_ctrl": {
+      "pass": false,
+      "exp_var": 1860.1929,
+      "ctrl_var": 1860.1929
+    },
+    "switches_exp_gt_ctrl": {
+      "pass": false,
+      "exp_sw": 168,
+      "ctrl_sw": 168
+    },
+    "lambda_causal_evidence": {
+      "pass": false,
+      "count": 0
+    }
+  },
+  "summary_stats": {
+    "exp_var": 1860.1929,
+    "ctrl_var": 1860.1929,
+    "exp_sw": 168,
+    "ctrl_sw": 168,
+    "exp_lambda_mean": 0.0,
+    "causal_evidence_count": 0
+  }
+}

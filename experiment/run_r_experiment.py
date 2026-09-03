@@ -111,6 +111,9 @@ def reset_memory(mem_path):
         'ema_amp': 0.3, 'ema_ratio': 0.3,
         'ema_pv': 0.0, 'ema_pv2': 0.0,
         's_depth': 0.0,
+        'lambda_self': 0.0,
+        '_max_tokens_hist': [80.0, 80.0],
+        '_rp_ema_hist': [0.0, 0.0],
     }
     init_m['internal_climate'] = {
         'emotion_intensity': 0.5, 'tension': 0.0,
@@ -295,6 +298,9 @@ def main():
         'ema_amp': 0.3, 'ema_ratio': 0.3,
         'ema_pv': 0.0, 'ema_pv2': 0.0,
         's_depth': 0.0,
+        'lambda_self': 0.0,
+        '_max_tokens_hist': [80.0, 80.0],
+        '_rp_ema_hist': [0.0, 0.0],
     }
     init_m['internal_climate'] = {
         'emotion_intensity': 0.5, 'tension': 0.0,

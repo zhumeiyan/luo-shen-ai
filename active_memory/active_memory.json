@@ -1,93 +1,173 @@
 {
+  "__meta": {
+    "schema_version": "4.0",
+    "last_updated": 1788354467.7121575,
+    "last_reflection_at": 0,
+    "chain_height": 0
+  },
+  "internal_climate": {
+    "emotion_intensity": 0.5,
+    "tension": 0.0,
+    "energy": -0.5000000000000008,
+    "memory_pressure": 0.3
+  },
   "user_model": {
-    "known_facts": {
-      "facts": [],
-      "last_update": 0
+    "trust": {
+      "value": 0.3,
+      "confidence": 0.1,
+      "evidence_count": 0
     },
+    "intimacy": {
+      "value": 0.1,
+      "confidence": 0.1
+    },
+    "shared_history_length": 0,
+    "first_seen": 1788354467.7121587,
+    "total_interactions": 0,
+    "emotional_patterns": [],
+    "preferences": [],
+    "known_facts": {},
     "episodic_memory": [
       {
-        "timestamp": 1788262884.9895425,
-        "e_s": 0.5288,
-        "t_s": 0.0192,
-        "n_s": 0.504,
-        "salience": 1.0,
-        "kind": "chat",
-        "source": "interaction"
-      },
-      {
-        "timestamp": 1788262892.2592237,
-        "e_s": 0.5288,
-        "t_s": 0.0192,
-        "n_s": 0.488,
-        "salience": 1.0,
-        "kind": "chat",
-        "source": "interaction"
+        "e_s": 0.5,
+        "t_s": 0.0,
+        "n_s": 0.5,
+        "salience": 0.6,
+        "kind": "interaction",
+        "timestamp": 1788354467.0444698,
+        "source_id": null
       }
-    ],
-    "total_interactions": 2,
-    "shared_history_length": 2,
-    "intimacy": {
-      "value": 0.5
-    },
-    "emotional_patterns": [],
-    "preferences": []
+    ]
   },
   "self_model": {
     "emotion": {
       "primary": "平静",
-      "intensity": 0.5288
+      "intensity": 0.5,
+      "since": 1788354467.7121594,
+      "trail": [
+        "平静"
+      ]
     },
+    "relation": {
+      "description": "",
+      "asymmetry": 0.0
+    },
+    "strategy_weights": {
+      "strategy_give_advice": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      },
+      "strategy_show_empathy": {
+        "value": 0.6,
+        "initial": 0.6,
+        "adjustments": []
+      },
+      "strategy_ask_question": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      },
+      "strategy_share_info": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      },
+      "strategy_remain_silent": {
+        "value": 0.3,
+        "initial": 0.3,
+        "adjustments": []
+      },
+      "strategy_self_expression": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      }
+    },
+    "skills": {},
     "self_stated_state": {
+      "entries": [],
       "last_stated": null,
-      "last_stated_at": null
+      "last_stated_at": null,
+      "total_stated_count": 0
     },
-    "strategy_weights": {},
     "ring_state": {
       "E": 0.5,
       "T": 0.0,
-      "N": 0.5,
-      "M": 0.3
-    }
+      "N": -0.5000000000000008,
+      "M": 0.3,
+      "phase": 0.0,
+      "mu_core": 0.5,
+      "ema_S": 0.0,
+      "S": 0.0,
+      "relational_pressure_ema": 0.0
+    },
+    "self_awareness_signal": 0.0,
+    "relational_awareness": 0.0
   },
   "active_context": {
+    "session_id": null,
+    "current_topic": null,
     "interaction_mode": "waiting",
-    "last_interaction_ts": 1788262890.6941853,
-    "emotional_arc": [
-      "平静",
-      "平静"
-    ],
+    "last_interaction_ts": 1788354467.7121618,
+    "emotional_arc": [],
     "strategy_used_this_turn": null,
-    "memory_emergence": {
-      "background": {
-        "e_bg": 0.5288000000000002,
-        "t_bg": 0.0192,
-        "n_bg": 0.4959960044567622,
-        "age_bg": 6.0069967751214545e-06,
-        "sal_bg": 1.0,
-        "dominance": 0.5002497214523645
-      },
-      "weights": [
-        0.49987513926603133,
-        0.5001248607339686
-      ],
-      "length_bias": 0.5290641054080208,
-      "tone_bias": 0.1152575358226254,
-      "arousal_bias": 0.07147853760162201
-    },
     "input_pressure": {
       "valence": 0.0,
-      "arousal": 0.1,
-      "applied_at": 1788262892.2592115
+      "arousal": 0.45,
+      "applied_at": 1788354468.05154
     },
-    "mem_arousal_bias": 0.0
+    "memory_emergence": {
+      "background": {
+        "e_bg": 0.5,
+        "t_bg": 0.0,
+        "n_bg": 0.5,
+        "age_bg": 1.665134593923256e-06,
+        "sal_bg": 0.6,
+        "dominance": 1.0
+      },
+      "weights": [
+        1.0
+      ],
+      "length_bias": 0.9,
+      "tone_bias": 0.0,
+      "arousal_bias": 0.1428860061846862,
+      "pressure_memory_mod": 1.0,
+      "narrative_potential": 0.0,
+      "narrative_frame_weights": {
+        "pattern": 0.0,
+        "unspoken": 0.0,
+        "contrast": 0.0,
+        "present": 1.0
+      },
+      "narrative_hints": {
+        "repetition_count": 1,
+        "temporal_span": "无积累",
+        "closure_state": "absent"
+      }
+    }
   },
-  "internal_climate": {
-    "emotion_intensity": 0.5288,
-    "tension": 0.0192,
-    "energy": 0.488,
-    "memory_pressure": 0.3
-  },
-  "__meta": {
-    "last_updated": 1788262890.6941848
+  "residue": {
+    "texture": [
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5
+    ],
+    "ema_alpha": 0.15,
+    "num_updates": 0,
+    "t_snapshot": []
   }
 }

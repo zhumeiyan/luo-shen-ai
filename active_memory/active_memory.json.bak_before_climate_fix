@@ -1,0 +1,99 @@
+{
+  "__meta": {
+    "schema_version": "4.0",
+    "last_updated": 1788271699.5677238,
+    "last_reflection_at": 0,
+    "chain_height": 0
+  },
+  "user_model": {
+    "trust": {
+      "value": 0.3,
+      "confidence": 0.1,
+      "evidence_count": 0
+    },
+    "intimacy": {
+      "value": 0.1,
+      "confidence": 0.1
+    },
+    "shared_history_length": 22,
+    "first_seen": 1788270731.595337,
+    "total_interactions": 22,
+    "emotional_patterns": [],
+    "preferences": [],
+    "known_facts": {},
+    "episodic_memory": []
+  },
+  "self_model": {
+    "emotion": {
+      "primary": "平静",
+      "intensity": 0.3,
+      "since": 1788270731.5953376,
+      "trail": [
+        "平静"
+      ]
+    },
+    "relation": {
+      "description": "",
+      "asymmetry": 0.0
+    },
+    "strategy_weights": {
+      "strategy_give_advice": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      },
+      "strategy_show_empathy": {
+        "value": 0.6,
+        "initial": 0.6,
+        "adjustments": []
+      },
+      "strategy_ask_question": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      },
+      "strategy_share_info": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      },
+      "strategy_remain_silent": {
+        "value": 0.3,
+        "initial": 0.3,
+        "adjustments": []
+      },
+      "strategy_self_expression": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      }
+    },
+    "skills": {},
+    "self_stated_state": {
+      "entries": [],
+      "last_stated": null,
+      "last_stated_at": null,
+      "total_stated_count": 0
+    }
+  },
+  "active_context": {
+    "session_id": null,
+    "current_topic": null,
+    "interaction_mode": "waiting",
+    "last_interaction_ts": 1788271699.5677242,
+    "emotional_arc": [
+      "平和的、好奇的",
+      "平静",
+      "平静",
+      "安静的沉默的",
+      "平静",
+      "平静",
+      "平静",
+      "平静",
+      "平静",
+      "平静"
+    ],
+    "strategy_used_this_turn": null,
+    "memory_emergence": null
+  }
+}

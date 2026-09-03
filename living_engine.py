@@ -408,6 +408,9 @@ def cold_start_if_needed():
                 "ema_pv": 0.0,
                 "ema_pv2": 0.0,
                 "s_depth": 0.0,
+                "lambda_self": 0.0,
+                "_max_tokens_hist": [80.0, 80.0],
+                "_rp_ema_hist": [0.0, 0.0],
             },
         },
         "active_context": {
@@ -1741,6 +1744,93 @@ def _emergence_log(memory):
 # 因为 narrative_potential 通常 0.05-0.2，需较大 boost 才能跨过 0.55 行为门槛
 _NARRATIVE_TENDENCY_BOOST = 5.0
 
+# Lambda-Self 自调节参数（固定，不允许实验过程中调整）
+_LAMBDA_SELF_ALPHA = 1.5       # 乘性调制强度
+_LAMBDA_SELF_TAU = 80.0       # 慢变量时间常数 (tick)
+_LAMBDA_HIST_WINDOW = 20      # 历史窗口长度
+_LAMBDA_HIST_MIN = 5          # 最少有效观测数（低于此返回当前值，不更新）
+
+
+def _compute_lambda_self(memory):
+    """
+    计算 Lambda-Self 自调节信号（连续、无 if-then 数值分支）。
+
+    返回 lambda_self ∈ [0, 1]（已在 EMA 更新后的值）。
+    如果历史观测数不足 _LAMBDA_HIST_MIN，返回当前存储值（不更新）。
+
+    数据来源：ring_state._max_tokens_hist、ring_state._rp_ema_hist（均为已有字段）。
+    """
+    rs = memory.get("self_model", {}).get("ring_state", {})
+    lambda_self = rs.get("lambda_self", 0.0)
+    hist_tok = rs.get("_max_tokens_hist", [])
+    hist_rp = rs.get("_rp_ema_hist", [])
+
+    n_tok = len(hist_tok)
+    n_rp = len(hist_rp)
+    n_obs = n_tok if n_tok < n_rp else n_rp   # min(n_tok, n_rp)，无条件分支
+
+    if n_obs < _LAMBDA_HIST_MIN:
+        return lambda_self
+
+    # ── 行为范围（连续，无分支）──
+    _tok = hist_tok[-n_obs:]
+    _rp = hist_rp[-n_obs:]
+
+    # max - min 用迭代方式避免 if（但内置 max/min 被视为 clamp 函数，非分支）
+    _tok_max = _tok[0]; _tok_min = _tok[0]
+    for _v in _tok[1:]:
+        if _v > _tok_max: _tok_max = _v
+        if _v < _tok_min: _tok_min = _v
+    _tok_range = _tok_max - _tok_min
+    _norm_range = _tok_range / 350.0           # 350 = 各档位 base 最大值
+    _rigidity = 1.0 - (_norm_range if _norm_range < 1.0 else 1.0)
+    if _rigidity < 0.0: _rigidity = 0.0         # clamp via if-chain，可接受
+
+    # ── 皮尔逊连续计算（cov / (sx*sy + 1e-12)）──
+    _mx = sum(_tok) / n_obs
+    _my = sum(_rp) / n_obs
+    _cov = 0.0; _sxx = 0.0; _syy = 0.0
+    for i in range(n_obs):
+        _dx = _tok[i] - _mx; _dy = _rp[i] - _my
+        _cov += _dx * _dy; _sxx += _dx * _dx; _syy += _dy * _dy
+    _cov /= n_obs; _sxx /= n_obs; _syy /= n_obs
+    _sx = math.sqrt(_sxx + 1e-12)
+    _sy = math.sqrt(_syy + 1e-12)
+    _r = _cov / (_sx * _sy)
+    # clamp r to [-1, 1] via if-chain
+    if _r > 1.0: _r = 1.0
+    if _r < -1.0: _r = -1.0
+    _coherence = _r
+
+    # ── lambda_raw ──
+    _lambda_raw = _rigidity * (1.0 - _coherence) / 2.0
+
+    # ── EMA 更新（dt 固定 0.08）──
+    _dt = 0.08
+    _alpha_ema = _dt / (_LAMBDA_SELF_TAU + _dt)
+    lambda_self += _alpha_ema * (_lambda_raw - lambda_self)
+    # clamp [0, 1]
+    if lambda_self < 0.0: lambda_self = 0.0
+    if lambda_self > 1.0: lambda_self = 1.0
+
+    rs["lambda_self"] = lambda_self
+    return lambda_self
+
+
+def _update_lambda_histories(memory, max_tokens, rp_ema):
+    """更新 Lambda-Self 历史序列（纯存储操作，非数值计算分支）"""
+    rs = memory.get("self_model", {}).get("ring_state", {})
+    h_tok = rs.setdefault("_max_tokens_hist", [80.0, 80.0])
+    h_rp = rs.setdefault("_rp_ema_hist", [0.0, 0.0])
+    h_tok.append(max_tokens)
+    h_rp.append(rp_ema)
+    # 保持窗口长度 _LAMBDA_HIST_WINDOW
+    while len(h_tok) > _LAMBDA_HIST_WINDOW:
+        h_tok.pop(0)
+    while len(h_rp) > _LAMBDA_HIST_WINDOW:
+        h_rp.pop(0)
+
+
 # ── 关系地貌向量 R (r_intensity, r_historicity, r_coherence) 参数 ──
 _R_ALPHA_ENERGY = 0.005            # r_intensity EMA 平滑系数（~200 tick 窗口）
 _R_ALPHA_HIST = 0.005              # r_historicity EMA 平滑系数
@@ -1796,6 +1886,11 @@ def _select_behavior(memory, emergence):
     # s_depth 缓冲当前压力：深厚关系使同等情绪波动对行为影响减弱
     _pressure_term = _PRESSURE_K * _pressure_ema / (1.0 + 1.5 * _s_depth)
 
+    # ═══ Lambda-Self 自调节：行为僵化检测 → 乘性调制压力项 ═══
+    _lambda_self_val = _compute_lambda_self(memory)
+    _modulator = 1.0 + _LAMBDA_SELF_ALPHA * _lambda_self_val
+    _pressure_term *= _modulator
+
     # 乘性调制 ②：定型度 r_coherence 调节叙事增强强度
     _narr_boost = _NARRATIVE_TENDENCY_BOOST * (1.0 + _R_K_COH_R * (_rcoh - 0.5))
 
@@ -1831,6 +1926,9 @@ def _select_behavior(memory, emergence):
         "max_tokens": max_tokens,
         "pressure_ema": round(_pressure_ema, 6),
         "pressure_quality": round(pq, 4),
+        "pressure_term": round(_pressure_term, 7),
+        "lambda_self": round(_lambda_self_val, 7),
+        "lambda_modulator": round(_modulator, 7),
         "r_intensity": round(_rint, 6),
         "r_historicity": round(_rhist, 6),
         "r_coherence": round(_rcoh, 6),
@@ -1994,6 +2092,9 @@ def _generate_response_impl(user_input, source="living_engine", extra_context=No
     # LLM 只在这个框架内填充语言，差异不会被采样随机性淹没
     emergence_for_behavior = emergence_for_directive if emergence_for_directive else _emergence_log(memory)
     behavior = _select_behavior(memory, emergence_for_behavior)
+
+    # ── Lambda-Self 历史序列更新（纯存储操作，不影响行为选择结果）──
+    _update_lambda_histories(memory, behavior["max_tokens"], behavior["pressure_ema"])
     
     # 如果行为选择判定沉默，直接返回
     if behavior["response_mode"] == "silent":
