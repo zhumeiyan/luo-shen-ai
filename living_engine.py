@@ -1795,22 +1795,14 @@ def _select_behavior(memory, emergence):
     # s_depth 缓冲当前压力：深厚关系使同等情绪波动对行为影响减弱
     _pressure_term = _PRESSURE_K * _pressure_ema / (1.0 + 1.5 * _s_depth)
 
-    # ★ 深度正向共鸣偏置：s_depth 直接提升响应基调（结构通道，非遮掩参数）
-    _S_DEPTH_BOOST = 0.50
-    _depth_boost = _S_DEPTH_BOOST * _s_depth
-
-    # ★ Emergence 后备：合成环境 narr_potential=None 时，由 s_depth 兜底（防坍塌）
-    _narr_fallback = 0.08 * _s_depth if (narrative_potential is None or (isinstance(narrative_potential, float) and math.isnan(narrative_potential))) else 0.0
-
     # 乘性调制 ②：定型度 r_coherence 调节叙事增强强度
     _narr_boost = _NARRATIVE_TENDENCY_BOOST * (1.0 + _R_K_COH_R * (_rcoh - 0.5))
 
-    # 重组 response_pre：phase + emerg(含后备) + pressure + ★depth_boost
+    # 连续叠加叙事势 + 相位偏置 + 慢压力（s_depth 仅通过 pressure_term divider 间接影响）
     response_pre = (arousal_bias + 0.5 * tone_bias
-                    + _narr_boost * (narrative_potential + _narr_fallback)
+                    + _narr_boost * narrative_potential
                     + _phase_bias
-                    + _pressure_term
-                    + _depth_boost)
+                    + _pressure_term)
     response_tendency = 1.0 / (1.0 + math.exp(-response_pre))
 
     # ── 维度 1：5 档位离散选择（无 if-then，floor + 隐式 clamp via * 4.999）──
