@@ -1792,8 +1792,8 @@ def _select_behavior(memory, emergence):
     _pressure_ema = _ring_state.get("relational_pressure_ema", 0.0)
     # 读取 s_depth（不可逆深度积累量）
     _s_depth = _ring_state.get("s_depth", 0.0)
-    # s_depth 调制压力敏感度：深度积累后，同等压力产生更强的行为偏移
-    _pressure_term = _PRESSURE_K * _pressure_ema * (1.0 + 1.5 * _s_depth)
+    # s_depth 缓冲当前压力：深厚关系使同等情绪波动对行为影响减弱
+    _pressure_term = _PRESSURE_K * _pressure_ema / (1.0 + 1.5 * _s_depth)
 
     # 乘性调制 ②：定型度 r_coherence 调节叙事增强强度
     _narr_boost = _NARRATIVE_TENDENCY_BOOST * (1.0 + _R_K_COH_R * (_rcoh - 0.5))
@@ -2493,13 +2493,13 @@ def _update_luoshen_coupled(memory, env, tick_id=0):
     _mu_core_new = _mu_core + _mu_drift_eps * (_ema_S_new - _mu_core) * dt
 
     # ── 亲密度深度积累 (s_depth) ──
-    # s_depth 积累速率 ∝ rp_ema²（正负输入对称贡献），衰减极慢（gamma_decay = 0.00002）
-    # 方程：s_depth += alpha_accum * engagement - gamma_decay * s_depth，clamp 到 [0, 1]
+    # 方程：s_depth += alpha * |rp_ema| - gamma * s_depth, clamp 到 [0, 1]
+    # 用绝对值：情感强度不分正负，避免弱信号被平方衰减
     _s_depth = _ring_sm.get("s_depth", 0.0)
     _rpe_local = _ring_sm.get("relational_pressure_ema", 0.0)
-    _engagement = _rpe_local * _rpe_local
-    _alpha_accum = 0.002
-    _gamma_decay_s = 0.00002
+    _engagement = abs(_rpe_local)
+    _alpha_accum = 0.03
+    _gamma_decay_s = 0.0002
     _s_depth_new = _s_depth + _alpha_accum * _engagement * dt - _gamma_decay_s * _s_depth * dt
     _s_depth_new = min(1.0, max(0.0, _s_depth_new))
     _s_depth_new = round(_s_depth_new, 7)

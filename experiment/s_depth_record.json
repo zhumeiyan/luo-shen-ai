@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "timestamp": 1788394499.6612039,
+  "event_type": "s_depth_experiment",
+  "git_commit": "fc2ebd9",
+  "result": "FAILED",
+  "reason": "s_depth growth too slow with alpha_accum=0.002, dt=0.08. Effective alpha=0.00016/tick gives time constant ~50000 ticks. Experiment only ran 1000 ticks.",
+  "data": {
+    "P_final_sdepth": 0.008944,
+    "N_final_sdepth": 0.027084,
+    "G_posneg_tick1000_sdepth": 0.034785,
+    "G_negpos_tick1000_sdepth": 0.0356,
+    "D_final_sdepth": 0.0,
+    "corr_sdepth_rpema": -0.0892
+  }
+}

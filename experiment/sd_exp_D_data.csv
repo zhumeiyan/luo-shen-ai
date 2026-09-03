@@ -1,0 +1,14 @@
+tick,group,phase,input_type,rp_ema,s_depth,mode,max_tokens,E,T,N
+1,D,train,positive,0.0,0.0,short,80,0.492,-0.03936,0.48601
+5,D,train,positive,0.0,0.0,short,80,0.42873,-0.20172,0.43281
+10,D,train,positive,0.0,0.0,short,80,0.28698,-0.38904,0.37698
+50,D,train,positive,0.0,0.0,short,80,-0.24291,-0.3018,0.27514
+100,D,train,positive,0.0,0.0,short,80,-0.41838,-0.01051,0.19673
+150,D,train,positive,0.0,0.0,short,80,-0.3503,0.25131,0.13732
+200,D,train,positive,0.0,0.0,short,80,-0.16772,0.35899,0.08476
+250,D,train,positive,0.0,0.0,short,80,0.00977,0.32204,0.03197
+300,D,train,positive,0.0,0.0,short,80,0.11206,0.20919,-0.02069
+350,D,train,positive,0.0,0.0,short,80,0.12575,0.09402,-0.0701
+400,D,train,positive,0.0,0.0,short,80,0.07798,0.02345,-0.11396
+450,D,train,positive,0.0,0.0,short,80,0.00988,0.00839,-0.151
+500,D,train,positive,0.0,0.0,short,80,-0.04534,0.03318,-0.18062
