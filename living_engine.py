@@ -1756,6 +1756,9 @@ INTERNAL_DRIVE_ENABLED = True
 # ── 存在感基线开关（实验用）──
 PRESENCE_BIAS_ENABLED = True
 
+# ── 内在稳态偏好开关（实验用）──
+STABILITY_DRIVE_ENABLED = True
+
 # ── 在线学习核心参数 ──
 LEARNING_LR = 0.01
 LEARNING_BETA = 0.5
@@ -1955,6 +1958,24 @@ def _select_behavior(memory, emergence):
         _total_int = float(memory.get("user_model", {}).get("total_interactions", 0))
         _presence_bias = 0.12 * math.tanh(_S + 0.001 * _total_int)
 
+    # ── 内在稳态偏好：当 H 下降时加大对压力的敏感度 ──
+    _stability_D = 0.0
+    _H_val = 0.5
+    _H_ema_val = 0.5
+    if STABILITY_DRIVE_ENABLED:
+        _climate = memory.get("internal_climate", {})
+        _ring_st = memory.get("self_model", {}).get("ring_state", {})
+        _E_val = float(_climate.get("emotion_intensity", 0.5))
+        _T_val = float(_climate.get("tension", 0.0))
+        _H_val = 1.0 - min(1.0, (abs(_E_val) + abs(_T_val)) / 2.0)
+        _H_ema_val = float(_ring_st.get("H_ema", _H_val))
+        _stability_D = _H_ema_val - _H_val  # >0 表示内部正在变差
+        _D_pos = _stability_D * (1.0 if _stability_D > 0.0 else 0.0)
+        _pressure_term = _pressure_term * (1.0 + 0.8 * _D_pos)
+        # 更新 H_ema (alpha = 1/50 = 0.02)，存储回 memory
+        _new_H_ema = 0.98 * _H_ema_val + 0.02 * _H_val
+        memory["self_model"]["ring_state"]["H_ema"] = round(_new_H_ema, 6)
+
     # 连续叠加叙事势 + 相位偏置 + 慢压力 + 内部节律驱动 + 存在感基线
     response_pre = (arousal_bias + 0.5 * tone_bias
                     + _narr_boost * narrative_potential
@@ -1992,6 +2013,9 @@ def _select_behavior(memory, emergence):
         "pressure_term": round(_pressure_term, 7),
         "internal_drive": round(_internal_drive, 6),
         "presence_bias": round(_presence_bias, 7),
+        "H": round(_H_val, 6),
+        "H_ema": round(_H_ema_val, 6),
+        "stability_D": round(_stability_D, 6),
         "lambda_self": round(_lambda_self_val, 7),
         "lambda_modulator": round(_modulator, 7),
         "r_intensity": round(_rint, 6),
