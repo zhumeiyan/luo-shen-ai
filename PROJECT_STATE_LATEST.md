@@ -102,7 +102,29 @@
 
 **归档位置**：`experiment/learning_core_AB/results.csv` + `report.json`
 
-### 4.5 Self-Reflection 记忆实验（2026-09-03）— **FAIL + ROLLED BACK**
+### 4.5 内部节律驱动实验（2026-09-04）— **WEAK EFFECT**
+
+**目标**：让洛神的内部状态（E, T）通过 tanh 直接驱动行为选择，不再只让外部压力主导
+
+**实验设计**：
+- 新增项：`_internal_drive = tanh(E + 0.5*T) * 0.6`，加入 response_pre
+- A 组：启用（INTERNAL_DRIVE_ENABLED=True）
+- B 组：禁用（INTERNAL_DRIVE_ENABLED=False）
+- 500 tick 正向输入 + 50 tick 中性输入，每 10 tick 记录
+
+**结果**：
+- **internal_drive 有效**：A 组 avg = -0.020，波动范围 [-0.30, +0.14]；B 组恒为 0
+- **mode 变化**：A 组出现 brief 档位（tick 30，max_tokens=25），B 组始终 short
+- **行为差异过小**：正向段 avg max_tokens 差异仅 1.08（< 5 阈值）
+- **中性段无差异**：两组均为 mode=short, max_tokens=80
+
+**结论**：internal_drive 机制可运作并对行为产生可测影响（A 组产生 brief 档位而 B 没有），但效应极弱——远未达到"更丰富的 mode 变化"预期。中性输入下行为无差异。原因：在 rp_ema=0 条件下，phase_bias 和 base arousal 项主导，tanh 输出的 ±0.6 范围未被充分利用。
+
+**处理**：代码保留（全局开关可关闭），但如实报告为弱效应。未达预期阈值，路径半关闭——待探索更高内部压力场景后再议。
+
+**归档位置**：`experiment/internal_drive_AB/results.csv` + `report.json`
+
+### 4.6 Self-Reflection 记忆实验（2026-09-03）— **FAIL + ROLLED BACK**
 
 **目标**：让洛神将自身状态感知沉淀为情景记忆，影响后续行为
 
@@ -123,6 +145,7 @@
 | **Lambda-Self 自调节** | 2026-09-04 | 无法激活（系统不僵化） | 代码保留，路径关闭 |
 | **self_language 自然语言** | 2026-09-04 | 虚假 PASS：LLM 温度随机性冒充洛神语言，状态未变句子乱变 | 回滚，路径关闭 |
 | **在线学习核心** | 2026-09-04 | W 可更新但 rp_ema=0 导致 pressure_term=0，调制无效，行为无差异 | 代码保留，路径关闭 |
+| **内部节律驱动** | 2026-09-04 | 机制有效（A组出现 brief 档位 B没有），但效应极弱（差异仅1.08 token，阈值5），中性段无差异 | 代码保留（可控开关），路径半关闭 |
 
 ---
 

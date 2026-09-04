@@ -1750,6 +1750,9 @@ _LAMBDA_SELF_TAU = 80.0       # 慢变量时间常数 (tick)
 _LAMBDA_HIST_WINDOW = 20      # 历史窗口长度
 _LAMBDA_HIST_MIN = 5          # 最少有效观测数（低于此返回当前值，不更新）
 
+# ── 内部节律驱动全局开关（实验用）──
+INTERNAL_DRIVE_ENABLED = True
+
 # ── 在线学习核心参数 ──
 LEARNING_LR = 0.01
 LEARNING_BETA = 0.5
@@ -1933,11 +1936,20 @@ def _select_behavior(memory, emergence):
     # 乘性调制 ②：定型度 r_coherence 调节叙事增强强度
     _narr_boost = _NARRATIVE_TENDENCY_BOOST * (1.0 + _R_K_COH_R * (_rcoh - 0.5))
 
-    # 连续叠加叙事势 + 相位偏置 + 慢压力（s_depth 仅通过 pressure_term divider 间接影响）
+    # ── 内部节律驱动：环状态直接驱动行为，不再只让外部压力主导 ──
+    _internal_drive = 0.0
+    if INTERNAL_DRIVE_ENABLED:
+        _climate = memory.get("internal_climate", {})
+        _E = float(_climate.get("emotion_intensity", 0.5))
+        _T = float(_climate.get("tension", 0.0))
+        _internal_drive = math.tanh(_E + 0.5 * _T) * 0.6
+
+    # 连续叠加叙事势 + 相位偏置 + 慢压力 + 内部节律驱动
     response_pre = (arousal_bias + 0.5 * tone_bias
                     + _narr_boost * narrative_potential
                     + _phase_bias
-                    + _pressure_term)
+                    + _pressure_term
+                    + _internal_drive)
     response_tendency = 1.0 / (1.0 + math.exp(-response_pre))
 
     # ── 维度 1：5 档位离散选择（无 if-then，floor + 隐式 clamp via * 4.999）──
@@ -1966,6 +1978,7 @@ def _select_behavior(memory, emergence):
         "pressure_ema": round(_pressure_ema, 6),
         "pressure_quality": round(pq, 4),
         "pressure_term": round(_pressure_term, 7),
+        "internal_drive": round(_internal_drive, 6),
         "lambda_self": round(_lambda_self_val, 7),
         "lambda_modulator": round(_modulator, 7),
         "r_intensity": round(_rint, 6),

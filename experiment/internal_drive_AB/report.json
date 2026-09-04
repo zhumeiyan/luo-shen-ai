@@ -1,0 +1,33 @@
+{
+  "experiment": "internal_drive_AB",
+  "ticks": {
+    "pos": 500,
+    "neu": 50
+  },
+  "criteria": {
+    "pos_mode_diff": true,
+    "pos_token_diff_gt_5": false,
+    "neu_mode_diff": false,
+    "neu_token_diff": 0.0,
+    "A_internal_drive_nonzero": true,
+    "B_internal_drive_zero": true
+  },
+  "summary": {
+    "A_modes_pos": [
+      "brief",
+      "short"
+    ],
+    "B_modes_pos": [
+      "short"
+    ],
+    "A_avg_tokens_pos": 78.92,
+    "B_avg_tokens_pos": 80.0,
+    "A_avg_tokens_neu": 80.0,
+    "B_avg_tokens_neu": 80.0,
+    "token_diff_pos": -1.08,
+    "token_diff_neu": 0.0,
+    "A_avg_internal_drive": -0.020373,
+    "B_avg_internal_drive": 0.0
+  },
+  "all_pass": false
+}
