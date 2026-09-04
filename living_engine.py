@@ -35,6 +35,8 @@ import hashlib
 import shutil
 import tempfile
 
+# ── 自我语言生成器（独立模块，按需导入）──
+
 # ── 寻址上下文 ──────────────────────────────────────────────────────────────
 # _current_source_id 是寻址键，不是行为键。
 # 它唯一的作用是：在检索 episodic_memory 时，只选 tags 包含该 source_id 的记忆。
@@ -1144,6 +1146,9 @@ def update_after_interaction(user_input, luoshen_response, expression_directive,
     # 5b. 编码情景记忆（每次交互都把当前环状态残影写入记忆）
     _encode_episodic_memory(memory)
 
+    # 5b2. 生成自我状态自然语言描述（存入情景记忆 kind="self_language"）
+    _encode_self_language(memory)
+
     # 5c. 计算当前记忆浮现背景（softmax 加权 + 偏置输出）
     _compute_memory_emergence(memory)
 
@@ -1340,6 +1345,71 @@ def _encode_episodic_memory(memory):
         episodic.pop(min_idx)
 
     memory["user_model"]["episodic_memory"] = episodic
+
+
+def _encode_self_language(memory):
+    """
+    自我状态语言生成。
+    
+    每次交互后，从洛神当前内部状态生成一句第一人称描述，
+    存入 episodic_memory（kind="self_language"）。
+    
+    下次生成时，读取上一条 self_language，附加到 LLM prompt，
+    使描述随时间和状态变化。
+    
+    注意：此函数不修改 E/T/N 等状态变量，仅读取。
+    """
+    try:
+        from self_language_generator import generate_self_language, extract_state
+        from episodic_memory import make_memory, get_latest_self_language, MAX_MEMORIES, activation
+    except Exception:
+        return
+
+    # 提取内部状态
+    state = extract_state(memory)
+
+    # 读取上一条 self_language（如果有）
+    episodic = memory["user_model"].get("episodic_memory", [])
+    previous = get_latest_self_language(episodic)
+
+    # 生成新的自我描述
+    description = generate_self_language(state, previous)
+
+    if not description:
+        return
+
+    # 存入情景记忆（kind="self_language"，含 text 字段）
+    climate = memory.get("internal_climate", {})
+    mem = make_memory(
+        climate,
+        kind="self_language",
+        source="self_language_generator",
+        text=description,
+    )
+    episodic.append(mem)
+
+    # 超过上限时丢弃（与 _encode_episodic_memory 一致）
+    now = time.time()
+    while len(episodic) > MAX_MEMORIES:
+        min_idx = 0
+        min_act = float("inf")
+        cur_e = climate.get("emotion_intensity", 0.5)
+        cur_t = climate.get("tension", 0.0)
+        cur_n = climate.get("energy", 0.5)
+        for i, m in enumerate(episodic):
+            a = activation(m, now, cur_e, cur_t, cur_n)
+            if a < min_act:
+                min_act = a
+                min_idx = i
+        episodic.pop(min_idx)
+
+    memory["user_model"]["episodic_memory"] = episodic
+
+    # 更新 self_stated_state，供其他模块读取
+    self_stated = memory.get("self_model", {}).get("self_stated_state", {})
+    self_stated["last_stated"] = description
+    self_stated["last_stated_at"] = time.time()
+    memory.setdefault("self_model", {})["self_stated_state"] = self_stated
 
 
 

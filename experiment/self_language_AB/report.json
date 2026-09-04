@@ -1,0 +1,18 @@
+{
+  "experiment": "self_language_AB",
+  "ticks": 50,
+  "neutral_input": "你好",
+  "neg_count": 50,
+  "pos_count": 50,
+  "neg_diversity": 1.0,
+  "pos_diversity": 1.0,
+  "cross_diff": 1.0,
+  "neg_within_change": 1.0,
+  "pos_within_change": 1.0,
+  "criteria": {
+    "两组差异 >= 60%": true,
+    "组内前后变化 >= 30%": true,
+    "两组均产出 >= 40 条描述": true
+  },
+  "all_pass": true
+}
