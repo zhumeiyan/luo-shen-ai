@@ -27,14 +27,13 @@ SALIENCE = {                  # 经历类型的固有显著度
     "see": 0.6,               # 看见
     "hear": 0.6,              # 听见
     "obs": 0.5,               # 观察/感知
-    "self_language": 0.9,     # 自我状态描述（接近自我表态）
     "unknown": 0.6,
 }
 
 MAX_MEMORIES = 50             # 超过后丢弃最老且激活度最低的记忆
 
 
-def make_memory(climate, kind="unknown", source=None, tags=None, text=None):
+def make_memory(climate, kind="unknown", source=None, tags=None):
     """
     活记忆层调用：根据当前环状态创建一条记忆残影。
 
@@ -43,12 +42,11 @@ def make_memory(climate, kind="unknown", source=None, tags=None, text=None):
     source: 来源标签（调试用，可为 None）
     tags: 寻址标签列表（如 ["user_A", "user_B"]），用于记忆分区检索。
           不参与 salience、activation、gravity 的计算——只用于检索过滤。
-    text: 可选文本。用于 self_language 等需要保存自然语言描述的记忆。
 
-    返回一个字典。kind=self_language 时包含 text 字段。
+    返回一个字典，不含文本。
     """
     salience = SALIENCE.get(kind, 0.6)
-    mem = {
+    return {
         "timestamp": time.time(),
         "e_s": float(climate.get("emotion_intensity", 0.5)),
         "t_s": float(climate.get("tension", 0.0)),
@@ -58,25 +56,6 @@ def make_memory(climate, kind="unknown", source=None, tags=None, text=None):
         "source": source,
         "tags": list(tags) if tags else [],
     }
-    if text is not None:
-        mem["text"] = str(text)
-    return mem
-
-
-def get_latest_self_language(memories):
-    """
-    获取最近一条 self_language 记忆中的 text。
-
-    参数:
-        memories: episodic_memory 列表
-
-    返回:
-        str | None - 最近 self_language 的 text，如果没有则返回 None
-    """
-    for mem in reversed(memories):
-        if mem.get("kind") == "self_language":
-            return mem.get("text")
-    return None
 
 
 def activation(mem, now, cur_e, cur_t, cur_n):
