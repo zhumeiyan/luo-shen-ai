@@ -1750,16 +1750,13 @@ _LAMBDA_SELF_TAU = 80.0       # 慢变量时间常数 (tick)
 _LAMBDA_HIST_WINDOW = 20      # 历史窗口长度
 _LAMBDA_HIST_MIN = 5          # 最少有效观测数（低于此返回当前值，不更新）
 
-# ── 内部节律驱动全局开关（实验用）──
-INTERNAL_DRIVE_ENABLED = True
+# ── 实验开关（全部关闭，不再用于真实对话）──
+INTERNAL_DRIVE_ENABLED = False
+PRESENCE_BIAS_ENABLED = False
+STABILITY_DRIVE_ENABLED = False
 
-# ── 存在感基线开关（实验用）──
-PRESENCE_BIAS_ENABLED = True
-
-# ── 内在稳态偏好开关（实验用）──
-STABILITY_DRIVE_ENABLED = True
-
-# ── 在线学习核心参数 ──
+# ── 在线学习核心参数（实验用，已禁用）──
+LEARNING_CORE_ENABLED = False
 LEARNING_LR = 0.01
 LEARNING_BETA = 0.5
 LEARNING_ERR_EMA_ALPHA = 0.02
@@ -1932,7 +1929,8 @@ def _select_behavior(memory, emergence):
     _pressure_term = _PRESSURE_K * _pressure_ema / (1.0 + 1.5 * _s_depth)
 
     # 在线学习器乘性调制：预测误差越大（内在未知越大），越敏感于外部压力
-    _pressure_term *= (1.0 + LEARNING_BETA * memory.get("self_model", {}).get("learning_core", {}).get("lambda_learn", 0.5))
+    if LEARNING_CORE_ENABLED:
+        _pressure_term *= (1.0 + LEARNING_BETA * memory.get("self_model", {}).get("learning_core", {}).get("lambda_learn", 0.5))
 
     # ═══ Lambda-Self 自调节：行为僵化检测 → 乘性调制压力项 ═══
     _lambda_self_val = _compute_lambda_self(memory)
@@ -2803,35 +2801,36 @@ def _update_luoshen_coupled(memory, env, tick_id=0):
     _new_ring_state["relational_pressure_ema"] = _rpe
     memory["self_model"]["ring_state"] = _new_ring_state
 
-    # ── 在线学习核心更新 ──
-    learning = memory.get("self_model", {}).get("learning_core", {})
-    W = learning.get("W", [0.0] * len(LEARNING_VEC_KEYS))
-    err_ema = learning.get("err_ema", 0.0)
-    prev_vector = learning.get("prev_vector", None)
-    prev_E = learning.get("prev_E", None)
+    # ── 在线学习核心更新（已禁用）──
+    if LEARNING_CORE_ENABLED:
+        learning = memory.get("self_model", {}).get("learning_core", {})
+        W = learning.get("W", [0.0] * len(LEARNING_VEC_KEYS))
+        err_ema = learning.get("err_ema", 0.0)
+        prev_vector = learning.get("prev_vector", None)
+        prev_E = learning.get("prev_E", None)
 
-    new_E = memory["internal_climate"]["emotion_intensity"]
+        new_E = memory["internal_climate"]["emotion_intensity"]
 
-    if prev_E is not None and prev_vector is not None:
-        predicted_E = _predict_E(prev_vector, W)
-        error = new_E - predicted_E
-        W = _update_learning_weights(W, prev_vector, error)
-        err_ema = (1.0 - LEARNING_ERR_EMA_ALPHA) * err_ema + LEARNING_ERR_EMA_ALPHA * abs(error)
-    else:
-        predicted_E = 0.0
-        error = 0.0
+        if prev_E is not None and prev_vector is not None:
+            predicted_E = _predict_E(prev_vector, W)
+            error = new_E - predicted_E
+            W = _update_learning_weights(W, prev_vector, error)
+            err_ema = (1.0 - LEARNING_ERR_EMA_ALPHA) * err_ema + LEARNING_ERR_EMA_ALPHA * abs(error)
+        else:
+            predicted_E = 0.0
+            error = 0.0
 
-    lambda_learn = 1.0 / (1.0 + math.exp(-LEARNING_K * err_ema))
+        lambda_learn = 1.0 / (1.0 + math.exp(-LEARNING_K * err_ema))
 
-    memory["self_model"]["learning_core"] = {
-        "W": W,
-        "err_ema": round(err_ema, 6),
-        "lambda_learn": round(lambda_learn, 6),
-        "prev_E": new_E,
-        "prev_vector": _get_learning_state_vector(memory),
-        "last_predicted_E": round(predicted_E, 6),
-        "last_error": round(error, 6),
-    }
+        memory["self_model"]["learning_core"] = {
+            "W": W,
+            "err_ema": round(err_ema, 6),
+            "lambda_learn": round(lambda_learn, 6),
+            "prev_E": new_E,
+            "prev_vector": _get_learning_state_vector(memory),
+            "last_predicted_E": round(predicted_E, 6),
+            "last_error": round(error, 6),
+        }
 
     # ── 连续自我觉察信号（不进入 prompt，不生成文本） ──
     # self_awareness_signal = tanh(relational_awareness * 1.5)
