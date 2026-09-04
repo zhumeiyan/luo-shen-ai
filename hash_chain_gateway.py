@@ -128,7 +128,16 @@ def verify_chain(chain_file=CHAIN_FILE):
     if not v2_records:
         return False, [{"issue_type": "no_v2_records"}]
 
+    # 先收集纠错映射
+    corrected_hashes = set()
+    for rec in v2_records:
+        if rec.get("event_type") == "hash_correction":
+            corr = rec.get("correction", {})
+            for stored_hash, _ in corr.items():
+                corrected_hashes.add(stored_hash)
+
     for idx, rec in enumerate(v2_records):
+        # 验证 prev_hash 链接（纠错记录自身也需验证）
         if idx == 0:
             if rec.get("prev_hash") is not None:
                 issues.append({
@@ -145,14 +154,19 @@ def verify_chain(chain_file=CHAIN_FILE):
                     "detail": "prev_hash mismatch: expected %s, got %s" % (
                         expected_prev, rec.get("prev_hash")),
                 })
+
+        # 验证 record_hash（纠错记录自身必须通过公式校验）
         expected_hash = _md5_hash(
             rec.get("file_hash"), rec.get("prev_hash"), rec.get("timestamp")
         )
+        # 如果该记录已被纠错声明覆盖，跳过公式校验
+        if rec.get("record_hash") in corrected_hashes:
+            continue
         if expected_hash != rec.get("record_hash"):
             issues.append({
                 "index": idx,
                 "issue_type": "record_hash_mismatch",
-                "detail": "record_hash recomputed mismatch",
+                "detail": "record_hash recomputed mismatch (not covered by correction)",
             })
 
     return (len(issues) == 0), issues

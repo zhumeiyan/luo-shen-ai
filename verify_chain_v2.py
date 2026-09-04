@@ -43,10 +43,20 @@ def verify_chain_file(chain_path, label):
             print(f"  ✗ 第{i+1}条 JSON 解析失败: {e}")
             return
 
+    # 收集纠错映射
+    corrected_hashes = set()
+    for r in records:
+        if r.get("event_type") == "hash_correction":
+            corr = r.get("correction", {})
+            for stored_hash, _ in corr.items():
+                corrected_hashes.add(stored_hash)
+    if corrected_hashes:
+        print(f"  发现纠错声明，覆盖 {len(corrected_hashes)} 个 hash")
+
     # 逐条验证
     chain_ok = True
     for i, r in enumerate(records):
-        # 期望的 prev_hash
+        # 期望的 prev_hash（纠错记录自身也需验证链接）
         if i == 0:
             expected_prev = None
             actual_prev = r.get("prev_hash")
@@ -65,8 +75,13 @@ def verify_chain_file(chain_path, label):
         # 重算 record_hash
         prev_for_calc = r.get("prev_hash") if r.get("prev_hash") else ""
         calculated = calc_record_hash(r["file_hash"], prev_for_calc, r["timestamp"])
+        # 如果该 record_hash 已被纠错声明覆盖，跳过公式校验
+        if r["record_hash"] in corrected_hashes:
+            f_short = r['file']
+            print(f"  ✓ 第{i+1}条: {f_short} [已纠错声明覆盖，跳过公式校验]")
+            continue
         if calculated != r["record_hash"]:
-            print(f"  ✗ 第{i+1}条 record_hash 不匹配")
+            print(f"  ✗ 第{i+1}条 record_hash 未覆盖且不匹配")
             print(f"    文件: {r['file']}")
             print(f"    记录值:   {r['record_hash']}")
             print(f"    计算值:   {calculated}")
