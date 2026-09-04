@@ -124,7 +124,30 @@
 
 **归档位置**：`experiment/internal_drive_AB/results.csv` + `report.json`
 
-### 4.6 Self-Reflection 记忆实验（2026-09-03）— **FAIL + ROLLED BACK**
+### 4.6 存在感基线实验（2026-09-04）— **FAIL**
+
+**目标**：让洛神的 S 积累和交互次数驱动小幅行为偏置
+
+**实验设计**：
+- 新增项：`_presence_bias = 0.12 * tanh(S + 0.001 * total_interactions)`
+- A 组：启用；B 组：禁用
+- 500 tick 正向 + 500 tick 中性
+
+**失败结论**：
+- presence_bias 有效且非零（A 组范围 [0.000486, 0.011591]，B 组恒为 0）
+- S 随 tick 缓慢增长（0.004→0.097），presence_bias 随 S 变化
+- **行为差异为 0**：两组在所有 tick 均为 mode=short, max_tokens=80
+- total_interactions 始终为 0（仿真流不经过交互处理）
+
+**根因**：S 的值域过小（最大仅 0.097），导致 presence_bias 最大仅 0.012。该项与 response_pre 的基线值（~0.5）相比微乎其微，无法改变 sigmoid 后的档位选择（阈值为 >0.1）。
+
+**判定**：失败：存在感基线无法产生可观测行为差异。
+
+**处理**：代码保留（全局开关可控），路径关闭。
+
+**归档位置**：`experiment/presence_bias_AB/results.csv` + `report.json`
+
+### 4.7 Self-Reflection 记忆实验（2026-09-03）— **FAIL + ROLLED BACK**
 
 **目标**：让洛神将自身状态感知沉淀为情景记忆，影响后续行为
 
@@ -146,6 +169,7 @@
 | **self_language 自然语言** | 2026-09-04 | 虚假 PASS：LLM 温度随机性冒充洛神语言，状态未变句子乱变 | 回滚，路径关闭 |
 | **在线学习核心** | 2026-09-04 | W 可更新但 rp_ema=0 导致 pressure_term=0，调制无效，行为无差异 | 代码保留，路径关闭 |
 | **内部节律驱动** | 2026-09-04 | 机制有效（A组出现 brief 档位 B没有），但效应极弱（差异仅1.08 token，阈值5），中性段无差异 | 代码保留（可控开关），路径半关闭 |
+| **存在感基线** | 2026-09-04 | presence_bias 有效但 S 值域过小（max 0.097），最大偏置仅0.012，行为差异为0 | 代码保留（可控开关），路径关闭 |
 
 ---
 

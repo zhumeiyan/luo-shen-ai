@@ -1,0 +1,47 @@
+{
+  "experiment": "presence_bias_AB",
+  "ticks": {
+    "pos": 500,
+    "neu": 500
+  },
+  "config": {
+    "internal_drive": false,
+    "presence_bias_A": true,
+    "presence_bias_B": false
+  },
+  "criteria": {
+    "neu_token_diff_gt_5": false,
+    "A_presence_bias_nonzero": true,
+    "B_presence_bias_zero": true,
+    "presence_varies": true
+  },
+  "summary": {
+    "A_neu_modes": [
+      "short"
+    ],
+    "B_neu_modes": [
+      "short"
+    ],
+    "A_neu_avg_tokens": 80.0,
+    "B_neu_avg_tokens": 80.0,
+    "token_diff_neu": 0.0,
+    "A_presence_bias_range": [
+      0.000486,
+      0.011591
+    ],
+    "A_presence_bias_avg": 0.006336,
+    "B_presence_bias_range": [
+      0.0,
+      0.0
+    ],
+    "A_S_range": [
+      0.004,
+      0.0969
+    ],
+    "B_S_range": [
+      0.004,
+      0.0969
+    ]
+  },
+  "all_pass": false
+}

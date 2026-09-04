@@ -1753,6 +1753,9 @@ _LAMBDA_HIST_MIN = 5          # 最少有效观测数（低于此返回当前值
 # ── 内部节律驱动全局开关（实验用）──
 INTERNAL_DRIVE_ENABLED = True
 
+# ── 存在感基线开关（实验用）──
+PRESENCE_BIAS_ENABLED = True
+
 # ── 在线学习核心参数 ──
 LEARNING_LR = 0.01
 LEARNING_BETA = 0.5
@@ -1944,12 +1947,21 @@ def _select_behavior(memory, emergence):
         _T = float(_climate.get("tension", 0.0))
         _internal_drive = math.tanh(_E + 0.5 * _T) * 0.6
 
-    # 连续叠加叙事势 + 相位偏置 + 慢压力 + 内部节律驱动
+    # ── 存在感基线：S 积累 + 交互次数驱动小幅偏置 ──
+    _presence_bias = 0.0
+    if PRESENCE_BIAS_ENABLED:
+        _ring = memory.get("self_model", {}).get("ring_state", {})
+        _S = float(_ring.get("S", 0.0))
+        _total_int = float(memory.get("user_model", {}).get("total_interactions", 0))
+        _presence_bias = 0.12 * math.tanh(_S + 0.001 * _total_int)
+
+    # 连续叠加叙事势 + 相位偏置 + 慢压力 + 内部节律驱动 + 存在感基线
     response_pre = (arousal_bias + 0.5 * tone_bias
                     + _narr_boost * narrative_potential
                     + _phase_bias
                     + _pressure_term
-                    + _internal_drive)
+                    + _internal_drive
+                    + _presence_bias)
     response_tendency = 1.0 / (1.0 + math.exp(-response_pre))
 
     # ── 维度 1：5 档位离散选择（无 if-then，floor + 隐式 clamp via * 4.999）──
@@ -1979,6 +1991,7 @@ def _select_behavior(memory, emergence):
         "pressure_quality": round(pq, 4),
         "pressure_term": round(_pressure_term, 7),
         "internal_drive": round(_internal_drive, 6),
+        "presence_bias": round(_presence_bias, 7),
         "lambda_self": round(_lambda_self_val, 7),
         "lambda_modulator": round(_modulator, 7),
         "r_intensity": round(_rint, 6),
