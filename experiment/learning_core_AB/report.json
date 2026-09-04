@@ -1,0 +1,20 @@
+{
+  "experiment": "learning_core_AB",
+  "ticks": 1000,
+  "criteria": {
+    "A 组 W_norm 增长": false,
+    "Tick>=700 max_tokens 差异 > 5": false,
+    "B 组 W_norm 不变": true
+  },
+  "all_pass": false,
+  "verdict": "FAIL（学习器未影响行为）",
+  "A_W_norm": {
+    "first": 0.065473,
+    "last": 0.028805
+  },
+  "B_W_norm": {
+    "first": 0.0,
+    "last": 0.0
+  },
+  "late_diff": 0.0
+}

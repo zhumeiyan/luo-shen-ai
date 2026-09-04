@@ -114,6 +114,8 @@ def reset_memory(mem_path):
         'lambda_self': 0.0,
         '_max_tokens_hist': [80.0, 80.0],
         '_rp_ema_hist': [0.0, 0.0],
+        'learning_core': {},
+        '_recent_tokens': [],
     }
     init_m['internal_climate'] = {
         'emotion_intensity': 0.5, 'tension': 0.0,
@@ -301,6 +303,8 @@ def main():
         'lambda_self': 0.0,
         '_max_tokens_hist': [80.0, 80.0],
         '_rp_ema_hist': [0.0, 0.0],
+        'learning_core': {},
+        '_recent_tokens': [],
     }
     init_m['internal_climate'] = {
         'emotion_intensity': 0.5, 'tension': 0.0,

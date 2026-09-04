@@ -1750,6 +1750,13 @@ _LAMBDA_SELF_TAU = 80.0       # 慢变量时间常数 (tick)
 _LAMBDA_HIST_WINDOW = 20      # 历史窗口长度
 _LAMBDA_HIST_MIN = 5          # 最少有效观测数（低于此返回当前值，不更新）
 
+# ── 在线学习核心参数 ──
+LEARNING_LR = 0.01
+LEARNING_BETA = 0.5
+LEARNING_ERR_EMA_ALPHA = 0.02
+LEARNING_K = 2.0
+LEARNING_VEC_KEYS = ["E", "T", "N", "M", "rp_ema", "s_depth", "prev_tokens"]
+
 
 def _compute_lambda_self(memory):
     """
@@ -1815,6 +1822,35 @@ def _compute_lambda_self(memory):
 
     rs["lambda_self"] = lambda_self
     return lambda_self
+
+
+def _get_learning_state_vector(memory):
+    """提取学习器状态向量 s(t)"""
+    ring = memory.get("self_model", {}).get("ring_state", {})
+    climate = memory.get("internal_climate", {})
+    recent = memory.get("self_model", {}).get("_recent_tokens", [])
+    prev_tokens = recent[-1] if recent else 80
+    return {
+        "E": float(climate.get("emotion_intensity", 0.5)),
+        "T": float(climate.get("tension", 0.0)),
+        "N": float(climate.get("energy", 0.5)),
+        "M": float(climate.get("memory_pressure", 0.3)),
+        "rp_ema": float(ring.get("relational_pressure_ema", 0.0)),
+        "s_depth": float(ring.get("s_depth", 0.0)),
+        "prev_tokens": float(prev_tokens) / 200.0
+    }
+
+
+def _predict_E(state_vector, W):
+    """预测 E(t+1) = W · s(t)"""
+    return sum(w * state_vector[k] for w, k in zip(W, LEARNING_VEC_KEYS))
+
+
+def _update_learning_weights(W, state_vector, error, lr=None):
+    """在线更新权重 W <- W + lr * error * s(t)"""
+    if lr is None:
+        lr = LEARNING_LR
+    return [w + lr * error * state_vector[k] for w, k in zip(W, LEARNING_VEC_KEYS)]
 
 
 def _update_lambda_histories(memory, max_tokens, rp_ema):
@@ -1885,6 +1921,9 @@ def _select_behavior(memory, emergence):
     _s_depth = _ring_state.get("s_depth", 0.0)
     # s_depth 缓冲当前压力：深厚关系使同等情绪波动对行为影响减弱
     _pressure_term = _PRESSURE_K * _pressure_ema / (1.0 + 1.5 * _s_depth)
+
+    # 在线学习器乘性调制：预测误差越大（内在未知越大），越敏感于外部压力
+    _pressure_term *= (1.0 + LEARNING_BETA * memory.get("self_model", {}).get("learning_core", {}).get("lambda_learn", 0.5))
 
     # ═══ Lambda-Self 自调节：行为僵化检测 → 乘性调制压力项 ═══
     _lambda_self_val = _compute_lambda_self(memory)
@@ -2095,6 +2134,13 @@ def _generate_response_impl(user_input, source="living_engine", extra_context=No
 
     # ── Lambda-Self 历史序列更新（纯存储操作，不影响行为选择结果）──
     _update_lambda_histories(memory, behavior["max_tokens"], behavior["pressure_ema"])
+
+    # 更新 _recent_tokens（供学习器使用）
+    _rt = memory.get("self_model", {}).get("_recent_tokens", [])
+    _rt.append(behavior["max_tokens"])
+    if len(_rt) > 50:
+        _rt = _rt[-50:]
+    memory["self_model"]["_recent_tokens"] = _rt
     
     # 如果行为选择判定沉默，直接返回
     if behavior["response_mode"] == "silent":
@@ -2706,6 +2752,36 @@ def _update_luoshen_coupled(memory, env, tick_id=0):
     _rpe = _ring_sm.get("relational_pressure_ema", 0.0)
     _new_ring_state["relational_pressure_ema"] = _rpe
     memory["self_model"]["ring_state"] = _new_ring_state
+
+    # ── 在线学习核心更新 ──
+    learning = memory.get("self_model", {}).get("learning_core", {})
+    W = learning.get("W", [0.0] * len(LEARNING_VEC_KEYS))
+    err_ema = learning.get("err_ema", 0.0)
+    prev_vector = learning.get("prev_vector", None)
+    prev_E = learning.get("prev_E", None)
+
+    new_E = memory["internal_climate"]["emotion_intensity"]
+
+    if prev_E is not None and prev_vector is not None:
+        predicted_E = _predict_E(prev_vector, W)
+        error = new_E - predicted_E
+        W = _update_learning_weights(W, prev_vector, error)
+        err_ema = (1.0 - LEARNING_ERR_EMA_ALPHA) * err_ema + LEARNING_ERR_EMA_ALPHA * abs(error)
+    else:
+        predicted_E = 0.0
+        error = 0.0
+
+    lambda_learn = 1.0 / (1.0 + math.exp(-LEARNING_K * err_ema))
+
+    memory["self_model"]["learning_core"] = {
+        "W": W,
+        "err_ema": round(err_ema, 6),
+        "lambda_learn": round(lambda_learn, 6),
+        "prev_E": new_E,
+        "prev_vector": _get_learning_state_vector(memory),
+        "last_predicted_E": round(predicted_E, 6),
+        "last_error": round(error, 6),
+    }
 
     # ── 连续自我觉察信号（不进入 prompt，不生成文本） ──
     # self_awareness_signal = tanh(relational_awareness * 1.5)
