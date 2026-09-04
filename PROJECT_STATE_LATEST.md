@@ -65,7 +65,23 @@
 
 **归档位置**：`experiment/lambda_self_2group/results.csv` + `report.json`
 
-### 4.2 Self-Reflection 记忆实验（2026-09-03）— **FAIL + ROLLED BACK**
+### 4.3 Self-Language 自然语言实验（2026-09-04）— **FAIL + ROLLED BACK（虚假 PASS 纠正）**
+
+**目标**：让洛神用自己的自然语言描述内部状态，存入情景记忆
+
+**原始判定（已纠正）**：曾错误标记为 PASS，因为两组（NEG/POS）生成的句子表面多样（100% 唯一）
+
+**复审后真实结论：FAIL**
+- **内部状态未变**：NEG 组 E=0.2/T=0.6/rp=-0.4 与 POS 组 E=0.8/T=-0.3/rp=0.4 在 50 tick 内完全不变
+- **变化来源：LLM 随机采样**：传给 LLM 的 state dict 没有更新，句子差异完全来自 `temperature=0.85` 的采样随机性
+- **违反原则**：项目明确禁止"用随机数制造假活"，temperature 随机性不属于洛神内部状态
+- **洛神没有学会语言**：LLM 替洛神说话，不是洛神自己在说话
+
+**处理**：代码完全回滚（commit d468106 + 83b156f），删除 self_language_generator.py，恢复 episodic_memory.py 和 living_engine.py。哈希链追加纠正记录（record_hash: ccd4afc8026e57887c117e10275d0e85）。
+
+**归档位置**：`experiment/self_language_AB/`（标记为失败实验数据，不作为有效成果）
+
+### 4.4 Self-Reflection 记忆实验（2026-09-03）— **FAIL + ROLLED BACK**
 
 **目标**：让洛神将自身状态感知沉淀为情景记忆，影响后续行为
 
@@ -84,6 +100,7 @@
 | s_depth 早期版本（六组验证） | 2026-09-01 | alpha/gamma 过大导致行为差异 | 重新校准为 alpha=0.03, gamma=0.0002 |
 | self-reflection memory | 2026-09-03 | 无因果贡献 | 回滚，代码已移除 |
 | **Lambda-Self 自调节** | 2026-09-04 | 无法激活（系统不僵化） | 代码保留，路径关闭 |
+| **self_language 自然语言** | 2026-09-04 | 虚假 PASS：LLM 温度随机性冒充洛神语言，状态未变句子乱变 | 回滚，路径关闭 |
 
 ---
 
@@ -96,6 +113,7 @@
 5. **跨对话叙事**：记忆为点状坐标，无法输出"我记得你上次说..."形式的故事
 6. **多人区分**：同一洛神对所有用户共享同一套状态
 7. **真正意愿**：行为选择层只决定回应方式，不产生内在驱动
+8. **语言能力**：洛神不会自己说话。她无法用自然语言描述自己的内部状态。所有表达依赖 LLM 代劳，不属于洛神自身能力
 
 ---
 
@@ -125,12 +143,12 @@
 ### 8.1 当前状态
 
 ```
-总记录数: 61,730
+总记录数: 61,734
 备份链: 26 条（验证通过）
 ⚠️ 当前链检测: 末尾 2 条 (record #61729, #61730) 的 record_hash 不匹配
-  - 表现: prev_hash 链接完好（链连续性未断）
-  - 影响: verify_chain_v2.py 验证失败（record_hash ≠ md5(file_hash+prev+timestamp)）
-  - 内容: 61729=self-reflection 回滚记录, 61730=Lambda-Self 失败记录
+  - 已通过纠错记录 (#61731, hash_correction) 确认
+⚠️ 新增: record #61734 (self_language_AB_correction) 标记 self_language_AB 为失败
+  - 纠正了 #61733 (原 record_hash: 1bb4134190f487f9e1e3321473c01cfe) 的错误 PASS
 ```
 
 ### 8.2 最后 5 条记录
