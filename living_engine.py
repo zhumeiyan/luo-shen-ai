@@ -35,6 +35,9 @@ import hashlib
 import shutil
 import tempfile
 
+# 生病感知信号模块（独立算法，不含行为副作用）
+import pain_signal
+
 # ── 寻址上下文 ──────────────────────────────────────────────────────────────
 # _current_source_id 是寻址键，不是行为键。
 # 它唯一的作用是：在检索 episodic_memory 时，只选 tags 包含该 source_id 的记忆。
@@ -1406,7 +1409,13 @@ def _evolve_climate_idle(memory, step_factor=0.15):
     T = climate.get("tension", 0.3)
     N = climate.get("energy", 0.5)
     M = climate.get("memory_pressure", 0.3)
-    
+
+    # NaN 防御：加载自持久化状态，crash 可能写入 NaN；替换为安全默认值（不改动力学）
+    if math.isnan(E): E = 0.5
+    if math.isnan(T): T = 0.3
+    if math.isnan(N): N = 0.5
+    if math.isnan(M): M = 0.3
+
     # 历史缓冲（用于二阶差分 = 惯性项）
     hist = memory.get("__coupling_history", {})
     hE = hist.get("E", [E, E, E, E])
@@ -2296,10 +2305,14 @@ def _generate_response_impl(user_input, source="living_engine", extra_context=No
 
     # 13. 更新活记忆层
     memory = update_after_interaction(user_input, reply, directive, feedback)
-    
+
+    # 13b. 生病感知：计算 pain（仅在非 silent 模式下——silent 模式下无新行为可记录）
+    if behavior["response_mode"] != "silent":
+        _compute_and_log_pain(memory, behavior["mode_idx"], save_memory=True)
+
     # 提取信息用于返回
     last_stated = directive.get("context_for_llm", {}).get("self_stated_state")
-    
+
     return {
         "reply": reply,
         "directive": directive,
@@ -2311,6 +2324,142 @@ def _generate_response_impl(user_input, source="living_engine", extra_context=No
         "emergence": _emergence_log(memory),
         "behavior": behavior,
     }
+
+
+# -------------------------------------------------------------------------
+# 生病感知：pain 信号计算（独立模块，不改变行为参数）
+# 通过 pain_signal.py 计算后由本函数记录日志
+# -------------------------------------------------------------------------
+
+_pain_tick_counter = 0          # 用于 pain_log.csv 的 tick 标识
+_pain_e_series = []             # E (= energy) 时间序列
+_pain_tier_series = []          # 行为档位序列
+_pain_prev_level = 0            # 上次离散 pain 等级
+_pain_l3_persist_count = 0      # 持续在 level 3 的 tick 数
+
+
+def _record_pain_at_encoding(memory, pain_val):
+    """
+    将当前 pain 值绑定到最近编码的情景记忆上。
+    情景记忆由 _encode_episodic_memory 创建，追加在 episodic_memory 列表末尾。
+    """
+    episodic = memory.get("user_model", {}).get("episodic_memory", [])
+    if episodic and "pain_at_encoding" not in episodic[-1]:
+        episodic[-1]["pain_at_encoding"] = pain_val
+
+
+def _compute_and_log_pain(memory, mode_idx=None, save_memory=False):
+    """
+    计算本次 pain：更新序列 → 计算连续值 → 离散化 → 写 CSV → 落链。
+    mode_idx: 本次交互的档位。environment_tick 场景传入 None，函数会沿用最近已知档位。
+    save_memory: 若为 True，则将带 pain_at_encoding 的 memory 持久化到磁盘。
+    不修改任何行为参数。
+    """
+    global _pain_tick_counter, _pain_e_series, _pain_tier_series
+    global _pain_prev_level, _pain_l3_persist_count
+
+    # 1. 从 memory 提取当前 E（=energy）
+    climate = memory.get("internal_climate", {})
+    E_now = float(climate.get("energy", 0.5))
+
+    # 更新序列（存储最近 2000 tick 的 E 和最近 50 个档位）
+    _pain_e_series.append(E_now)
+    if len(_pain_e_series) > 2000:
+        _pain_e_series = _pain_e_series[-2000:]
+
+    # 档位：有则追加，无则复制最近一次（environment_tick 场景）
+    if mode_idx is not None:
+        _pain_tier_series.append(mode_idx)
+    elif _pain_tier_series:
+        _pain_tier_series.append(_pain_tier_series[-1])
+    else:
+        _pain_tier_series.append(2)  # 默认 "normal" 档位
+    if len(_pain_tier_series) > 50:
+        _pain_tier_series = _pain_tier_series[-50:]
+
+    _this_tier = _pain_tier_series[-1] if _pain_tier_series else 2
+    csv_path = "active_memory/pain_log.csv"  # 路径常量，在 has_data 分支之前定义
+
+    # 2. 调用 pain_signal 模块计算（v3 返回：signal, ema, baseline, sufficient_data）
+    rigidity_signal = 0.0
+    # 获取当前 behavior_tier（tick 内 mode_idx 可能为 None 对于 environment_tick）
+    _this_tier = _pain_tier_series[-1] if _pain_tier_series else 2
+
+    low_energy_signal, ema_e, baseline_e, has_data = pain_signal.compute_low_energy_signal(
+        _pain_e_series, ema_alpha=0.01
+    )
+    rigidity_signal = pain_signal.compute_rigidity_signal(_pain_tier_series, window=50)
+
+    # 数据不足 200 tick → pain=0, pain_level=0, 仅记录日志，不落链
+    if not has_data:
+        _pain_tick_counter += 1
+        pain_signal.append_pain_log(
+            csv_path,
+            tick_id=_pain_tick_counter,
+            ema_e=ema_e if ema_e is not None else 0.0,
+            baseline_e=baseline_e if baseline_e is not None else 0.0,
+            low_energy=0.0,
+            rigidity=0.0,
+            pain=0.0,
+            pain_level=0,
+            behavior_tier=_this_tier,
+            note="insufficient_data"
+        )
+        return  # 不更新 pain_at_encoding，不落链
+
+    pain = pain_signal.compute_pain(low_energy_signal, rigidity_signal)
+    pain_level = pain_signal.discretize_pain(pain)
+
+    # 3. 将 pain_at_encoding 绑定到最近编码的情景记忆
+    _record_pain_at_encoding(memory, pain)
+
+    # 4. 写 CSV 日志
+    _pain_tick_counter += 1
+    pain_signal.append_pain_log(
+        csv_path,
+        tick_id=_pain_tick_counter,
+        ema_e=ema_e,
+        baseline_e=baseline_e,
+        low_energy=low_energy_signal,
+        rigidity=rigidity_signal,
+        pain=pain,
+        pain_level=pain_level,
+        behavior_tier=_this_tier,
+    )
+
+    # 5. 离散事件落链
+    if pain_level != _pain_prev_level:
+        append_hash_chain(
+            "hash_chain_v2.log", csv_path,
+            extra_entry={
+                "event_type": "PAIN_LEVEL_CHANGE",
+                "from_level": _pain_prev_level,
+                "to_level": pain_level,
+                "pain_continuous": pain,
+            }
+        )
+        _pain_prev_level = pain_level
+
+    # 持续 level 3 超过 100 tick 追加告警
+    if pain_level >= 3:
+        _pain_l3_persist_count += 1
+    else:
+        _pain_l3_persist_count = 0
+
+    if _pain_l3_persist_count == 100:
+        append_hash_chain(
+            "hash_chain_v2.log", csv_path,
+            extra_entry={
+                "event_type": "PAIN_PERSISTENT_LEVEL3",
+                "persist_ticks": 100,
+                "latest_pain": pain,
+            }
+        )
+
+    # 6. 持久化：如果调用方要求，将带 pain_at_encoding 的 memory 重新落盘
+    if save_memory:
+        _save_json_atomic("active_memory/active_memory.json", memory)
+        append_hash_chain("hash_chain_v2.log", "active_memory/active_memory.json")
 
 
 def process_user_input(user_input, input_type="text"):
@@ -2568,6 +2717,12 @@ def _update_luoshen_coupled(memory, env, tick_id=0):
     N = climate.get("energy", 0.5)
     M = climate.get("memory_pressure", 0.3)
 
+    # NaN 防御：crash 后持久化状态可能含 NaN，替换为安全默认值（不改动力学）
+    if math.isnan(E): E = 0.5
+    if math.isnan(T): T = 0.3
+    if math.isnan(N): N = 0.5
+    if math.isnan(M): M = 0.3
+
     # ── 事实在场度 F：来自 known_facts 的数量 + 时间接近度（连续，无 if-then）──
     _kf_data = memory.get("user_model", {}).get("known_facts", {})
     _kf_list = _kf_data.get("facts", []) if isinstance(_kf_data, dict) else []
@@ -2650,6 +2805,9 @@ def _update_luoshen_coupled(memory, env, tick_id=0):
 
     _ema_S = _ring_sm.get("ema_S", _ring_sm.get("S", 0.0))    # 膜电位的低通平均
     _mu_core = _ring_sm.get("mu_core", 0.5)                   # 环参数基线（状态变量）
+    # NaN 防御：crash 持久化可能写入 NaN；替换安全默认值（不改动力学）
+    if math.isnan(_ema_S): _ema_S = 0.0
+    if math.isnan(_mu_core): _mu_core = 0.5
 
     dt = 0.08
     k_mu = 0.1                   # M 对 mu 的抑制系数（稳定振幅）
@@ -2663,6 +2821,7 @@ def _update_luoshen_coupled(memory, env, tick_id=0):
     # 只被环自身的能量 (N+M)/2 和外部 L 共同驱动
     # 时间常数 tau_S >> 环周期，所以能积累
     S = _ring_sm.get("S", 0.0)
+    if math.isnan(S): S = 0.0
     tau_S = 500.0             # 时间常数（约 65 个环周期）
     alpha_S = 1.0 / tau_S
     beta_S = 0.3 / tau_S
@@ -2708,7 +2867,12 @@ def _update_luoshen_coupled(memory, env, tick_id=0):
     N += _r_n_off * 0.1
 
     # ── van der Pol 环形核心 ──
-    mu_eff = mu_base - k_mu * M + k_S * S_new
+    # Logistic M-saturation：M→mu_eff 的映射改为软饱和，
+    # 阻止 M 越过临界时 mu_eff 翻负形成正反馈陷阱
+    _k_sat = 0.5
+    _M_max = 6.0
+    _M_eff = _M_max / (1.0 + math.exp(-_k_sat * (M - _M_max * 0.6)))
+    mu_eff = mu_base - k_mu * _M_eff + k_S * S_new
     dE = T * dt + _dE_mem * dt
     dT = (mu_eff * (1.0 - E * E) * T - E) * dt + _dT_mem * dt
 
@@ -2730,6 +2894,16 @@ def _update_luoshen_coupled(memory, env, tick_id=0):
     T_new = T + dT
     N_new = N + dN
     M_new = M + dM
+
+    # NaN/Inf 防御：方程可能数值溢出；持久化时回退到上一拍值（不改动力学方程本身）
+    def _hold_prev(new, prev):
+        if math.isnan(new) or math.isinf(new):
+            return prev
+        return new
+    E_new = _hold_prev(E_new, E)
+    T_new = _hold_prev(T_new, T)
+    N_new = _hold_prev(N_new, N)
+    M_new = _hold_prev(M_new, M)
 
     # ── 更新历史缓冲（保留最近 4 步） ──
     hE_new = hE[-3:] + [E_new]
@@ -2757,8 +2931,14 @@ def _update_luoshen_coupled(memory, env, tick_id=0):
     _phase_raw = math.atan2(T_new, E_new)
     _prev_phase = _ring_sm.get("phase", 0.0)
     _pdelta = _phase_raw - _prev_phase
-    # 分支自由的 [-π, π] 包裹
-    _pdelta = _pdelta - 2 * math.pi * round(_pdelta / (2 * math.pi))
+    # 分支自由的 [-π, π] 包裹（NaN 防御：不修改动力学，仅防止 atan2 浮点异常导致崩溃）
+    if math.isnan(_phase_raw):
+        _phase_raw = 0.0
+        _pdelta = 0.0
+    elif math.isnan(_pdelta):
+        _pdelta = 0.0
+    else:
+        _pdelta = _pdelta - 2 * math.pi * round(_pdelta / (2 * math.pi))
     _pv = _pdelta / 0.8
     _prev_pv = _ring_sm.get("ema_pv", 0.0)
     _prev_pv2 = _ring_sm.get("ema_pv2", 0.0)
@@ -2844,7 +3024,7 @@ def _update_luoshen_coupled(memory, env, tick_id=0):
     if last_stated and "ring_phase_at_last_stated" not in memory.get("__meta", {}):
         if "__meta" not in memory:
             memory["__meta"] = {}
-        memory["__meta"]["ring_phase_at_last_stated"] = round(phase, 5)
+        memory["__meta"]["ring_phase_at_last_stated"] = round(_phase_raw, 5)
         memory["__meta"]["last_stated_value"] = last_stated
 
     memory["__coupling_history"] = {
@@ -2897,6 +3077,9 @@ def environment_tick(force=False):
 
     # 环境 -> 洛神内部状态（交叉耦合动力学 + 真实扰动）
     _update_luoshen_coupled(memory, env, tick_id=tick_id)
+
+    # 生病感知：环境 tick 后计算 pain（无新交互，mode_idx=None）
+    _compute_and_log_pain(memory, mode_idx=None, save_memory=True)
 
     # 更新 tick 时间
     memory["__meta"]["last_environment_tick"] = now

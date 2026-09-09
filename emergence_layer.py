@@ -270,9 +270,13 @@ def _present_past_contrast(memories, cur_e, cur_t, cur_n):
     return raw_dist
 
 
-def compute_narrative_potential(memories, cur_e, cur_t, cur_n, now):
+def compute_narrative_potential(memories, cur_e, cur_t, cur_n, now,
+                                pain_at_encoding_avg=None):
     """
-    计算叙事势：当前记忆中“来自历史的话头强度”。
+    计算叙事势：当前记忆中"来自历史的话头强度"。
+
+    pain_at_encoding_avg: 当前所用记忆的平均 pain_at_encoding 值（连续）。
+      若提供，则叠加 pain_at_encoding_avg * 0.15 到 potential 上（clamp 回 [0,1]）。
 
     返回 dict:
       potential: float [0, 1]
@@ -302,6 +306,11 @@ def compute_narrative_potential(memories, cur_e, cur_t, cur_n, now):
 
     potential = A * B * C * D
     potential = max(0.0, min(1.0, potential))
+
+    # 生病感知：pain_at_encoding 通过记忆间接调制叙事势（不直接进行为公式）
+    if pain_at_encoding_avg is not None and pain_at_encoding_avg > 0.0:
+        potential = potential + float(pain_at_encoding_avg) * 0.15
+        potential = max(0.0, min(1.0, potential))
 
     w_pattern = A * C
     w_unspoken = C * D
@@ -368,6 +377,17 @@ def compute_emergence(memories, now, cur_e, cur_t, cur_n, activations,
     tbias = tone_bias(bg)
     abias = arousal_bias(bg)
 
+    # ─── 生病感知：从已激活记忆中提取 pain_at_encoding（加权平均） ───
+    # 只对带有 pain_at_encoding 字段的记忆进行加权平均（兼容无该字段的旧记忆）
+    pain_weighted_sum = 0.0
+    pain_weight_total = 0.0
+    for i, m in enumerate(memories):
+        p = m.get("pain_at_encoding")
+        if p is not None:
+            pain_weighted_sum += weights[i] * float(p)
+            pain_weight_total += weights[i]
+    pain_at_encoding_avg = (pain_weighted_sum / pain_weight_total) if pain_weight_total > 1e-10 else None
+
     # ─── 慢压力感知调制 ───
     # pressure_ema < 0（负向历史）→ 语气下沉 + 唤醒降低（更克制）
     # pressure_ema > 0（正向历史）→ 语气变轻 + 唤醒升高（更开放）
@@ -380,8 +400,9 @@ def compute_emergence(memories, now, cur_e, cur_t, cur_n, activations,
         abias += K_PRESSURE_AROUSAL * pressure_ema
         _pressure_memory_mod = 1.0 + K_PRESSURE_MEMORY * pressure_ema
 
-    # 计算叙事势
-    narrative = compute_narrative_potential(memories, cur_e, cur_t, cur_n, now)
+    # 计算叙事势（传入 pain_at_encoding_avg，让痛苦记忆间接调制叙事势）
+    narrative = compute_narrative_potential(memories, cur_e, cur_t, cur_n, now,
+                                            pain_at_encoding_avg=pain_at_encoding_avg)
 
     return {
         "background": bg,

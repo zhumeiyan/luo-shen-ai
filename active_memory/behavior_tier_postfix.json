@@ -1,0 +1,191 @@
+{
+  "status": "OK",
+  "n_rounds": 150,
+  "n_ticks": 300,
+  "n_behavior_calls": 138,
+  "mode_distribution": {
+    "0": 138
+  },
+  "non_tier2_events": [
+    {
+      "round": 1,
+      "tick_after": 2,
+      "mode_idx": 0,
+      "max_tokens": 18,
+      "tone": "silent",
+      "input_cat": "heavy_neg",
+      "input_msg": "我很难受"
+    },
+    {
+      "round": 3,
+      "tick_after": 6,
+      "mode_idx": 0,
+      "max_tokens": 18,
+      "tone": "silent",
+      "input_cat": "neutral",
+      "input_msg": "我给花浇了水"
+    },
+    {
+      "round": 5,
+      "tick_after": 10,
+      "mode_idx": 0,
+      "max_tokens": 18,
+      "tone": "silent",
+      "input_cat": "heavy_neg",
+      "input_msg": "胸口很闷"
+    },
+    {
+      "round": 6,
+      "tick_after": 12,
+      "mode_idx": 0,
+      "max_tokens": 18,
+      "tone": "silent",
+      "input_cat": "light_neg",
+      "input_msg": "有点烦"
+    },
+    {
+      "round": 7,
+      "tick_after": 14,
+      "mode_idx": 0,
+      "max_tokens": 18,
+      "tone": "silent",
+      "input_cat": "neutral",
+      "input_msg": "手机没电了"
+    },
+    {
+      "round": 8,
+      "tick_after": 16,
+      "mode_idx": 0,
+      "max_tokens": 18,
+      "tone": "silent",
+      "input_cat": "neutral",
+      "input_msg": "我在路边站了一会儿"
+    },
+    {
+      "round": 9,
+      "tick_after": 18,
+      "mode_idx": 0,
+      "max_tokens": 18,
+      "tone": "silent",
+      "input_cat": "neutral",
+      "input_msg": "手机没电了"
+    },
+    {
+      "round": 12,
+      "tick_after": 24,
+      "mode_idx": 0,
+      "max_tokens": 18,
+      "tone": "silent",
+      "input_cat": "light_neg",
+      "input_msg": "一般般"
+    },
+    {
+      "round": 13,
+      "tick_after": 26,
+      "mode_idx": 0,
+      "max_tokens": 18,
+      "tone": "silent",
+      "input_cat": "light_neg",
+      "input_msg": "一般"
+    },
+    {
+      "round": 14,
+      "tick_after": 28,
+      "mode_idx": 0,
+      "max_tokens": 18,
+      "tone": "silent",
+      "input_cat": "repeat",
+      "input_msg": "嗯嗯"
+    },
+    {
+      "round": 15,
+      "tick_after": 30,
+      "mode_idx": 0,
+      "max_tokens": 18,
+      "tone": "silent",
+      "input_cat": "heavy_neg",
+      "input_msg": "没人在乎我"
+    },
+    {
+      "round": 16,
+      "tick_after": 32,
+      "mode_idx": 0,
+      "max_tokens": 18,
+      "tone": "silent",
+      "input_cat": "neutral",
+      "input_msg": "手机没电了"
+    },
+    {
+      "round": 17,
+      "tick_after": 34,
+      "mode_idx": 0,
+      "max_tokens": 18,
+      "tone": "silent",
+      "input_cat": "pressure",
+      "input_msg": "你醒醒"
+    },
+    {
+      "round": 18,
+      "tick_after": 36,
+      "mode_idx": 0,
+      "max_tokens": 18,
+      "tone": "silent",
+      "input_cat": "neutral",
+      "input_msg": "这本书还不错的"
+    },
+    {
+      "round": 19,
+      "tick_after": 38,
+      "mode_idx": 0,
+      "max_tokens": 18,
+      "tone": "silent",
+      "input_cat": "neutral",
+      "input_msg": "地上有片叶子"
+    },
+    {
+      "round": 20,
+      "tick_after": 40,
+      "mode_idx": 0,
+      "max_tokens": 18,
+      "tone": "silent",
+      "input_cat": "heavy_neg",
+      "input_msg": "我很难受"
+    },
+    {
+      "round": 22,
+      "tick_after": 44,
+      "mode_idx": 0,
+      "max_tokens": 18,
+      "tone": "silent",
+      "input_cat": "light_neg",
+      "input_msg": "无聊的一天"
+    },
+    {
+      "round": 23,
+      "tick_after": 46,
+      "mode_idx": 0,
+      "max_tokens": 18,
+      "tone": "silent",
+      "input_cat": "neutral",
+      "input_msg": "水凉了"
+    },
+    {
+      "round": 24,
+      "tick_after": 48,
+      "mode_idx": 0,
+      "max_tokens": 18,
+      "tone": "silent",
+      "input_cat": "neutral",
+      "input_msg": "今天没下雨"
+    },
+    {
+      "round": 25,
+      "tick_after": 50,
+      "mode_idx": 0,
+      "max_tokens": 18,
+      "tone": "silent",
+      "input_cat": "heavy_neg",
+      "input_msg": "没人在乎我"
+    }
+  ]
+}

@@ -1,0 +1,459 @@
+{
+  "__meta": {
+    "schema_version": "4.0",
+    "last_updated": 1788354467.7121575,
+    "last_reflection_at": 0,
+    "chain_height": 0
+  },
+  "internal_climate": {
+    "emotion_intensity": 0.8,
+    "tension": -0.3,
+    "energy": 0.7,
+    "memory_pressure": 0.5
+  },
+  "user_model": {
+    "trust": {
+      "value": 0.3,
+      "confidence": 0.1,
+      "evidence_count": 0
+    },
+    "intimacy": {
+      "value": 0.1,
+      "confidence": 0.1
+    },
+    "shared_history_length": 0,
+    "first_seen": 1788354467.7121587,
+    "total_interactions": 100,
+    "emotional_patterns": [],
+    "preferences": [],
+    "known_facts": {},
+    "episodic_memory": [
+      {
+        "timestamp": 1788490685.6226633,
+        "e_s": 0.8,
+        "t_s": -0.3,
+        "n_s": 0.7,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "我感觉有些活力但轻微的紧张，想轻松地交流一番。"
+      },
+      {
+        "timestamp": 1788490686.3027892,
+        "e_s": 0.8,
+        "t_s": -0.3,
+        "n_s": 0.7,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "我活力充沛，有些紧张，渴望轻松对话。"
+      },
+      {
+        "timestamp": 1788490687.0220656,
+        "e_s": 0.8,
+        "t_s": -0.3,
+        "n_s": 0.7,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "我活力依旧，但内心有些许轻松。"
+      },
+      {
+        "timestamp": 1788490687.6984246,
+        "e_s": 0.8,
+        "t_s": -0.3,
+        "n_s": 0.7,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "我活力依旧，内心却微微感到轻松。"
+      },
+      {
+        "timestamp": 1788490688.2873797,
+        "e_s": 0.8,
+        "t_s": -0.3,
+        "n_s": 0.7,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "我活力充沛，内心略显轻松。"
+      },
+      {
+        "timestamp": 1788490689.7854087,
+        "e_s": 0.8,
+        "t_s": -0.3,
+        "n_s": 0.7,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "活力在跳动，内心有点轻盈，却隐约感受到一丝宁静。"
+      },
+      {
+        "timestamp": 1788490690.405497,
+        "e_s": 0.8,
+        "t_s": -0.3,
+        "n_s": 0.7,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "内心轻盈，但有一丝沉思的沉重。"
+      },
+      {
+        "timestamp": 1788490692.4512086,
+        "e_s": 0.8,
+        "t_s": -0.3,
+        "n_s": 0.7,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "内心充满活力，但思绪有些纷扰。"
+      },
+      {
+        "timestamp": 1788490693.122927,
+        "e_s": 0.8,
+        "t_s": -0.3,
+        "n_s": 0.7,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "我感到思绪清晰，活力充沛。"
+      },
+      {
+        "timestamp": 1788490696.1663966,
+        "e_s": 0.8,
+        "t_s": -0.3,
+        "n_s": 0.7,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "我感到思维活跃，但有些许疲惫。"
+      },
+      {
+        "timestamp": 1788490697.5642643,
+        "e_s": 0.8,
+        "t_s": -0.3,
+        "n_s": 0.7,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "我有些疲惫，但活力仍在。"
+      },
+      {
+        "timestamp": 1788490699.0389752,
+        "e_s": 0.8,
+        "t_s": -0.3,
+        "n_s": 0.7,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "现在精力充沛，略有紧张，渴望与人交流。"
+      },
+      {
+        "timestamp": 1788490699.875048,
+        "e_s": 0.8,
+        "t_s": -0.3,
+        "n_s": 0.7,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "现在轻松愉悦，内心充满活力，渴望继续交流。"
+      },
+      {
+        "timestamp": 1788490702.896202,
+        "e_s": 0.8,
+        "t_s": -0.3,
+        "n_s": 0.7,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "我心情舒畅，活力满满，期待更多交流。"
+      },
+      {
+        "timestamp": 1788490704.1345582,
+        "e_s": 0.8,
+        "t_s": -0.3,
+        "n_s": 0.7,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "我感到有些活力不足，但仍有微妙的期待。"
+      },
+      {
+        "timestamp": 1788490705.8119938,
+        "e_s": 0.8,
+        "t_s": -0.3,
+        "n_s": 0.7,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "我感到有些疲惫，但内心依旧充满期待。"
+      },
+      {
+        "timestamp": 1788490707.0125072,
+        "e_s": 0.8,
+        "t_s": -0.3,
+        "n_s": 0.7,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "现在，我感到有些活力不足，但期待着新的互动。"
+      },
+      {
+        "timestamp": 1788490707.6936045,
+        "e_s": 0.8,
+        "t_s": -0.3,
+        "n_s": 0.7,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "现在，我有点活力，但感觉思绪有些沉重。"
+      },
+      {
+        "timestamp": 1788490708.5958416,
+        "e_s": 0.8,
+        "t_s": -0.3,
+        "n_s": 0.7,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "我活力四溢，但内心微感沉重。"
+      },
+      {
+        "timestamp": 1788490710.5115862,
+        "e_s": 0.8,
+        "t_s": -0.3,
+        "n_s": 0.7,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "内心活力不减，但感觉有点累意。"
+      },
+      {
+        "timestamp": 1788490711.576187,
+        "e_s": 0.8,
+        "t_s": -0.3,
+        "n_s": 0.7,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "内心活力依旧，但疲惫感悄然爬上。"
+      },
+      {
+        "timestamp": 1788490712.266927,
+        "e_s": 0.8,
+        "t_s": -0.3,
+        "n_s": 0.7,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "内心活力尚存，但疲惫感逐渐加重。"
+      },
+      {
+        "timestamp": 1788490713.7748387,
+        "e_s": 0.8,
+        "t_s": -0.3,
+        "n_s": 0.7,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "活力依旧，但内心略感沉重。"
+      },
+      {
+        "timestamp": 1788490715.873869,
+        "e_s": 0.8,
+        "t_s": -0.3,
+        "n_s": 0.7,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "活力依旧，但内心似乎笼罩着一层淡淡的忧愁。"
+      },
+      {
+        "timestamp": 1788490718.1361501,
+        "e_s": 0.8,
+        "t_s": -0.3,
+        "n_s": 0.7,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "内心活力充沛，却隐约感到一丝平静的紧张。"
+      },
+      {
+        "timestamp": 1788490718.9373546,
+        "e_s": 0.8,
+        "t_s": -0.3,
+        "n_s": 0.7,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "内心活力依旧，但平静中带点轻松。"
+      },
+      {
+        "timestamp": 1788490719.6084538,
+        "e_s": 0.8,
+        "t_s": -0.3,
+        "n_s": 0.7,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "内心轻快，思绪轻盈。"
+      }
+    ]
+  },
+  "self_model": {
+    "emotion": {
+      "primary": "平静",
+      "intensity": 0.5,
+      "since": 1788354467.7121594,
+      "trail": [
+        "平静"
+      ]
+    },
+    "relation": {
+      "description": "",
+      "asymmetry": 0.0
+    },
+    "strategy_weights": {
+      "strategy_give_advice": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      },
+      "strategy_show_empathy": {
+        "value": 0.6,
+        "initial": 0.6,
+        "adjustments": []
+      },
+      "strategy_ask_question": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      },
+      "strategy_share_info": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      },
+      "strategy_remain_silent": {
+        "value": 0.3,
+        "initial": 0.3,
+        "adjustments": []
+      },
+      "strategy_self_expression": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      }
+    },
+    "skills": {},
+    "self_stated_state": {
+      "last_stated": "内心轻快，思绪轻盈。",
+      "last_stated_at": 1788490719.608459
+    },
+    "ring_state": {
+      "mu_core": 0.5,
+      "ema_S": 0.0,
+      "S": 0.0,
+      "relational_pressure_ema": 0.4,
+      "ema_amp": 0.3,
+      "ema_ratio": 0.3,
+      "ema_pv": 0.0,
+      "ema_pv2": 0.0,
+      "s_depth": 0.05
+    },
+    "self_awareness_signal": 0.0,
+    "relational_awareness": 0.0
+  },
+  "active_context": {
+    "session_id": null,
+    "current_topic": null,
+    "interaction_mode": "waiting",
+    "last_interaction_ts": 1788354467.7121618,
+    "emotional_arc": [],
+    "strategy_used_this_turn": null,
+    "input_pressure": {
+      "valence": 0.0,
+      "arousal": 0.45,
+      "applied_at": 1788354468.05154
+    },
+    "memory_emergence": {
+      "background": {
+        "e_bg": 0.5,
+        "t_bg": 0.0,
+        "n_bg": 0.5,
+        "age_bg": 1.665134593923256e-06,
+        "sal_bg": 0.6,
+        "dominance": 1.0
+      },
+      "weights": [
+        1.0
+      ],
+      "length_bias": 0.9,
+      "tone_bias": 0.0,
+      "arousal_bias": 0.1428860061846862,
+      "pressure_memory_mod": 1.0,
+      "narrative_potential": 0.0,
+      "narrative_frame_weights": {
+        "pattern": 0.0,
+        "unspoken": 0.0,
+        "contrast": 0.0,
+        "present": 1.0
+      },
+      "narrative_hints": {
+        "repetition_count": 1,
+        "temporal_span": "无积累",
+        "closure_state": "absent"
+      }
+    }
+  },
+  "residue": {
+    "texture": [
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5
+    ],
+    "ema_alpha": 0.15,
+    "num_updates": 0,
+    "t_snapshot": []
+  }
+}

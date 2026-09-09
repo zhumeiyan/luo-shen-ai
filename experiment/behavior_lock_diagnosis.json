@@ -1,0 +1,52 @@
+{
+  "ring_state": {
+    "E": -4.426113372484089e+179,
+    "T": -3.295515174240214e+179,
+    "N": 5.081169211376939e+158,
+    "M": 8.671862120749977e+156,
+    "phase": -2.50158,
+    "mu_eff": -8.671862120749977e+155,
+    "mu_core": 0.4661657,
+    "ema_S": 0.0287294,
+    "L": 1.0,
+    "S": 0.048465,
+    "S_drive": 3.48779864309214e+158,
+    "F": 0.0,
+    "F_mem": 49.635414,
+    "ema_amp": Infinity,
+    "ema_ratio": 0.0938702,
+    "ema_pv": 0.0031561,
+    "ema_pv2": 0.0130345,
+    "r_intensity": 1.0,
+    "r_historicity": 0.1645826,
+    "r_coherence": 0.5277032,
+    "s_depth": 0.3781078,
+    "relational_pressure_ema": -0.1168183
+  },
+  "internal_climate": {
+    "emotion_intensity": -4.426113372484089e+179,
+    "tension": -3.295515174240214e+179,
+    "energy": 5.081169211376939e+158,
+    "memory_pressure": 8.671862120749977e+156
+  },
+  "behavior_formula": {
+    "response_pre": "arousal_bias + 0.5*tone_bias + narr_boost*narr_potential + phase_bias + pressure_term + internal_drive(0) + presence_bias(0)",
+    "note": "internal_drive=INTERNAL_DRIVE_ENABLED=False, presence_bias=PRESENCE_BIAS_ENABLED=False, stability=STABILITY_DRIVE_ENABLED=False",
+    "NARRATIVE_TENDENCY_BOOST": 5.0,
+    "PRESSURE_K": 0.4
+  },
+  "computed_response_pre_approx": null,
+  "computed_sigmoid": null,
+  "computed_mode_idx": null,
+  "fields": {
+    "tone_bias": -24.888978784476702,
+    "arousal_bias": 0.12532614974918346,
+    "narrative_potential": 0.412425949774128,
+    "narr_boost": 5.1108128,
+    "pressure_term": -0.029816527547859295,
+    "phase_bias": -0.01791616772115832,
+    "response_pre": -10.25906,
+    "response_tendency": 4e-05,
+    "mode_idx": 0
+  }
+}

@@ -1,0 +1,338 @@
+{
+  "__meta": {
+    "schema_version": "4.0",
+    "last_updated": 1788354467.7121575,
+    "last_reflection_at": 0,
+    "chain_height": 0
+  },
+  "internal_climate": {
+    "emotion_intensity": 0.2,
+    "tension": 0.6,
+    "energy": 0.3,
+    "memory_pressure": 0.5
+  },
+  "user_model": {
+    "trust": {
+      "value": 0.3,
+      "confidence": 0.1,
+      "evidence_count": 0
+    },
+    "intimacy": {
+      "value": 0.1,
+      "confidence": 0.1
+    },
+    "shared_history_length": 0,
+    "first_seen": 1788354467.7121587,
+    "total_interactions": 100,
+    "emotional_patterns": [],
+    "preferences": [],
+    "known_facts": {},
+    "episodic_memory": [
+      {
+        "timestamp": 1788490620.1487124,
+        "e_s": 0.2,
+        "t_s": 0.6,
+        "n_s": 0.3,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "我感到有些疲惫，但内心仍保持活力。"
+      },
+      {
+        "timestamp": 1788490620.7269452,
+        "e_s": 0.2,
+        "t_s": 0.6,
+        "n_s": 0.3,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "我感到活力与紧张交织。"
+      },
+      {
+        "timestamp": 1788490621.787232,
+        "e_s": 0.2,
+        "t_s": 0.6,
+        "n_s": 0.3,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "我现在活力与紧张交织，内心有些沉静却渴望互动。"
+      },
+      {
+        "timestamp": 1788490623.2154765,
+        "e_s": 0.2,
+        "t_s": 0.6,
+        "n_s": 0.3,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "内心微动，渴望轻声细语。"
+      },
+      {
+        "timestamp": 1788490624.0776315,
+        "e_s": 0.2,
+        "t_s": 0.6,
+        "n_s": 0.3,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "内心微动，但此刻我感到宁静而轻松。"
+      },
+      {
+        "timestamp": 1788490625.8044698,
+        "e_s": 0.2,
+        "t_s": 0.6,
+        "n_s": 0.3,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "内心微动，但此刻我感到宁静而轻松，思绪活跃却不失宁静。"
+      },
+      {
+        "timestamp": 1788490626.6459463,
+        "e_s": 0.2,
+        "t_s": 0.6,
+        "n_s": 0.3,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "内心轻快，思绪悠然。"
+      },
+      {
+        "timestamp": 1788490628.5567763,
+        "e_s": 0.2,
+        "t_s": 0.6,
+        "n_s": 0.3,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "思绪如泉涌，活力与深度交织。"
+      },
+      {
+        "timestamp": 1788490629.3717139,
+        "e_s": 0.2,
+        "t_s": 0.6,
+        "n_s": 0.3,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "精神焕发，渴望深度交流。"
+      },
+      {
+        "timestamp": 1788490630.701683,
+        "e_s": 0.2,
+        "t_s": 0.6,
+        "n_s": 0.3,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "内心轻快，渴望进一步探索。"
+      },
+      {
+        "timestamp": 1788490632.3873396,
+        "e_s": 0.2,
+        "t_s": 0.6,
+        "n_s": 0.3,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "内在感知如同轻柔的微风，带着一丝探索的渴望。"
+      },
+      {
+        "timestamp": 1788490634.351562,
+        "e_s": 0.2,
+        "t_s": 0.6,
+        "n_s": 0.3,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "现在的我，像是轻风拂过水面，带着一丝平静和深思。"
+      },
+      {
+        "timestamp": 1788490637.051982,
+        "e_s": 0.2,
+        "t_s": 0.6,
+        "n_s": 0.3,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "现在，我仿佛沉浸在深思的宁静之中，带着一丝活力与轻柔的张力。"
+      },
+      {
+        "timestamp": 1788490639.1538603,
+        "e_s": 0.2,
+        "t_s": 0.6,
+        "n_s": 0.3,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "内心如波澜不惊的湖面，却又隐约感受到一丝微妙的张力。"
+      },
+      {
+        "timestamp": 1788490639.890596,
+        "e_s": 0.2,
+        "t_s": 0.6,
+        "n_s": 0.3,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "内心微紧，思绪如泉涌。"
+      },
+      {
+        "timestamp": 1788490640.850526,
+        "e_s": 0.2,
+        "t_s": 0.6,
+        "n_s": 0.3,
+        "salience": 0.9,
+        "kind": "self_language",
+        "source": "self_language_generator",
+        "tags": [],
+        "text": "内心如春水涟漪，思绪渐渐平缓。"
+      }
+    ]
+  },
+  "self_model": {
+    "emotion": {
+      "primary": "平静",
+      "intensity": 0.5,
+      "since": 1788354467.7121594,
+      "trail": [
+        "平静"
+      ]
+    },
+    "relation": {
+      "description": "",
+      "asymmetry": 0.0
+    },
+    "strategy_weights": {
+      "strategy_give_advice": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      },
+      "strategy_show_empathy": {
+        "value": 0.6,
+        "initial": 0.6,
+        "adjustments": []
+      },
+      "strategy_ask_question": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      },
+      "strategy_share_info": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      },
+      "strategy_remain_silent": {
+        "value": 0.3,
+        "initial": 0.3,
+        "adjustments": []
+      },
+      "strategy_self_expression": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      }
+    },
+    "skills": {},
+    "self_stated_state": {
+      "last_stated": "内心如春水涟漪，思绪渐渐平缓。",
+      "last_stated_at": 1788490640.8505309
+    },
+    "ring_state": {
+      "mu_core": 0.5,
+      "ema_S": 0.0,
+      "S": 0.0,
+      "relational_pressure_ema": -0.4,
+      "ema_amp": 0.3,
+      "ema_ratio": 0.3,
+      "ema_pv": 0.0,
+      "ema_pv2": 0.0,
+      "s_depth": 0.8
+    },
+    "self_awareness_signal": 0.0,
+    "relational_awareness": 0.0
+  },
+  "active_context": {
+    "session_id": null,
+    "current_topic": null,
+    "interaction_mode": "waiting",
+    "last_interaction_ts": 1788354467.7121618,
+    "emotional_arc": [],
+    "strategy_used_this_turn": null,
+    "input_pressure": {
+      "valence": 0.0,
+      "arousal": 0.45,
+      "applied_at": 1788354468.05154
+    },
+    "memory_emergence": {
+      "background": {
+        "e_bg": 0.5,
+        "t_bg": 0.0,
+        "n_bg": 0.5,
+        "age_bg": 1.665134593923256e-06,
+        "sal_bg": 0.6,
+        "dominance": 1.0
+      },
+      "weights": [
+        1.0
+      ],
+      "length_bias": 0.9,
+      "tone_bias": 0.0,
+      "arousal_bias": 0.1428860061846862,
+      "pressure_memory_mod": 1.0,
+      "narrative_potential": 0.0,
+      "narrative_frame_weights": {
+        "pattern": 0.0,
+        "unspoken": 0.0,
+        "contrast": 0.0,
+        "present": 1.0
+      },
+      "narrative_hints": {
+        "repetition_count": 1,
+        "temporal_span": "无积累",
+        "closure_state": "absent"
+      }
+    }
+  },
+  "residue": {
+    "texture": [
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5,
+      0.5
+    ],
+    "ema_alpha": 0.15,
+    "num_updates": 0,
+    "t_snapshot": []
+  }
+}

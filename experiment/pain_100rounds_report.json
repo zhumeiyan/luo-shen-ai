@@ -1,0 +1,27 @@
+{
+  "n": 100,
+  "mean_pain": 0.6983981,
+  "std_pain": 0.1215660539105798,
+  "pain_range": [
+    0.57436,
+    0.81757
+  ],
+  "level_counts": {
+    "0": 0,
+    "1": 0,
+    "2": 49,
+    "3": 51
+  },
+  "level_transitions": 1,
+  "cat_mean_pain": {
+    "heavy_neg": 0.687856,
+    "light_neg": 0.7081255,
+    "neutral": 0.695966,
+    "silence": 0.720286,
+    "pressure": 0.647331,
+    "repeat": 0.720288
+  },
+  "high_pain_n": 51,
+  "low_pain_n": 0,
+  "chi2": 0.0
+}
