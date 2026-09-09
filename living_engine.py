@@ -403,8 +403,9 @@ def cold_start_if_needed():
                 "total_stated_count": 0,
             },
             "withdraw_tendency": 0.0,   # 连续退缩倾向，数值驱动沉默/恢复
-            "pain": 0.0,                  # 连续疼痛值，数值驱动行为降温
-            "_pain_logit": 0.0,
+            "internal_pain": 0.0,         # 内部疼痛（低能量+僵化信号驱动）
+            "low_energy_signal": 0.0,     # 低能量信号（观察用）
+            "rigidity_signal": 0.0,       # 行为僵化信号（观察用）
             "_withdraw_logit": 0.0,
             "ring_state": {
                 "ema_S": 0.0,
@@ -1715,85 +1716,113 @@ def _update_withdraw_tendency(memory, user_input):
     return tendency_sat
 
 # -------------------------------------------------------------------------
-# 连续疼痛机制（pain）
-# 负面情绪压力使 pain 上升，温和陪伴使 pain 缓慢下降
+# 内部疼痛机制（internal_pain）
+# 由洛神内部状态（低能量+行为僵化）驱动，非用户输入词库
 # 通过 response_pre 间接影响行为档位（只减 penalty，不映射档位）
-# 无 if-then、无 clamp、无随机数
+# 数据来自 pain_signal.py 的 compute_pain 函数
+# 注意：不使用任何人工预热；序列从真实运行历史中自然积累
 # -------------------------------------------------------------------------
 
-# 疼痛词库：每出现一次贡献一个小的连续正值（使 pain 上升）
-_PAIN_CUES = {
-    "难过": 0.30, "痛苦": 0.35, "悲伤": 0.30, "哭": 0.25,
-    "绝望": 0.40, "崩溃": 0.35, "压抑": 0.30, "焦虑": 0.25,
-    "害怕": 0.25, "恐惧": 0.30, "累": 0.20, "疲惫": 0.25,
-    "压力": 0.25, "烦": 0.20, "讨厌": 0.25, "恨": 0.35,
-    "孤独": 0.25, "无助": 0.30, "迷茫": 0.20, "空虚": 0.25,
-    "生气": 0.25, "愤怒": 0.30, "委屈": 0.25, "心痛": 0.30,
-    "绝望": 0.40, "折磨": 0.35, "煎熬": 0.30, "喘不过气": 0.35,
-}
 
-# 缓解词库：每出现一次贡献一个小的连续负值（使 pain 下降）
-_RELIEF_CUES = {
-    "谢谢": 0.20, "感谢": 0.20, "轻松": 0.25, "舒服": 0.20,
-    "开心": 0.20, "快乐": 0.20, "幸福": 0.25, "温暖": 0.20,
-    "安心": 0.20, "平静": 0.15, "好了": 0.15, "没事": 0.15,
-    "挺好": 0.15, "顺利": 0.15, "陪你": 0.20, "相伴": 0.20,
-    "温柔": 0.20, "休息": 0.15, "放松": 0.20, "慢慢": 0.10,
-    "恢复": 0.15, "好点了": 0.20, "踏实": 0.15, "安稳": 0.15,
-}
-
-_PAIN_DECAY_PER_TICK = math.exp(-1.0 / 25.0)   # τ=25 ticks（比 withdraw 更慢）
-_PAIN_ACCUM_RATE = 0.45
-
-
-def _compute_pain_signal(user_input):
-    """连续疼痛信号：负面情绪压力加权累加，缓解词加权减少，tanh 饱和。"""
-    if not user_input:
-        return 0.0
-    raw = 0.0
-    for cue, w in _PAIN_CUES.items():
-        if cue in user_input:
-            raw += w
-    for cue, w in _RELIEF_CUES.items():
-        if cue in user_input:
-            raw -= w
-    return math.tanh(raw * 0.7)
-
-
-def _update_pain(memory, user_input):
-    """
-    连续更新 pain（存储在 self_model.pain ∈ [0, 1]）。n
-    - 疼痛信号 > 0 → pain 上升
-    - 缓解信号 < 0 → pain 下降，速度 × 0.4（示好修复慢于受伤）
-    - 每 tick 指数衰减 exp(-1/25)（τ=25）
-
-    内部存储策略与 withdraw_tendency 一致：logit 空间线性叠加。
-    bias = -0.7 使零输入对应 pain ≈ 0.33（允许双向移动）。
-    """
-    _LOGIT_BIAS_PAIN = -0.7  # 零输入 → sigmoid(-0.7) ≈ 0.33
-
-    stored = memory.get("self_model", {}).get("pain", 0.0)
-    if 0.0 < stored < 1.0:
-        try:
-            logit = -math.log(1.0 / stored - 1.0) - _LOGIT_BIAS_PAIN
-        except (ValueError, ZeroDivisionError):
-            logit = 0.0
-    else:
-        logit = 0.0
-
-    signal = _compute_pain_signal(user_input)
-    if signal >= 0:
-        delta = signal * _PAIN_ACCUM_RATE
-    else:
-        delta = signal * _PAIN_ACCUM_RATE * 0.4  # 缓解慢于受伤
-
-    logit = logit * _PAIN_DECAY_PER_TICK + delta
-    pain_sat = 1.0 / (1.0 + math.exp(-(logit + _LOGIT_BIAS_PAIN)))
-
+def _write_internal_pain_to_memory(memory, response_pre=None):
+    """将 pain_signal 计算结果写入 self_model。
+    response_pre: 行为选择前的 logit 值，仅观测用，不影响行为。"""
+    global _pain_e_series, _pain_tier_series
     sm = memory.setdefault("self_model", {})
-    sm["pain"] = pain_sat
-    sm["_pain_logit"] = logit
-    return pain_sat
+    if response_pre is not None:
+        sm["_response_pre"] = round(response_pre, 6)
+    if len(_pain_e_series) < 200:
+        sm["internal_pain"] = 0.0
+        sm["low_energy_signal"] = 0.0
+        sm["rigidity_signal"] = 0.0
+        return 0.0
+    low_energy_signal, _, _, has_data = pain_signal.compute_low_energy_signal(
+        _pain_e_series, ema_alpha=0.01
+    )
+    rigidity_signal = pain_signal.compute_rigidity_signal(_pain_tier_series, window=50)
+    if not has_data:
+        sm["internal_pain"] = 0.0
+        sm["low_energy_signal"] = 0.0
+        sm["rigidity_signal"] = 0.0
+        return 0.0
+    pain = pain_signal.compute_pain(low_energy_signal, rigidity_signal)
+    sm["internal_pain"] = pain
+    sm["low_energy_signal"] = low_energy_signal
+    sm["rigidity_signal"] = rigidity_signal
+    return pain
+
+
+# -------------------------------------------------------------------------
+# 预演循环机制（preplay loop）
+# 在 E/T/N/M 标量副本上运行 K 步确定性 van der Pol 演化（不动实际状态）
+# 计算 preplay_fluctuation = log(1 + 路径能量)，连续注入 response_pre
+# 无 if-then, 无 clamp, 无随机
+# -------------------------------------------------------------------------
+
+# 预演参数（用户指定 K_preplay = 0.35）
+_PREPLAY_K = 0.35             # preplay 偏置强度（按用户指定 K_preplay = 0.35）
+_PREPLAY_DEPTH = 5           # 预演步数 K
+
+
+def _preplay_simulate(memory, env, K):
+    """在 E/T/N/M 标量副本上运行 K 步确定性 van der Pol 演化。
+    
+    不修改 memory 的实际 E/T/N/M，仅演化标量副本。
+    返回 (fluctuation, E_path, T_path)：
+      - fluctuation = log(1 + sum(dE_i^2 + dT_i^2))，连续无分支
+      - E_path / T_path：K+1 个采样点的路径列表
+    """
+    # ── 读取实际 E/T/N/M（只读）──
+    climate = memory.get("internal_climate", {})
+    E = float(climate.get("emotion_intensity", 0.5))
+    T = float(climate.get("tension", 0.3))
+    N = float(climate.get("energy", 0.5))
+    M = float(climate.get("memory_pressure", 0.3))
+
+    # NaN 防御
+    if math.isnan(E): E = 0.5
+    if math.isnan(T): T = 0.3
+    if math.isnan(N): N = 0.5
+    if math.isnan(M): M = 0.3
+
+    # 静息环境参数
+    light = env.get("light", 0.5) if env else 0.5
+    _ = env.get("temperature", 0.5) if env else 0.5
+
+    # 耦合系数（与 _evolve_climate_idle 一致）
+    c_EN = 0.14
+    damping = 0.15
+    step_factor = 0.15
+
+    E_path = [E]
+    T_path = [T]
+
+    for _ in range(K):
+        # 核心 van der Pol 耦合（无惯性：副本无历史）
+        dE = (0.12 * T - c_EN * N + 0.05 * M - damping * E) * step_factor
+        dT = (0.10 * E + 0.06 * M - c_EN * N - damping * T) * step_factor
+        dN = (c_EN * E - 0.07 * T - 0.10 * N + 0.02) * step_factor
+        dM = (0.09 * T + 0.04 * E - 0.14 * M) * step_factor
+
+        E += dE
+        T += dT
+        N += dN
+        M += dM
+
+        # van der Pol 极限环有界，无需 clamp
+        E_path.append(E)
+        T_path.append(T)
+
+    # ── 路径波动量 = log(1 + sum(dE_i^2 + dT_i^2)) ──
+    path_energy = 0.0
+    for i in range(len(E_path) - 1):
+        dE_i = E_path[i + 1] - E_path[i]
+        dT_i = T_path[i + 1] - T_path[i]
+        path_energy += dE_i * dE_i + dT_i * dT_i
+
+    fluctuation = math.log(1.0 + path_energy)
+
+    return fluctuation, E_path, T_path
 
 
 def _emergence_log(memory):
@@ -2056,12 +2085,19 @@ def _select_behavior(memory, emergence):
     _WITHDRAW_K = 0.8
     _withdraw_penalty = _WITHDRAW_K * _withdraw_tendency
 
-    # ── 疼痛偏置：pain ∈ [0,1] 时从 response_pre 中减去（间接驱动档位） ──
-    _pain = memory.get("self_model", {}).get("pain", 0.0)
+    # ── 内部疼痛偏置：internal_pain ∈ [0,1] 时从 response_pre 中减去 ──
+    _internal_pain = memory.get("self_model", {}).get("internal_pain", 0.0)
     _PAIN_K = 0.6     # 用户指定的系数 k_pain
-    _pain_penalty = _PAIN_K * _pain
+    _pain_penalty = _PAIN_K * _internal_pain
 
-    # 连续叠加叙事势 + 相位偏置 + 慢压力 + 内部节律驱动 + 存在感基线 - 退缩惩罚 - 疼痛惩罚
+    # ── 预演波动偏置：在 E/T/N/M 标量副本上运行 K 步 van der Pol，不动实际状态 ──
+    _env_preplay = {"light": 0.5, "temperature": 0.5, "noise": 0.0}
+    _preplay_fluctuation, _preplay_E_path, _preplay_T_path = _preplay_simulate(
+        memory, _env_preplay, _PREPLAY_DEPTH
+    )
+    _preplay_bias = _PREPLAY_K * _preplay_fluctuation
+
+    # 连续叠加 - 退缩惩罚 - 内部疼痛惩罚 + 预演波动偏置
     response_pre = (arousal_bias + 0.5 * tone_bias
                     + _narr_boost * narrative_potential
                     + _phase_bias
@@ -2069,7 +2105,8 @@ def _select_behavior(memory, emergence):
                     + _internal_drive
                     + _presence_bias
                     - _withdraw_penalty
-                    - _pain_penalty)
+                    - _pain_penalty
+                    + _preplay_bias)
     response_tendency = 1.0 / (1.0 + math.exp(-response_pre))
 
     # ── 维度 1：5 档位离散选择（无 if-then，floor + 隐式 clamp via * 4.999）──
@@ -2092,6 +2129,7 @@ def _select_behavior(memory, emergence):
     return {
         "response_mode": response_mode,
         "response_tendency": round(response_tendency, 4),
+        "response_pre": round(response_pre, 6),
         "mode_idx": mode_idx,
         "tone_mode_idx": tone_mode_idx,
         "max_tokens": max_tokens,
@@ -2110,8 +2148,16 @@ def _select_behavior(memory, emergence):
         "r_coherence": round(_rcoh, 6),
         "withdraw_tendency": round(_withdraw_tendency, 6),
         "withdraw_penalty": round(_withdraw_penalty, 6),
-        "pain": round(_pain, 6),
+        "internal_pain": round(_internal_pain, 6),
         "pain_penalty": round(_pain_penalty, 6),
+        "preplay_fluctuation": round(_preplay_fluctuation, 6),
+        "preplay_bias": round(_preplay_bias, 6),
+        "preplay_path_summary": {
+            "E_start": round(_preplay_E_path[0], 5),
+            "E_end": round(_preplay_E_path[-1], 5),
+            "T_start": round(_preplay_T_path[0], 5),
+            "T_end": round(_preplay_T_path[-1], 5),
+        },
     }
 
 
@@ -2144,11 +2190,11 @@ def _generate_response_impl(user_input, source="living_engine", extra_context=No
     # 1b. 残留层仅存 t_snapshot / texture 对共振计算的影响（本轮不写入持久层）
     # 实际的纹理累积由 update_after_interaction 负责（从磁盘重读后再写）
 
-    # 2. === 活记忆层：连续退缩倾向 + 疼痛连续驱动（数值更新，无布尔判定） ===
+    # 2. === 活记忆层：连续退缩倾向更新（数值更新，无布尔判定） ===
     withdraw_tendency = _update_withdraw_tendency(memory, user_input)
-    pain = _update_pain(memory, user_input)
+    # internal_pain 由 _compute_and_log_pain 在行为选择后更新，此处不修改
 
-    # 持久化：确保 update_after_interaction 从磁盘重读时拿到最新 pain/withdraw
+    # 持久化：确保 update_after_interaction 从磁盘重读时拿到最新 withdraw
     _save_json_atomic("active_memory/active_memory.json", memory)
 
     # 3. 正常流程：行为档位由 withdraw_tendency 通过 response_pre 连续决定
@@ -2202,7 +2248,7 @@ def _generate_response_impl(user_input, source="living_engine", extra_context=No
             "directive": directive,
             "llm_called": False,
             "withdraw_tendency": round(withdraw_tendency, 6),
-            "pain": round(pain, 6),
+            "internal_pain": round(memory.get("self_model", {}).get("internal_pain", 0.0), 6),
             "behavior": behavior,
             "self_stated_state": last_stated_b,
             "emergence": _emergence_log(memory),
@@ -2298,7 +2344,8 @@ def _generate_response_impl(user_input, source="living_engine", extra_context=No
 
     # 13b. 生病感知：计算 pain（仅在非 silent 模式下——silent 模式下无新行为可记录）
     if behavior["response_mode"] != "silent":
-        _compute_and_log_pain(memory, behavior["mode_idx"], save_memory=True)
+        _compute_and_log_pain(memory, behavior["mode_idx"], save_memory=True,
+                              response_pre=behavior.get("response_pre"))
 
     # 提取信息用于返回
     last_stated = directive.get("context_for_llm", {}).get("self_stated_state")
@@ -2308,7 +2355,7 @@ def _generate_response_impl(user_input, source="living_engine", extra_context=No
         "directive": directive,
         "llm_called": True,
         "withdraw_tendency": round(withdraw_tendency, 6),
-        "pain": round(pain, 6),
+        "internal_pain": round(memory.get("self_model", {}).get("internal_pain", 0.0), 6),
         "behavior": behavior,
         "self_stated_state": last_stated,
         "emergence": _emergence_log(memory),
@@ -2337,11 +2384,12 @@ def _record_pain_at_encoding(memory, pain_val):
         episodic[-1]["pain_at_encoding"] = pain_val
 
 
-def _compute_and_log_pain(memory, mode_idx=None, save_memory=False):
+def _compute_and_log_pain(memory, mode_idx=None, save_memory=False, response_pre=None):
     """
     计算本次 pain：更新序列 → 计算连续值 → 离散化 → 写 CSV → 落链。
     mode_idx: 本次交互的档位。environment_tick 场景传入 None，函数会沿用最近已知档位。
     save_memory: 若为 True，则将带 pain_at_encoding 的 memory 持久化到磁盘。
+    response_pre: 行为选择前的 logit 值，仅用于诊断性记录（不影响任何行为）。
     不修改任何行为参数。
     """
     global _pain_tick_counter, _pain_e_series, _pain_tier_series
@@ -2379,7 +2427,7 @@ def _compute_and_log_pain(memory, mode_idx=None, save_memory=False):
     )
     rigidity_signal = pain_signal.compute_rigidity_signal(_pain_tier_series, window=50)
 
-    # 数据不足 200 tick → pain=0, pain_level=0, 仅记录日志，不落链
+    # 数据不足 200 tick → pain=0, pain_level=0, 但必须 internal_pain=0.0 落盘
     if not has_data:
         _pain_tick_counter += 1
         pain_signal.append_pain_log(
@@ -2392,8 +2440,11 @@ def _compute_and_log_pain(memory, mode_idx=None, save_memory=False):
             pain=0.0,
             pain_level=0,
             behavior_tier=_this_tier,
-            note="insufficient_data"
+            note="insufficient_data",
         )
+        # 数据不足时写入 internal_pain=0.0 并落盘，防止下一轮读到旧值
+        _write_internal_pain_to_memory(memory, response_pre=response_pre)
+        _save_json_atomic("active_memory/active_memory.json", memory)
         return  # 不更新 pain_at_encoding，不落链
 
     pain = pain_signal.compute_pain(low_energy_signal, rigidity_signal)
@@ -2444,6 +2495,9 @@ def _compute_and_log_pain(memory, mode_idx=None, save_memory=False):
                 "latest_pain": pain,
             }
         )
+
+    # 5b. 将内部 pain 写入 self_model（供下一轮 _select_behavior 使用）
+    _write_internal_pain_to_memory(memory, response_pre=response_pre)
 
     # 6. 持久化：如果调用方要求，将带 pain_at_encoding 的 memory 重新落盘
     if save_memory:
