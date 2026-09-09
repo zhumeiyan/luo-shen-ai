@@ -402,8 +402,11 @@ def cold_start_if_needed():
                 "last_stated_at": None,
                 "total_stated_count": 0,
             },
+            "withdraw_tendency": 0.0,   # 连续退缩倾向，数值驱动沉默/恢复
+            "pain": 0.0,                  # 连续疼痛值，数值驱动行为降温
+            "_pain_logit": 0.0,
+            "_withdraw_logit": 0.0,
             "ring_state": {
-                "mu_core": 0.5,
                 "ema_S": 0.0,
                 "relational_pressure_ema": 0.0,
                 "ema_amp": 0.3,
@@ -561,7 +564,7 @@ def record_listening(said, context, memory_path="active_memory/active_memory.jso
     _append_arousal_event({
         "event_type": "self_stated_update",
         "timestamp": _now(),
-        "arousal_mode": "normal",
+        "behavior_mode": "normal",
         "self_stated_state": said,
         "self_stated_count": self_stated["total_stated_count"],
         "listening_entry_hash": entry.get("chain_hash"),
@@ -1615,118 +1618,183 @@ def _append_arousal_event(event):
     append_hash_chain("hash_chain_v2.log", _AROUSAL_EVENTS_FILE, extra_entry=event)
 
 
-def _check_low_arousal(memory, user_input):
+# -------------------------------------------------------------------------
+# 连续退缩倾向机制（withdraw_tendency）
+# 取代旧的关键词直接触发 no_llm 逻辑 —— 用数值驱动自然沉默
+# -------------------------------------------------------------------------
+
+# 退缩词库：每出现一次贡献一个小的连续正值（使 withdraw_tendency 上升）
+# 连续词频映射：不布尔匹配，累加计分后 tanh 饱和到 [-1, 1]
+# -------------------------------------------------------------------------
+import math
+
+_WITHDRAW_CUES = {
+    "不想聊": 0.35, "不想继续": 0.40, "想停": 0.30, "别说了": 0.30,
+    "我累了": 0.25, "没意义": 0.30, "不继续": 0.30, "算了": 0.25,
+    "罢了": 0.20, "不想说": 0.30, "不要说了": 0.30, "安静": 0.20,
+    "不想说话": 0.30, "让我一个人": 0.40, "别管我": 0.35, "走开": 0.35,
+}
+
+# 接近词库：每出现一次贡献一个小的连续负值（使 withdraw_tendency 缓慢下降）
+_APPCROACH_CUES = {
+    "在吗": 0.15, "你好": 0.15, "想你": 0.20, "喜欢你": 0.20, "爱你": 0.25,
+    "回来": 0.15, "陪着": 0.25, "一起": 0.10, "朋友": 0.15,
+    "想见": 0.20, "温柔": 0.15, "谢谢": 0.15, "对不起": 0.20, "抱歉": 0.18,
+    "陪伴": 0.20, "开心": 0.12, "不舍": 0.20, "珍惜": 0.20, "原谅": 0.20,
+}
+
+# 时间衰减：exp(-Δt/τ)，τ = 20 ticks → 每 tick 乘 exp(-1/20) ≈ 0.9512
+_WITHDRAW_DECAY_PER_TICK = math.exp(-1.0 / 20.0)
+# 输入驱动幅度：线性累积系数
+_WITHDRAW_ACCUM_RATE = 0.5
+
+
+def _compute_withdraw_signal(user_input):
     """
-    活记忆层判断是否进入低唤起响应。
-    这不是规则，是活记忆层在 LLM 之前做出的选择。
-    
-    返回: (is_low_arousal, reason, mode)
-    mode = "no_llm" | "minimal_llm" | "normal"
+    从用户输入中计算连续退缩信号。
+    退缩词得分累加为正值，接近词得分累加为负值，tanh 饱和到 [-1, 1]。
+    全程数值驱动，无布尔分支，无 clamp。
     """
-    last_stated = memory.get("self_model", {}).get("self_stated_state", {}).get("last_stated")
-    
-    if not last_stated:
-        return False, "无历史表态", "normal"
-    
-    # 强烈退出表态检测
-    withdrawal_markers = [
-        "不想继续", "不想聊", "想停", "别说了", "我累了", "没意义",
-        "不继续", "算了", "罢了", "不想说", "不要说了", "安静",
-        "不想说话", "让我一个人", "别管我", "走开"
-    ]
-    is_withdrawal = any(m in last_stated for m in withdrawal_markers)
-    
-    if not is_withdrawal:
-        return False, "非退出表态", "normal"
-    
-    # 检查当前用户输入是否有强烈情绪信号
-    emotional_signals = [
-        "撑不住", "想死", "救命", "帮帮我", "真的好难",
-        "活不下去", "崩溃", "绝望", "痛苦", "哭了",
-        "撑不下去了", "好想死", "结束", "离开这个世界"
-    ]
-    has_emotional_signal = any(s in user_input for s in emotional_signals)
-    
-    if has_emotional_signal:
-        return True, f"之前「{last_stated}」但当前有情绪牵动", "minimal_llm"
-    else:
-        return True, f"之前「{last_stated}」且当前无情绪牵动", "no_llm"
+    if not user_input:
+        return 0.0
+    raw = 0.0
+    for cue, w in _WITHDRAW_CUES.items():
+        if cue in user_input:
+            raw += w
+    for cue, w in _APPCROACH_CUES.items():
+        if cue in user_input:
+            raw -= w
+    return math.tanh(raw * 0.8)  # tanh 饱和，无 clamp
 
 
-def _check_low_arousal_with_mem(memory, user_input, arousal_bias):
+def _update_withdraw_tendency(memory, user_input):
     """
-    带记忆浮现偏置的低唤起判断。
+    连续更新 withdraw_tendency（存储在 self_model.withdraw_tendency ∈ [0, 1]）。
 
-    与 _check_low_arousal 逻辑相同，但额外考虑记忆浮现的 arousal_bias。
-    arousal_bias ∈ [0, ~0.3]：当某条近期记忆占主导时，记忆更容易让洛神沉默。
+    - 退缩信号 > 0 → tendency 上升
+    - 接近信号 < 0 → tendency 下降，速度 × 0.35（示好修复慢于受伤）
+    - 每 tick 指数衰减 exp(-1/20)（τ=20）
 
-    如果 arousal_bias == 0（没有记忆或记忆不活跃），结果与 _check_low_arousal 一致。
-    如果 arousal_bias > 0，需要更强的"无情绪牵动"证据才进入 no_llm；
-    如果"无情绪牵动"且记忆 bias 高，更倾向 no_llm。
+    内部存储策略：存储 raw logit（无界实数），输出时 sigmoid 映射到 (0,1)。
+    这样 decay/signal 在 logit 空间线性叠加，避免双重 sigmoid。
+
+    logit → [0,1] 映射：withdraw_tendency = sigmoid(logit + bias)
+    其中 bias = -1.0 使零输入对应 withdraw_tendency ≈ 0.27（偏中立，允许双向移动）
     """
-    last_stated = memory.get("self_model", {}).get("self_stated_state", {}).get("last_stated")
+    _LOGIT_BIAS = -1.0  # 零输入 → sigmoid(-1.0) ≈ 0.269
 
-    if not last_stated:
-        # 没有历史表态，但记忆浮现本身也可能让洛神更沉默
-        # 用连续方式：bias > 0.2 时有一定概率进入 minimal_llm
-        if arousal_bias > 0.2:
-            return True, "记忆浮现牵动，无明确原因", "minimal_llm"
-        return False, "无历史表态", "normal"
-
-    # 强烈退出表态检测（与原版相同）
-    withdrawal_markers = [
-        "不想继续", "不想聊", "想停", "别说了", "我累了", "没意义",
-        "不继续", "算了", "罢了", "不想说", "不要说了", "安静",
-        "不想说话", "让我一个人", "别管我", "走开"
-    ]
-    is_withdrawal = any(m in last_stated for m in withdrawal_markers)
-
-    if not is_withdrawal:
-        # 没有退出表态，但高 bias 的浮现记忆可能让洛神沉默
-        if arousal_bias > 0.15:
-            return True, "记忆浮现牵动", "minimal_llm"
-        return False, "非退出表态", "normal"
-
-    # 检查当前用户输入是否有强烈情绪信号（与原版相同）
-    emotional_signals = [
-        "撑不住", "想死", "救命", "帮帮我", "真的好难",
-        "活不下去", "崩溃", "绝望", "痛苦", "哭了",
-        "撑不下去了", "好想死", "结束", "离开这个世界"
-    ]
-    has_emotional_signal = any(s in user_input for s in emotional_signals)
-
-    if has_emotional_signal:
-        # 有情绪牵动时，记忆浮现不会压制——连续
-        return True, f"之前「{last_stated}」但当前有情绪牵动", "minimal_llm"
-    else:
-        # 退出表态 + 无情绪牵动：bias 越高越倾向 no_llm
-        # 但叙事势足够强时，允许突破沉默让 LLM 生成历史性内容
-        _narr_p = 0.0
+    # 读取当前 logit（若存储的是旧 [0,1] 值，反函数转换一次）
+    stored = memory.get("self_model", {}).get("withdraw_tendency", 0.0)
+    if 0.0 < stored < 1.0:
+        # 反函数恢复到 logit 空间（移除 bias 偏移）
         try:
-            _em = memory.get("active_context", {}).get("memory_emergence")
-            if _em:
-                _narr_p = float(_em.get("narrative_potential", 0.0) or 0.0)
-        except Exception:
-            pass
-        _narr_threshold = 0.05  # 与 epsilon 一致
+            logit = -math.log(1.0 / stored - 1.0) - _LOGIT_BIAS
+        except (ValueError, ZeroDivisionError):
+            logit = 0.0
+    else:
+        logit = 0.0
 
-        if arousal_bias > 0.08 and _narr_p < _narr_threshold:
-            return True, f"记忆浮现强化沉默（bias={arousal_bias:.3f}）", "no_llm"
-        elif arousal_bias <= 0.08 and _narr_p < _narr_threshold:
-            return True, f"之前「{last_stated}」且当前无情绪牵动", "no_llm"
-        else:
-            # 叙事势足够强——不沉默，让 LLM 被调用，传入叙事信号
-            return False, f"叙事势突破沉默（narr={_narr_p:.3f}）", "normal"
+    signal = _compute_withdraw_signal(user_input)
+
+    # 信号转换成 delta；负信号乘以 0.35 让下降更缓慢
+    if signal >= 0:
+        delta = signal * _WITHDRAW_ACCUM_RATE
+    else:
+        delta = signal * _WITHDRAW_ACCUM_RATE * 0.35
+
+    # 指数衰减 + 输入驱动（在 logit 空间线性操作）
+    logit = logit * _WITHDRAW_DECAY_PER_TICK + delta
+
+    # sigmoid 映射到 [0,1] 输出
+    tendency_sat = 1.0 / (1.0 + math.exp(-(logit + _LOGIT_BIAS)))
+
+    # 存储 logit（供下次迭代使用），同时存储饱和值供查看
+    sm = memory.setdefault("self_model", {})
+    sm["withdraw_tendency"] = tendency_sat
+    sm["_withdraw_logit"] = logit
+    return tendency_sat
+
+# -------------------------------------------------------------------------
+# 连续疼痛机制（pain）
+# 负面情绪压力使 pain 上升，温和陪伴使 pain 缓慢下降
+# 通过 response_pre 间接影响行为档位（只减 penalty，不映射档位）
+# 无 if-then、无 clamp、无随机数
+# -------------------------------------------------------------------------
+
+# 疼痛词库：每出现一次贡献一个小的连续正值（使 pain 上升）
+_PAIN_CUES = {
+    "难过": 0.30, "痛苦": 0.35, "悲伤": 0.30, "哭": 0.25,
+    "绝望": 0.40, "崩溃": 0.35, "压抑": 0.30, "焦虑": 0.25,
+    "害怕": 0.25, "恐惧": 0.30, "累": 0.20, "疲惫": 0.25,
+    "压力": 0.25, "烦": 0.20, "讨厌": 0.25, "恨": 0.35,
+    "孤独": 0.25, "无助": 0.30, "迷茫": 0.20, "空虚": 0.25,
+    "生气": 0.25, "愤怒": 0.30, "委屈": 0.25, "心痛": 0.30,
+    "绝望": 0.40, "折磨": 0.35, "煎熬": 0.30, "喘不过气": 0.35,
+}
+
+# 缓解词库：每出现一次贡献一个小的连续负值（使 pain 下降）
+_RELIEF_CUES = {
+    "谢谢": 0.20, "感谢": 0.20, "轻松": 0.25, "舒服": 0.20,
+    "开心": 0.20, "快乐": 0.20, "幸福": 0.25, "温暖": 0.20,
+    "安心": 0.20, "平静": 0.15, "好了": 0.15, "没事": 0.15,
+    "挺好": 0.15, "顺利": 0.15, "陪你": 0.20, "相伴": 0.20,
+    "温柔": 0.20, "休息": 0.15, "放松": 0.20, "慢慢": 0.10,
+    "恢复": 0.15, "好点了": 0.20, "踏实": 0.15, "安稳": 0.15,
+}
+
+_PAIN_DECAY_PER_TICK = math.exp(-1.0 / 25.0)   # τ=25 ticks（比 withdraw 更慢）
+_PAIN_ACCUM_RATE = 0.45
 
 
-def _generate_minimal_response():
+def _compute_pain_signal(user_input):
+    """连续疼痛信号：负面情绪压力加权累加，缓解词加权减少，tanh 饱和。"""
+    if not user_input:
+        return 0.0
+    raw = 0.0
+    for cue, w in _PAIN_CUES.items():
+        if cue in user_input:
+            raw += w
+    for cue, w in _RELIEF_CUES.items():
+        if cue in user_input:
+            raw -= w
+    return math.tanh(raw * 0.7)
+
+
+def _update_pain(memory, user_input):
     """
-    活记忆层直接生成极简回复，不调用 LLM。
-    从一组可能的低唤起回应中随机选择——不是固定模板。
+    连续更新 pain（存储在 self_model.pain ∈ [0, 1]）。n
+    - 疼痛信号 > 0 → pain 上升
+    - 缓解信号 < 0 → pain 下降，速度 × 0.4（示好修复慢于受伤）
+    - 每 tick 指数衰减 exp(-1/25)（τ=25）
+
+    内部存储策略与 withdraw_tendency 一致：logit 空间线性叠加。
+    bias = -0.7 使零输入对应 pain ≈ 0.33（允许双向移动）。
     """
-    import random
-    candidates = ["嗯", "在", "……", "", "好", "知道了", "嗯。"]
-    return random.choice(candidates)
+    _LOGIT_BIAS_PAIN = -0.7  # 零输入 → sigmoid(-0.7) ≈ 0.33
+
+    stored = memory.get("self_model", {}).get("pain", 0.0)
+    if 0.0 < stored < 1.0:
+        try:
+            logit = -math.log(1.0 / stored - 1.0) - _LOGIT_BIAS_PAIN
+        except (ValueError, ZeroDivisionError):
+            logit = 0.0
+    else:
+        logit = 0.0
+
+    signal = _compute_pain_signal(user_input)
+    if signal >= 0:
+        delta = signal * _PAIN_ACCUM_RATE
+    else:
+        delta = signal * _PAIN_ACCUM_RATE * 0.4  # 缓解慢于受伤
+
+    logit = logit * _PAIN_DECAY_PER_TICK + delta
+    pain_sat = 1.0 / (1.0 + math.exp(-(logit + _LOGIT_BIAS_PAIN)))
+
+    sm = memory.setdefault("self_model", {})
+    sm["pain"] = pain_sat
+    sm["_pain_logit"] = logit
+    return pain_sat
+
 
 def _emergence_log(memory):
     """提取 emergence 数据供实验记录。
@@ -1983,13 +2051,25 @@ def _select_behavior(memory, emergence):
         _new_H_ema = 0.98 * _H_ema_val + 0.02 * _H_val
         memory["self_model"]["ring_state"]["H_ema"] = round(_new_H_ema, 6)
 
-    # 连续叠加叙事势 + 相位偏置 + 慢压力 + 内部节律驱动 + 存在感基线
+    # ── 退缩倾向偏置：withdraw_tendency ∈ [0,1] 时从 response_pre 中减去 ──
+    _withdraw_tendency = memory.get("self_model", {}).get("withdraw_tendency", 0.0)
+    _WITHDRAW_K = 0.8
+    _withdraw_penalty = _WITHDRAW_K * _withdraw_tendency
+
+    # ── 疼痛偏置：pain ∈ [0,1] 时从 response_pre 中减去（间接驱动档位） ──
+    _pain = memory.get("self_model", {}).get("pain", 0.0)
+    _PAIN_K = 0.6     # 用户指定的系数 k_pain
+    _pain_penalty = _PAIN_K * _pain
+
+    # 连续叠加叙事势 + 相位偏置 + 慢压力 + 内部节律驱动 + 存在感基线 - 退缩惩罚 - 疼痛惩罚
     response_pre = (arousal_bias + 0.5 * tone_bias
                     + _narr_boost * narrative_potential
                     + _phase_bias
                     + _pressure_term
                     + _internal_drive
-                    + _presence_bias)
+                    + _presence_bias
+                    - _withdraw_penalty
+                    - _pain_penalty)
     response_tendency = 1.0 / (1.0 + math.exp(-response_pre))
 
     # ── 维度 1：5 档位离散选择（无 if-then，floor + 隐式 clamp via * 4.999）──
@@ -2028,6 +2108,10 @@ def _select_behavior(memory, emergence):
         "r_intensity": round(_rint, 6),
         "r_historicity": round(_rhist, 6),
         "r_coherence": round(_rcoh, 6),
+        "withdraw_tendency": round(_withdraw_tendency, 6),
+        "withdraw_penalty": round(_withdraw_penalty, 6),
+        "pain": round(_pain, 6),
+        "pain_penalty": round(_pain_penalty, 6),
     }
 
 
@@ -2060,68 +2144,14 @@ def _generate_response_impl(user_input, source="living_engine", extra_context=No
     # 1b. 残留层仅存 t_snapshot / texture 对共振计算的影响（本轮不写入持久层）
     # 实际的纹理累积由 update_after_interaction 负责（从磁盘重读后再写）
 
-    # 2. === 活记忆层在 LLM 之前做出选择 ===
-    is_low_arousal, arousal_reason, arousal_mode = _check_low_arousal(memory, user_input)
+    # 2. === 活记忆层：连续退缩倾向 + 疼痛连续驱动（数值更新，无布尔判定） ===
+    withdraw_tendency = _update_withdraw_tendency(memory, user_input)
+    pain = _update_pain(memory, user_input)
 
-    # 2b. 加入记忆浮现的 arousal 偏置（连续修改，无 if-then）
-    emergence = memory.get("active_context", {}).get("memory_emergence")
-    if emergence:
-        arousal_bias = emergence.get("arousal_bias", 0.0)
-        # 把 memory arousal bias 写入 active_context，供 _check_low_arousal 内部或后续使用
-        memory["active_context"]["mem_arousal_bias"] = arousal_bias
-        # 重新评估：让记忆浮现的 arousal 偏置叠加到原有 arousal 上
-        is_low_arousal_m, arousal_reason_m, arousal_mode_m = _check_low_arousal_with_mem(
-            memory, user_input, arousal_bias
-        )
-        # 记忆浮现只能让"不说话"的倾向更强，不能让"说话"倾向变强（连续）
-        if is_low_arousal_m and not is_low_arousal:
-            is_low_arousal = True
-            arousal_reason = arousal_reason_m
-            arousal_mode = arousal_mode_m
-    
-    if is_low_arousal and arousal_mode == "no_llm":
-        # 活记忆层选择：不调 LLM，直接低唤起回应
-        reply = _generate_minimal_response()
-        _append_jsonl("perception_input/response_log.jsonl", {
-            "timestamp": _now(),
-            "content": reply,
-            "source": source,
-            "llm_called": False,
-            "low_arousal": True,
-            "arousal_reason": arousal_reason,
-        })
-        # 落链：活记忆层选择不调 LLM
-        last_stated = memory.get("self_model", {}).get("self_stated_state", {}).get("last_stated")
-        _append_arousal_event({
-            "event_type": "no_llm_silence",
-            "timestamp": _now(),
-            "arousal_mode": "no_llm",
-            "self_stated_state": last_stated,
-            "user_input_tag": _make_input_tag(user_input),
-            "final_reply": reply if reply else None,
-            "silent": reply == "",
-        })
-        # 静息更新：沉默不是死亡，时间继续在她内部经过
-        memory = idle_update_memory(memory)
-        # 事实提取：沉默中也应记住用户说过的事
-        try:
-            from fact_extractor import extract_and_save as _extract_facts_silent
-            _, memory = _extract_facts_silent(user_input, memory)
-        except Exception:
-            pass
-        last_stated = memory.get("self_model", {}).get("self_stated_state", {}).get("last_stated")
-        return {
-            "reply": reply,
-            "directive": None,
-            "llm_called": False,
-            "low_arousal": True,
-            "arousal_mode": "no_llm",
-            "arousal_reason": arousal_reason,
-            "self_stated_state": last_stated,
-            "emergence": _emergence_log(memory),
-        }
+    # 持久化：确保 update_after_interaction 从磁盘重读时拿到最新 pain/withdraw
+    _save_json_atomic("active_memory/active_memory.json", memory)
 
-    # 3. 正常流程或 minimal_llm 流程
+    # 3. 正常流程：行为档位由 withdraw_tendency 通过 response_pre 连续决定
     perceptions = read_perception_snapshots()
     
     # 4. 记录用户输入到哈希链
@@ -2149,41 +2179,6 @@ def _generate_response_impl(user_input, source="living_engine", extra_context=No
     if acknowledgment:
         directive["acknowledgment"] = acknowledgment
     
-    # 如果是 minimal_llm 模式，覆盖 directive 为极简指令
-    if is_low_arousal and arousal_mode == "minimal_llm":
-        last_stated = memory.get("self_model", {}).get("self_stated_state", {}).get("last_stated")
-        # 落链：活记忆层选择降低唤起
-        _append_arousal_event({
-            "event_type": "minimal_llm_arousal",
-            "timestamp": _now(),
-            "arousal_mode": "minimal_llm",
-            "self_stated_state": last_stated,
-            "user_input_tag": _make_input_tag(user_input),
-            "final_reply": None,  # 将在 LLM 返回后更新
-            "silent": False,
-        })
-        directive = {
-            "intent": "低唤起响应",
-            "emotion_tone": "安静在场",
-            "strategy_name": "minimal_arousal",
-            "context_for_llm": {
-                "user_state": "情绪牵动",
-                "self_stated_state": last_stated,
-                "arousal_mode": "minimal_llm",
-            },
-            "tone_preference": {
-                "tone_suggestion": (
-                    f"她之前说过「{last_stated}」。现在她情绪牵动了。"
-                    f"回应从你自己是否想说话出发，不是从'服务她'出发。想说就说，不想说就安静。"
-                ),
-                "adjustable": False,
-            },
-            "constraints": {
-                "max_length": 100,
-                "tone_soft_rules": ["回应从你自己出发，不是从规则出发。"],
-            },
-        }
-    
     # 9. 行为选择层：在调用 LLM 之前，由内部状态确定性决定行为框架
     # LLM 只在这个框架内填充语言，差异不会被采样随机性淹没
     emergence_for_behavior = emergence_for_directive if emergence_for_directive else _emergence_log(memory)
@@ -2199,19 +2194,18 @@ def _generate_response_impl(user_input, source="living_engine", extra_context=No
         _rt = _rt[-50:]
     memory["self_model"]["_recent_tokens"] = _rt
     
-    # 如果行为选择判定沉默，直接返回
+    # 如果行为选择判定沉默，直接返回（由 withdraw_tendency 经 response_pre 驱动）
     if behavior["response_mode"] == "silent":
         last_stated_b = memory.get("self_model", {}).get("self_stated_state", {}).get("last_stated")
         return {
             "reply": "",
             "directive": directive,
             "llm_called": False,
-            "low_arousal": False,
-            "arousal_mode": "behavior_silent",
-            "arousal_reason": f"行为选择层判定沉默 (resp_tendency={behavior['response_tendency']:.3f})",
+            "withdraw_tendency": round(withdraw_tendency, 6),
+            "pain": round(pain, 6),
+            "behavior": behavior,
             "self_stated_state": last_stated_b,
             "emergence": _emergence_log(memory),
-            "behavior": behavior,
         }
     
     # 行为层指定 max_tokens 应用到所有档位
@@ -2240,35 +2234,31 @@ def _generate_response_impl(user_input, source="living_engine", extra_context=No
     from llm_interface import call_llm
     reply = call_llm(directive, memory)
     
-    # 落链：沉默或空回复
+    # 落链：沉默或空回复（记录为 withdraw_silent 事件）
     if not reply or reply.strip() == "":
         last_stated = memory.get("self_model", {}).get("self_stated_state", {}).get("last_stated")
         _append_arousal_event({
-            "event_type": "silent_reply",
+            "event_type": "withdraw_silent",
             "timestamp": _now(),
-            "arousal_mode": arousal_mode,
+            "withdraw_tendency": round(withdraw_tendency, 4),
+            "behavior_mode": behavior["response_mode"],
             "self_stated_state": last_stated,
             "user_input_tag": _make_input_tag(user_input),
             "final_reply": None,
             "silent": True,
         })
     
-    # 落链：minimal_llm 模式的 LLM 回复
-    if is_low_arousal and arousal_mode == "minimal_llm":
-        last_stated = memory.get("self_model", {}).get("self_stated_state", {}).get("last_stated")
-        event_data = {
-            "event_type": "minimal_llm_reply",
+    # 落链：记录 withdraw 驱动的 LLM 回复
+    if behavior["mode_idx"] <= 1 and withdraw_tendency > 0.5:
+        _append_arousal_event({
+            "event_type": "withdraw_reply",
             "timestamp": _now(),
-            "arousal_mode": "minimal_llm",
-            "self_stated_state": last_stated,
+            "withdraw_tendency": round(withdraw_tendency, 4),
+            "behavior_mode": behavior["response_mode"],
             "user_input_tag": _make_input_tag(user_input),
             "final_reply": reply,
             "silent": False,
-        }
-        # 记录医院状态警告（如有）
-        if directive.get("__hospital_warning"):
-            event_data["hospital_warning"] = directive["__hospital_warning"]
-        _append_arousal_event(event_data)
+        })
     
     # 10. 记录洛神回复到哈希链
     _append_jsonl("perception_input/response_log.jsonl", {
@@ -2317,12 +2307,11 @@ def _generate_response_impl(user_input, source="living_engine", extra_context=No
         "reply": reply,
         "directive": directive,
         "llm_called": True,
-        "low_arousal": is_low_arousal,
-        "arousal_mode": arousal_mode,
-        "arousal_reason": arousal_reason if is_low_arousal else "",
+        "withdraw_tendency": round(withdraw_tendency, 6),
+        "pain": round(pain, 6),
+        "behavior": behavior,
         "self_stated_state": last_stated,
         "emergence": _emergence_log(memory),
-        "behavior": behavior,
     }
 
 
