@@ -32,6 +32,17 @@ SALIENCE = {                  # 经历类型的固有显著度
 
 MAX_MEMORIES = 50             # 超过后丢弃最老且激活度最低的记忆
 
+# E → e_s 饱和映射：k=1.0 的 sigmoid，将无界 van der Pol E 压缩到 (0,1)
+# 约束：E=-2.61 → e_s≥0.05,  E=-1.37 → e_s≤0.20,  E=0.5 → e_s≈0.62
+_K_SAT = 1.0
+_E0_SAT = 0.02   # 将 sigmoid 中心微调到 E=+0.02, 保证 E=-1.37 时 e_s<0.2
+
+def _saturate_e(raw_e):
+    """将无界的 van der Pol E 通过连续 sigmoid 映射到 (0, 1)。
+    不引入 if-ton、不 clamp、不修改 tone_bias 公式:
+    仅限制进入记忆编码的量程, 使 e_bg 不再被 -2.6 级值主导。"""
+    return 1.0 / (1.0 + math.exp(-_K_SAT * (raw_e - _E0_SAT)))
+
 
 def make_memory(climate, kind="unknown", source=None, tags=None):
     """
@@ -48,7 +59,7 @@ def make_memory(climate, kind="unknown", source=None, tags=None):
     salience = SALIENCE.get(kind, 0.6)
     return {
         "timestamp": time.time(),
-        "e_s": float(climate.get("emotion_intensity", 0.5)),
+        "e_s": _saturate_e(float(climate.get("emotion_intensity", 0.5))),
         "t_s": float(climate.get("tension", 0.0)),
         "n_s": float(climate.get("energy", 0.5)),
         "salience": float(salience),
