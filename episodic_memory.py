@@ -32,15 +32,18 @@ SALIENCE = {                  # 经历类型的固有显著度
 
 MAX_MEMORIES = 50             # 超过后丢弃最老且激活度最低的记忆
 
-# E → e_s 饱和映射：k=1.0 的 sigmoid，将无界 van der Pol E 压缩到 (0,1)
-# 约束：E=-2.61 → e_s≥0.05,  E=-1.37 → e_s≤0.20,  E=0.5 → e_s≈0.62
-_K_SAT = 1.0
-_E0_SAT = 0.02   # 将 sigmoid 中心微调到 E=+0.02, 保证 E=-1.37 时 e_s<0.2
+# E → e_s 饱和映射：连续 sigmoid，将无界 van der Pol E 压缩到 (0,1)
+# 参数 k=0.8452, E0=-1.6076 使吸引子 E∈[-2.61,-1.37] 映射到 e_s∈[0.30, 0.55]
+# → tone_bias 落在 [-1.60, +0.40] → response_pre 跨过 tier 1/2 门槛
+# 约束：E=-2.61→e_s≈0.30≥0.25,  E=-1.37→e_s≈0.55≤0.60,  E→±∞→e_s→{1,0}
+_K_SAT = 0.8452
+_E0_SAT = -1.6076   # sigmoid 中心移到 van der Pol 吸引子附近
 
 def _saturate_e(raw_e):
     """将无界的 van der Pol E 通过连续 sigmoid 映射到 (0, 1)。
-    不引入 if-ton、不 clamp、不修改 tone_bias 公式:
-    仅限制进入记忆编码的量程, 使 e_bg 不再被 -2.6 级值主导。"""
+    参数使典型 E∈[-2.61,-1.37] 映射到略低于/高于 0.5 的区间,
+    让 tone_bias 不再极端负值, 保留 memory→behavior 信号通路。
+    连续单调, 无 if-then, 无 clamp, 不修改 tone_bias 公式。"""
     return 1.0 / (1.0 + math.exp(-_K_SAT * (raw_e - _E0_SAT)))
 
 
