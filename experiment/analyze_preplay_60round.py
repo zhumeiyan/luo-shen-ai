@@ -136,7 +136,7 @@ except Exception as e:
 # ── 6. 各阶段统计 ──
 print("\n" + "="*60)
 print("【6】各阶段平均指标:")
-phases = {"A_neutral": (0, 15), "B_negative": (15, 30), "C_silence": (30, 40), "D_recovery": (40, 50), "E_neutral_end": (50, 60)}
+phases = {"A_neutral": (0, 40), "B_negative": (40, 120), "C_silence": (120, 150), "D_recovery": (150, 180), "E_neutral_end": (180, 250)}
 for pn, (s, e) in phases.items():
     subset = data[s:e]
     avg_pf = sum(r["preplay_fluctuation"] or 0 for r in subset) / len(subset)

@@ -2101,8 +2101,8 @@ def _select_behavior(memory, emergence):
     # 注：不再将 preplay_fluctuation 作为加性偏置，改为驱动档位动态边界
     _preplay_bias = _PREPLAY_K * _preplay_fluctuation  # 仍输出到日志，但不加入 response_pre
 
-    # ── 动态档位阈值（连续调制）──
-    _threshold_shift = _K_SHIFT * math.tanh(_preplay_fluctuation + 0.5 * _internal_pain)
+    # ── 动态档位阈值（双向：pf 推上，pain 推下）──
+    _threshold_shift = _K_SHIFT * math.tanh(_preplay_fluctuation - 0.5 * _internal_pain)
 
     # 连续叠加 - 退缩惩罚 - 内部疼痛惩罚（不再 + _preplay_bias）
     response_pre = (arousal_bias + 0.5 * tone_bias
