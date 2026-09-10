@@ -44,6 +44,12 @@ import pain_signal
 # 它不进入情绪方程、不进入 emergence 公式、不进入行为选择公式。
 _current_source_id = None
 
+# ── 身份锚点（寻址键 + 关系键）──────────────────────────────────────────────
+# _current_user_id 是身份锚点的寻址键，也是关系状态的寻址键。
+# 它进入：episodic_memory 检索过滤、relationship_warmth 寻址、场景插槽寻址。
+# 不做行为直接键：warmth 须通过 K_WARMTH 偏置进入 response_pre，不直接决定档位。
+_current_user_id = None
+
 
 # ── 不可读残留层 ─────────────────────────────────────────────────────────
 # 残留层存储的是交互的原始质地——未经语义解析、未经分类、无法反向推导原文。
@@ -429,8 +435,9 @@ def cold_start_if_needed():
             "strategy_used_this_turn": None,
         },
         "residue": _init_residue(),
+        "relations": {},                       # 身份锚点：user_id → {relationship_warmth, total_turns, tone_sum, ...}
     }
-    
+
     _save_json_atomic(memory_path, memory)
     append_hash_chain("hash_chain_v2.log", memory_path)
     return memory
@@ -1766,6 +1773,11 @@ _PREPLAY_DEPTH = 5           # 预演步数 K
 # 动态档位阈值参数（K_SHIFT * tanh(pf + 0.5*pain)）
 _K_SHIFT = 0.35              # K_SHIFT = 0.35，先设
 
+# 身份锚点与关系温度参数
+_K_WARMTH = 0.4              # relationship_warmth 注入 response_pre 的系数
+_WARMTH_RATE = 0.02          # 每轮 warmth 增量上限（参与度驱动）
+_WARMTH_DECAY = 0.005        # 每轮自然衰减（无交互时缓慢回归 0）
+
 
 def _preplay_simulate(memory, env, K):
     """在 E/T/N/M 标量副本上运行 K 步确定性 van der Pol 演化。
@@ -1826,6 +1838,61 @@ def _preplay_simulate(memory, env, K):
     fluctuation = math.log(1.0 + path_energy)
 
     return fluctuation, E_path, T_path
+
+
+# ── 身份锚点与关系温度 ──────────────────────────────────────────────────────
+
+def _ensure_relations(memory, user_id):
+    """确保 memory["relations"][user_id] 存在，返回该用户的 relation 状态 dict。
+    不同 user_id 的关系状态完全隔离——warmth、count、tone_sum 各自独立。
+    """
+    relations = memory.get("relations")
+    if relations is None:
+        relations = {}
+        memory["relations"] = relations
+    rel = relations.get(user_id)
+    if rel is None:
+        rel = {
+            "relationship_warmth": 0.0,     # tanh-saturated ∈ [-1, 1]
+            "total_turns": 0,               # 与该用户的累计轮次
+            "tone_sum": 0.0,                # tone_bias 累计（用于平均）
+            "_last_delta": 0.0,             # 最近一轮的增量（调试/分析用）
+        }
+        relations[user_id] = rel
+    return rel
+
+
+def _compute_warmth_delta(user_input, tone_bias):
+    """计算单轮 warmth 增量，连续无 if-then，无随机数。
+
+    输入信号:
+      - tone_bias ∈ [-1, 1]：emergence 层输出的情感色调偏置（暖>0，冷<0）
+      - len(user_input)：参与度代理（长输入=高参与）
+
+    综合信号 = tone_bias * (0.5 + 0.5 * length_proxy) - WARMTH_DECAY
+    输出 delta ∈ [-0.03, +0.03] 近似范围
+    """
+    _len_proxy = min(len(user_input) / 30.0, 1.0)        # [0, 1]
+    # 参与度调制：高参与时暖色调更强，低参与时冷色调衰减更快 — 连续叠加
+    _engagement_signal = tone_bias * (0.5 + 0.5 * _len_proxy)
+    _delta = _WARMTH_RATE * _engagement_signal - _WARMTH_DECAY
+    return _delta
+
+
+def _update_relationship_warmth(memory, user_id, user_input, tone_bias):
+    """连续更新 relationship_warmth ∈ [-1, 1]（tanh 自然饱和）。
+
+    返回更新后的 warmth 值（float，已 saturated）。
+    """
+    rel = _ensure_relations(memory, user_id)
+    warmth = rel.get("relationship_warmth", 0.0)
+    delta = _compute_warmth_delta(user_input, tone_bias)
+    warmth_new = math.tanh(warmth + delta)
+    rel["relationship_warmth"] = round(warmth_new, 6)
+    rel["total_turns"] = rel.get("total_turns", 0) + 1
+    rel["tone_sum"] = rel.get("tone_sum", 0.0) + tone_bias
+    rel["_last_delta"] = round(delta, 6)
+    return warmth_new
 
 
 def _emergence_log(memory):
@@ -2004,7 +2071,7 @@ _MODE_NAMES = ["silent", "brief", "short", "normal", "engaged"]
 _N_MODES = len(_MODE_NAMES)
 
 
-def _select_behavior(memory, emergence):
+def _select_behavior(memory, emergence, user_id="primary"):
     """
     行为选择层：在调用 LLM 之前，由内部状态确定性决定行为框架。
     """
@@ -2104,7 +2171,13 @@ def _select_behavior(memory, emergence):
     # ── 动态档位阈值（双向：pf 推上，pain 推下）──
     _threshold_shift = _K_SHIFT * math.tanh(_preplay_fluctuation - 0.5 * _internal_pain)
 
-    # 连续叠加 - 退缩惩罚 - 内部疼痛惩罚（不再 + _preplay_bias）
+    # ── 身份锚点偏置：relationship_warmth 连续调制 response_pre ──
+    # warmth ∈ [-1, 1]；K_WARMTH=0.4 → 最大 ±0.4 偏置
+    # 正温度→更开放/投入档位，负温度→更退缩/疏远档位（连续无阶梯）
+    _relationship_warmth = memory.get("relations", {}).get(user_id, {}).get("relationship_warmth", 0.0)
+    _warmth_bias = _K_WARMTH * _relationship_warmth
+
+    # 连续叠加 - 退缩惩罚 - 内部疼痛惩罚 + 身份温度偏置（不再 + _preplay_bias）
     response_pre = (arousal_bias + 0.5 * tone_bias
                     + _narr_boost * narrative_potential
                     + _phase_bias
@@ -2112,7 +2185,8 @@ def _select_behavior(memory, emergence):
                     + _internal_drive
                     + _presence_bias
                     - _withdraw_penalty
-                    - _pain_penalty)
+                    - _pain_penalty
+                    + _warmth_bias)
     response_tendency = 1.0 / (1.0 + math.exp(-response_pre))
 
     # ── 维度 1：5 档位离散选择（动态边界，随 preplay_fluctuation+internal_pain 漂移）──
@@ -2156,6 +2230,9 @@ def _select_behavior(memory, emergence):
         "r_coherence": round(_rcoh, 6),
         "withdraw_tendency": round(_withdraw_tendency, 6),
         "withdraw_penalty": round(_withdraw_penalty, 6),
+        "user_id": user_id,
+        "relationship_warmth": round(_relationship_warmth, 6),
+        "warmth_bias": round(_warmth_bias, 6),
         "internal_pain": round(_internal_pain, 6),
         "pain_penalty": round(_pain_penalty, 6),
         "preplay_fluctuation": round(_preplay_fluctuation, 6),
@@ -2172,7 +2249,7 @@ def _select_behavior(memory, emergence):
     }
 
 
-def generate_response(user_input, source="living_engine", extra_context=None, extract_facts=True, source_id=None):
+def generate_response(user_input, source="living_engine", extra_context=None, extract_facts=True, source_id=None, user_id="primary"):
     """
     活记忆层对外提供的统一响应接口。
     
@@ -2182,24 +2259,35 @@ def generate_response(user_input, source="living_engine", extra_context=None, ex
                仅用于 episodic_memory 的检索过滤：只取该 tag 的记忆参与 emergence。
                不进入情绪方程、不进入 emergence 公式、不进入行为选择公式。
                是寻址键，不是行为键。
+    user_id: 身份锚点键（如 \"primary\" / \"secondary\"）。
+             用于 episodic_memory 的 owner 过滤、relationship_warmth 读写、
+             withdraw_tendency（退缩倾向）的 per-user 独立跟踪。
+             是寻址键 + 关系键：warmth 须通过 K_WARMTH 偏置连续进入 response_pre，
+             不直接决定档位（不做 if-then）。
     """
-    global _current_source_id
+    global _current_source_id, _current_user_id
     _prev_source_id = _current_source_id
+    _prev_user_id = _current_user_id
     _current_source_id = source_id  # 设置当前寻址上下文：仅用于 memory tags 过滤
+    _current_user_id = user_id      # 设置当前身份锚点：用于关系温度和退缩倾向隔离
 
     try:
-        return _generate_response_impl(user_input, source, extra_context, extract_facts)
+        return _generate_response_impl(user_input, source, extra_context, extract_facts, user_id)
     finally:
         _current_source_id = _prev_source_id  # 恢复上下文（寻址隔离）
+        _current_user_id = _prev_user_id      # 恢复身份锚点（关系隔离）
 
 
-def _generate_response_impl(user_input, source="living_engine", extra_context=None, extract_facts=True):
+def _generate_response_impl(user_input, source="living_engine", extra_context=None, extract_facts=True, user_id="primary"):
     """实际实现，拆分出来只为 finally 能恢复 _current_source_id。"""
     # 1. 加载活记忆
     memory = cold_start_if_needed()
 
     # 1b. 残留层仅存 t_snapshot / texture 对共振计算的影响（本轮不写入持久层）
     # 实际的纹理累积由 update_after_interaction 负责（从磁盘重读后再写）
+
+    # 1c. ── 身份锚点初始化：确保该 user_id 的关系状态存在 ──
+    _ensure_relations(memory, user_id)
 
     # 2. === 活记忆层：连续退缩倾向更新（数值更新，无布尔判定） ===
     withdraw_tendency = _update_withdraw_tendency(memory, user_input)
@@ -2216,6 +2304,7 @@ def _generate_response_impl(user_input, source="living_engine", extra_context=No
         "timestamp": _now(),
         "content": user_input,
         "source": source,
+        "user_id": user_id,
     })
     append_hash_chain("hash_chain_v2.log", "perception_input/user_input_log.jsonl")
     
@@ -2239,7 +2328,13 @@ def _generate_response_impl(user_input, source="living_engine", extra_context=No
     # 9. 行为选择层：在调用 LLM 之前，由内部状态确定性决定行为框架
     # LLM 只在这个框架内填充语言，差异不会被采样随机性淹没
     emergence_for_behavior = emergence_for_directive if emergence_for_directive else _emergence_log(memory)
-    behavior = _select_behavior(memory, emergence_for_behavior)
+
+    # 9b. ── 关系温度更新：基于当前输入的 tone_bias 连续更新 ──
+    # 使用 emergence_for_behavior 的 tone_bias 作为用户情感色调信号
+    _tone_signal = emergence_for_behavior.get("tone_bias", 0.0) if emergence_for_behavior else 0.0
+    _current_warmth = _update_relationship_warmth(memory, user_id, user_input, _tone_signal)
+
+    behavior = _select_behavior(memory, emergence_for_behavior, user_id)
 
     # ── Lambda-Self 历史序列更新（纯存储操作，不影响行为选择结果）──
     _update_lambda_histories(memory, behavior["max_tokens"], behavior["pressure_ema"])
@@ -2516,11 +2611,12 @@ def _compute_and_log_pain(memory, mode_idx=None, save_memory=False, response_pre
         append_hash_chain("hash_chain_v2.log", "active_memory/active_memory.json")
 
 
-def process_user_input(user_input, input_type="text"):
+def process_user_input(user_input, input_type="text", user_id="primary"):
     """
     处理用户输入的主流程（兼容旧接口，委托给 generate_response）
+    user_id: 身份锚点键，默认 "primary"。不同 user_id 的关系状态完全隔离。
     """
-    result = generate_response(user_input, source="process_user_input")
+    result = generate_response(user_input, source="process_user_input", user_id=user_id)
     return result["reply"]
 
 
