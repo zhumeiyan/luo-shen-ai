@@ -1,0 +1,948 @@
+{
+  "__meta": {
+    "schema_version": "4.0",
+    "last_updated": 1788985670.2586653,
+    "last_reflection_at": 0,
+    "chain_height": 0
+  },
+  "internal_climate": {
+    "emotion_intensity": 0.08479999999999979,
+    "tension": -0.2768000000000002,
+    "energy": -5.139999999999985,
+    "memory_pressure": 0.3
+  },
+  "user_model": {
+    "trust": {
+      "value": 0.3,
+      "confidence": 0.1,
+      "evidence_count": 0
+    },
+    "intimacy": {
+      "value": 0.1,
+      "confidence": 0.1
+    },
+    "shared_history_length": 640,
+    "first_seen": 1788967788.8068924,
+    "total_interactions": 640,
+    "emotional_patterns": [],
+    "preferences": [],
+    "known_facts": {
+      "facts": [
+        {
+          "type": "location",
+          "fact": "住在干嘛",
+          "target": "干嘛",
+          "recorded_at": 1788976641.7215388
+        }
+      ],
+      "last_updated": 1788979421.3634014,
+      "added_this_round": []
+    },
+    "episodic_memory": [
+      {
+        "timestamp": 1788984873.2498367,
+        "e_s": 0.8292069085839655,
+        "t_s": -0.15880000000000016,
+        "n_s": -4.731999999999991,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788984883.0589273,
+        "e_s": 0.8287755582793447,
+        "t_s": -0.16120000000000018,
+        "n_s": -4.743999999999991,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788984888.9922945,
+        "e_s": 0.8287755582793447,
+        "t_s": -0.16120000000000018,
+        "n_s": -4.7639999999999905,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788984895.6086576,
+        "e_s": 0.8276934017293415,
+        "t_s": -0.16720000000000018,
+        "n_s": -4.7639999999999905,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788984902.6387498,
+        "e_s": 0.8309236829691239,
+        "t_s": -0.14920000000000017,
+        "n_s": -4.7639999999999905,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788984910.3986793,
+        "e_s": 0.8296373956002139,
+        "t_s": -0.15640000000000018,
+        "n_s": -4.759999999999991,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788984916.8661082,
+        "e_s": 0.8304957821822062,
+        "t_s": -0.15160000000000018,
+        "n_s": -4.767999999999991,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788984923.8236582,
+        "e_s": 0.8336840831319415,
+        "t_s": -0.13360000000000016,
+        "n_s": -4.767999999999991,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788984932.4508362,
+        "e_s": 0.8374464615150927,
+        "t_s": -0.11200000000000015,
+        "n_s": -4.763999999999991,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985002.1603172,
+        "e_s": 0.848387617650344,
+        "t_s": -0.04680000000000015,
+        "n_s": -4.83199999999999,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985008.2893496,
+        "e_s": 0.84942833168601,
+        "t_s": -0.040400000000000144,
+        "n_s": -4.84399999999999,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985020.1733377,
+        "e_s": 0.84942833168601,
+        "t_s": -0.040400000000000144,
+        "n_s": -4.863999999999989,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985029.810997,
+        "e_s": 0.84942833168601,
+        "t_s": -0.040400000000000144,
+        "n_s": -4.875999999999989,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985036.6421669,
+        "e_s": 0.8503986563642952,
+        "t_s": -0.034400000000000146,
+        "n_s": -4.883999999999989,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985414.7601871,
+        "e_s": 0.8503986563642952,
+        "t_s": -0.034400000000000146,
+        "n_s": -4.895999999999988,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985421.3973978,
+        "e_s": 0.8503986563642952,
+        "t_s": -0.034400000000000146,
+        "n_s": -4.911999999999988,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985426.63921,
+        "e_s": 0.8503986563642952,
+        "t_s": -0.034400000000000146,
+        "n_s": -4.923999999999988,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985434.555895,
+        "e_s": 0.8532787307432869,
+        "t_s": -0.016400000000000144,
+        "n_s": -4.923999999999988,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985441.9961767,
+        "e_s": 0.8532787307432869,
+        "t_s": -0.016400000000000144,
+        "n_s": -4.9439999999999875,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985449.9682367,
+        "e_s": 0.8532787307432869,
+        "t_s": -0.016400000000000144,
+        "n_s": -4.963999999999987,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985454.97673,
+        "e_s": 0.8532787307432869,
+        "t_s": -0.016400000000000144,
+        "n_s": -4.971999999999987,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985465.5224676,
+        "e_s": 0.8532787307432869,
+        "t_s": -0.016400000000000144,
+        "n_s": -4.987999999999987,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985471.1799076,
+        "e_s": 0.8532787307432869,
+        "t_s": -0.016400000000000144,
+        "n_s": -4.995999999999987,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985478.3551314,
+        "e_s": 0.8532787307432869,
+        "t_s": -0.016400000000000144,
+        "n_s": -5.015999999999987,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985484.8231025,
+        "e_s": 0.8532787307432869,
+        "t_s": -0.016400000000000144,
+        "n_s": -5.035999999999986,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985492.247384,
+        "e_s": 0.8532787307432869,
+        "t_s": -0.016400000000000144,
+        "n_s": -5.055999999999986,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985498.1748629,
+        "e_s": 0.8532787307432869,
+        "t_s": -0.016400000000000144,
+        "n_s": -5.067999999999985,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985502.883756,
+        "e_s": 0.8539124785108114,
+        "t_s": -0.012400000000000144,
+        "n_s": -5.079999999999985,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985509.0800395,
+        "e_s": 0.8539124785108114,
+        "t_s": -0.012400000000000144,
+        "n_s": -5.0999999999999845,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985516.8210402,
+        "e_s": 0.8539124785108114,
+        "t_s": -0.012400000000000144,
+        "n_s": -5.103999999999984,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985522.8371887,
+        "e_s": 0.8492985645723738,
+        "t_s": -0.041200000000000146,
+        "n_s": -5.0919999999999845,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985532.7309122,
+        "e_s": 0.8477341760718331,
+        "t_s": -0.050800000000000144,
+        "n_s": -5.0999999999999845,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985541.649464,
+        "e_s": 0.8441656027726282,
+        "t_s": -0.07240000000000014,
+        "n_s": -5.095999999999985,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985545.8560383,
+        "e_s": 0.8394385311080922,
+        "t_s": -0.10040000000000014,
+        "n_s": -5.087999999999985,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985551.6071153,
+        "e_s": 0.8359915288177862,
+        "t_s": -0.12040000000000015,
+        "n_s": -5.087999999999985,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985564.8910367,
+        "e_s": 0.8331912971058337,
+        "t_s": -0.13640000000000013,
+        "n_s": -5.087999999999985,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985572.0929024,
+        "e_s": 0.8299954757583613,
+        "t_s": -0.15440000000000015,
+        "n_s": -5.087999999999985,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985578.2823005,
+        "e_s": 0.8271140406946764,
+        "t_s": -0.17040000000000016,
+        "n_s": -5.087999999999985,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985586.5387647,
+        "e_s": 0.8241941123352012,
+        "t_s": -0.18640000000000018,
+        "n_s": -5.087999999999985,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985593.4588995,
+        "e_s": 0.822423609939433,
+        "t_s": -0.19600000000000017,
+        "n_s": -5.095999999999985,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985599.2103598,
+        "e_s": 0.8188407230303225,
+        "t_s": -0.21520000000000017,
+        "n_s": -5.091999999999985,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985603.8668754,
+        "e_s": 0.8154308689857788,
+        "t_s": -0.23320000000000018,
+        "n_s": -5.091999999999985,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985612.9234204,
+        "e_s": 0.8117391891875758,
+        "t_s": -0.2524000000000002,
+        "n_s": -5.087999999999986,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985620.1616147,
+        "e_s": 0.8082269722935472,
+        "t_s": -0.2704000000000002,
+        "n_s": -5.087999999999986,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985625.5908184,
+        "e_s": 0.8044257616254628,
+        "t_s": -0.2896000000000002,
+        "n_s": -5.083999999999986,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985632.7690246,
+        "e_s": 0.8044257616254628,
+        "t_s": -0.2896000000000002,
+        "n_s": -5.103999999999986,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985649.2040546,
+        "e_s": 0.8044257616254628,
+        "t_s": -0.2896000000000002,
+        "n_s": -5.1239999999999855,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985656.455205,
+        "e_s": 0.8044257616254628,
+        "t_s": -0.2896000000000002,
+        "n_s": -5.135999999999985,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985664.8168063,
+        "e_s": 0.8044257616254628,
+        "t_s": -0.2896000000000002,
+        "n_s": -5.135999999999985,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      },
+      {
+        "timestamp": 1788985671.5268044,
+        "e_s": 0.806966199880301,
+        "t_s": -0.2768000000000002,
+        "n_s": -5.139999999999985,
+        "salience": 1.0,
+        "kind": "chat",
+        "source": "interaction",
+        "tags": []
+      }
+    ]
+  },
+  "self_model": {
+    "emotion": {
+      "primary": "平静",
+      "intensity": 0.08479999999999979,
+      "since": 1788967788.8068933,
+      "trail": [
+        "平静"
+      ]
+    },
+    "relation": {
+      "description": "",
+      "asymmetry": 0.0
+    },
+    "strategy_weights": {
+      "strategy_give_advice": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      },
+      "strategy_show_empathy": {
+        "value": 0.6,
+        "initial": 0.6,
+        "adjustments": []
+      },
+      "strategy_ask_question": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      },
+      "strategy_share_info": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      },
+      "strategy_remain_silent": {
+        "value": 0.3,
+        "initial": 0.3,
+        "adjustments": []
+      },
+      "strategy_self_expression": {
+        "value": 0.5,
+        "initial": 0.5,
+        "adjustments": []
+      }
+    },
+    "skills": {},
+    "self_stated_state": {
+      "entries": [
+        {
+          "said": "感觉好累好疲惫",
+          "context_of_said": "",
+          "recorded_at": 1788967881.390923,
+          "chain_hash": "d1d7b17ad47a15a789445adc1e6389d0"
+        },
+        {
+          "said": "好累，真的不想动了",
+          "context_of_said": "",
+          "recorded_at": 1788975643.004349,
+          "chain_hash": "b8179e289c6b6bba11cf57b4848c5e98"
+        },
+        {
+          "said": "随便吧",
+          "context_of_said": "",
+          "recorded_at": 1788975710.3715904,
+          "chain_hash": "b4cece092ae921a94d8a0459f4d8e7d2"
+        },
+        {
+          "said": "没意思",
+          "context_of_said": "",
+          "recorded_at": 1788975725.1665626,
+          "chain_hash": "66f61c27e80a820f9170320b87460dfd"
+        },
+        {
+          "said": "算了",
+          "context_of_said": "",
+          "recorded_at": 1788975752.7482402,
+          "chain_hash": "8d91922d4d0d2d62ba295222e5f9c416"
+        },
+        {
+          "said": "好累啊不想动",
+          "context_of_said": "",
+          "recorded_at": 1788976815.9396422,
+          "chain_hash": "2e3abf581cb7b3e69ef03b54e98d21ef"
+        },
+        {
+          "said": "算了不说了",
+          "context_of_said": "",
+          "recorded_at": 1788976961.222081,
+          "chain_hash": "877c094afc279a31274943466a16db23"
+        },
+        {
+          "said": "好累",
+          "context_of_said": "",
+          "recorded_at": 1788977002.2626987,
+          "chain_hash": "264249fd1a636bac49c87f3cfa91bc5b"
+        },
+        {
+          "said": "浑身没劲",
+          "context_of_said": "",
+          "recorded_at": 1788977071.6730032,
+          "chain_hash": "f99708ba9ad0fe2b50f83c0d01881c1f"
+        },
+        {
+          "said": "无所谓",
+          "context_of_said": "",
+          "recorded_at": 1788977222.1726747,
+          "chain_hash": "105a84082ef11e6bbc833d43afc5a71b"
+        },
+        {
+          "said": "无所谓了",
+          "context_of_said": "",
+          "recorded_at": 1788977284.4183064,
+          "chain_hash": "183d1eba05cbaa4cfab935efe4472205"
+        },
+        {
+          "said": "没意义",
+          "context_of_said": "",
+          "recorded_at": 1788977290.3640711,
+          "chain_hash": "bd6c8c7f57491b3df89a87ee5edb2c2e"
+        },
+        {
+          "said": "别说了",
+          "context_of_said": "",
+          "recorded_at": 1788977323.6473885,
+          "chain_hash": "df9c0e9bfb4458f628eca05987d39587"
+        },
+        {
+          "said": "算了",
+          "context_of_said": "",
+          "recorded_at": 1788977399.4504719,
+          "chain_hash": "a8f499300982cc1cb64290fbf89cc76e"
+        },
+        {
+          "said": "好累啊不想动",
+          "context_of_said": "",
+          "recorded_at": 1788979582.9806037,
+          "chain_hash": "5f7990262aaca7b0f82c5d471d1517ab"
+        },
+        {
+          "said": "算了不说了",
+          "context_of_said": "",
+          "recorded_at": 1788979721.8496768,
+          "chain_hash": "d7b363f74d5123775a42a33cca8ba245"
+        },
+        {
+          "said": "好累",
+          "context_of_said": "",
+          "recorded_at": 1788979758.8452368,
+          "chain_hash": "d1c391939eab4767c30998b01dfeeb4e"
+        },
+        {
+          "said": "浑身没劲",
+          "context_of_said": "",
+          "recorded_at": 1788979832.340509,
+          "chain_hash": "01f93eb26e1e1ce57519b80ce056e436"
+        },
+        {
+          "said": "活着好累",
+          "context_of_said": "",
+          "recorded_at": 1788979868.42975,
+          "chain_hash": "c44dc97adb8743931becd1faeb81a96b"
+        },
+        {
+          "said": "无所谓",
+          "context_of_said": "",
+          "recorded_at": 1788980000.8571901,
+          "chain_hash": "76c1b3d84cd0b510e97b65823f320135"
+        },
+        {
+          "said": "无所谓了",
+          "context_of_said": "",
+          "recorded_at": 1788980073.2911239,
+          "chain_hash": "ac45c2bb3db453d51911b5a2a9956900"
+        },
+        {
+          "said": "没意义",
+          "context_of_said": "",
+          "recorded_at": 1788980080.5802891,
+          "chain_hash": "523761256a6a66f622c1f6eec7a54ccd"
+        },
+        {
+          "said": "别说了",
+          "context_of_said": "",
+          "recorded_at": 1788980121.5720992,
+          "chain_hash": "da3a9a7fcdfb2aebfa866a15ad806e56"
+        },
+        {
+          "said": "算了",
+          "context_of_said": "",
+          "recorded_at": 1788980185.7252648,
+          "chain_hash": "d311d1d9e5355dfd8d89d5b8a03832fa"
+        },
+        {
+          "said": "好累啊不想动",
+          "context_of_said": "",
+          "recorded_at": 1788984718.283284,
+          "chain_hash": "c7719d7a91e44f71ca00759105ec60c8"
+        },
+        {
+          "said": "好累啊不想动",
+          "context_of_said": "",
+          "recorded_at": 1788985528.8270125,
+          "chain_hash": "e3681d3dace4d1c71545f7a8478584da"
+        }
+      ],
+      "last_stated": "好累啊不想动",
+      "last_stated_at": 1788985528.8270125,
+      "total_stated_count": 26
+    },
+    "withdraw_tendency": 0.26672069483799077,
+    "internal_pain": 0.0,
+    "low_energy_signal": 0.0,
+    "rigidity_signal": 0.0,
+    "_withdraw_logit": -0.011324649064567831,
+    "ring_state": {
+      "mu_core": 0.5,
+      "ema_S": 0.0,
+      "S": 0.0,
+      "relational_pressure_ema": -0.0819003,
+      "_max_tokens_hist": [
+        80.0,
+        80.0,
+        180,
+        183
+      ],
+      "_rp_ema_hist": [
+        0.0,
+        0.0,
+        -0.005527,
+        0.069598
+      ]
+    },
+    "_recent_tokens": [
+      180,
+      183
+    ],
+    "_response_pre": 1.045539
+  },
+  "active_context": {
+    "session_id": null,
+    "current_topic": null,
+    "interaction_mode": "waiting",
+    "last_interaction_ts": 1788985670.2586656,
+    "emotional_arc": [
+      "温柔的、不施压的",
+      "温柔的、不施压的",
+      "温柔的、不施压的",
+      "温柔的、不施压的",
+      "温柔的、不施压的",
+      "温柔的、不施压的",
+      "温柔的、不施压的",
+      "温柔的、不施压的",
+      "温柔的、不施压的",
+      "温柔的、不施压的"
+    ],
+    "strategy_used_this_turn": "strategy_share",
+    "input_pressure": {
+      "valence": 0.8,
+      "arousal": 0.4,
+      "applied_at": 1788985671.5267725
+    },
+    "memory_emergence": {
+      "background": {
+        "e_bg": 0.8334024650597324,
+        "t_bg": -0.13083434535008612,
+        "n_bg": -5.004105938017516,
+        "age_bg": 0.0004220570214818786,
+        "sal_bg": 0.9999999999999999,
+        "dominance": 0.02725664017279215
+      },
+      "weights": [
+        0.017575151995668895,
+        0.017817933433673886,
+        0.018168072683828744,
+        0.018237606044519142,
+        0.01803261501352686,
+        0.018050075209738732,
+        0.018132641269143247,
+        0.017917408220787606,
+        0.017579933332395745,
+        0.017690287684796295,
+        0.017751149383550643,
+        0.01801063159323394,
+        0.01816037102606577,
+        0.018157700609080656,
+        0.01839815793310118,
+        0.018575903412565303,
+        0.01870267421606491,
+        0.018389931634429202,
+        0.01858391909545768,
+        0.018761491040262125,
+        0.018828255045738037,
+        0.01895355678390861,
+        0.019012060346659268,
+        0.019143660137257927,
+        0.0192565646995176,
+        0.019350853392454508,
+        0.0193986451403897,
+        0.019363328274743102,
+        0.01941439141294918,
+        0.01942413911396175,
+        0.019939039960947067,
+        0.0201346737924541,
+        0.020512087254454515,
+        0.020967976726606316,
+        0.021292620179044656,
+        0.021544646435144504,
+        0.02181387367911895,
+        0.022042084343119692,
+        0.02226012476739379,
+        0.02240862464799756,
+        0.022634883877251266,
+        0.02284100903715397,
+        0.02303273817262512,
+        0.023206293587753012,
+        0.023358722429508337,
+        0.023417745833637846,
+        0.023455609786106963,
+        0.0234655949976322,
+        0.023468586909846607,
+        0.023363954402733336
+      ],
+      "length_bias": 0.1,
+      "tone_bias": 0.05222437318284026,
+      "arousal_bias": -0.008391230517539853,
+      "pressure_memory_mod": 0.994266979,
+      "narrative_potential": 0.2037604421907229,
+      "narrative_frame_weights": {
+        "pattern": 0.49832240679914636,
+        "unspoken": 0.5014487443050802,
+        "contrast": 0.0002288488957732659,
+        "present": 0.0
+      },
+      "narrative_hints": {
+        "repetition_count": 50,
+        "temporal_span": "最近 50 轮",
+        "closure_state": "unresolved"
+      }
+    }
+  },
+  "residue": {
+    "texture": [
+      0.4278928601234704,
+      0.5769359222325797,
+      0.4049717715875713,
+      0.5766769163348004,
+      0.4009292074457379,
+      0.6092516765797025,
+      0.5893206191441827,
+      0.3947356886096158,
+      0.4825978045721443,
+      0.4459408069542206,
+      0.5099727694288502,
+      0.3853996048321271,
+      0.37430742938655526,
+      0.4243811595318723,
+      0.3928520597554631,
+      0.593765959254387
+    ],
+    "ema_alpha": 0.15,
+    "num_updates": 640,
+    "t_snapshot": [
+      [
+        0.15019999999999978,
+        -0.23320000000000018,
+        -5.091999999999985
+      ],
+      [
+        0.12139999999999979,
+        -0.2524000000000002,
+        -5.087999999999986
+      ],
+      [
+        0.09439999999999979,
+        -0.2704000000000002,
+        -5.087999999999986
+      ],
+      [
+        0.0655999999999998,
+        -0.2896000000000002,
+        -5.083999999999986
+      ],
+      [
+        0.0655999999999998,
+        -0.2896000000000002,
+        -5.103999999999986
+      ],
+      [
+        0.0655999999999998,
+        -0.2896000000000002,
+        -5.1239999999999855
+      ],
+      [
+        0.0655999999999998,
+        -0.2896000000000002,
+        -5.135999999999985
+      ],
+      [
+        0.0655999999999998,
+        -0.2896000000000002,
+        -5.135999999999985
+      ]
+    ]
+  }
+}

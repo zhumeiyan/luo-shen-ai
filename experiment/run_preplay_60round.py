@@ -194,11 +194,14 @@ def main():
             # behavior dict 完整字段
             "response_mode": behavior.get("response_mode"),
             "mode_idx": behavior.get("mode_idx"),
+            "mode_idx_raw": behavior.get("mode_idx_raw"),
+            "mode_idx_shifted": behavior.get("mode_idx_shifted"),
             "response_tendency": behavior.get("response_tendency"),
             "response_pre": behavior.get("response_pre"),
             # preplay 字段
             "preplay_fluctuation": behavior.get("preplay_fluctuation"),
             "preplay_bias": behavior.get("preplay_bias"),
+            "threshold_shift": behavior.get("threshold_shift"),
             "preplay_path_summary": behavior.get("preplay_path_summary"),
             # 内部状态
             "internal_pain": sm.get("internal_pain", 0.0),
@@ -217,16 +220,16 @@ def main():
 
         # 每 10 轮打印一次；B/C/D 阶段每轮打印
         if i % 10 == 0 or 14 <= i <= 40:
-            ps = behavior.get("preplay_path_summary", {})
+            ts = behavior.get("threshold_shift", 0)
             print(
                 f"[r{i:03d}] {rec['phase'][:8]} "
-                f"pre={behavior.get('preplay_fluctuation',0):.4f} "
-                f"bias={behavior.get('preplay_bias',0):.4f} "
+                f"ts={ts:+.6f} "
                 f"pain={rec['internal_pain']:.3f} "
                 f"rp={behavior.get('response_pre',0):.3f} "
+                f"raw={behavior.get('mode_idx_raw',0):.3f} "
+                f"shifted={behavior.get('mode_idx_shifted',0):.3f} "
                 f"tier={behavior.get('mode_idx','?')} "
-                f"E={rec['E']:.2f} T={rec['T']:.2f} "
-                f"E_ph={ps.get('E_start','')}-{ps.get('E_end','')}",
+                f"E={rec['E']:.2f} T={rec['T']:.2f}",
                 flush=True,
             )
 

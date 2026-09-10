@@ -1759,9 +1759,12 @@ def _write_internal_pain_to_memory(memory, response_pre=None):
 # 无 if-then, 无 clamp, 无随机
 # -------------------------------------------------------------------------
 
-# 预演参数（用户指定 K_preplay = 0.35）
-_PREPLAY_K = 0.35             # preplay 偏置强度（按用户指定 K_preplay = 0.35）
+# 预演参数
+_PREPLAY_K = 0.35             # 预演偏置强度（当前仅用于日志，不直接加入 rp）
 _PREPLAY_DEPTH = 5           # 预演步数 K
+
+# 动态档位阈值参数（K_SHIFT * tanh(pf + 0.5*pain)）
+_K_SHIFT = 0.35              # K_SHIFT = 0.35，先设
 
 
 def _preplay_simulate(memory, env, K):
@@ -2090,14 +2093,18 @@ def _select_behavior(memory, emergence):
     _PAIN_K = 0.6     # 用户指定的系数 k_pain
     _pain_penalty = _PAIN_K * _internal_pain
 
-    # ── 预演波动偏置：在 E/T/N/M 标量副本上运行 K 步 van der Pol，不动实际状态 ──
+    # ── 预演波动计算：在 E/T/N/M 标量副本上运行 K 步 van der Pol，不动实际状态 ──
     _env_preplay = {"light": 0.5, "temperature": 0.5, "noise": 0.0}
     _preplay_fluctuation, _preplay_E_path, _preplay_T_path = _preplay_simulate(
         memory, _env_preplay, _PREPLAY_DEPTH
     )
-    _preplay_bias = _PREPLAY_K * _preplay_fluctuation
+    # 注：不再将 preplay_fluctuation 作为加性偏置，改为驱动档位动态边界
+    _preplay_bias = _PREPLAY_K * _preplay_fluctuation  # 仍输出到日志，但不加入 response_pre
 
-    # 连续叠加 - 退缩惩罚 - 内部疼痛惩罚 + 预演波动偏置
+    # ── 动态档位阈值（连续调制）──
+    _threshold_shift = _K_SHIFT * math.tanh(_preplay_fluctuation + 0.5 * _internal_pain)
+
+    # 连续叠加 - 退缩惩罚 - 内部疼痛惩罚（不再 + _preplay_bias）
     response_pre = (arousal_bias + 0.5 * tone_bias
                     + _narr_boost * narrative_potential
                     + _phase_bias
@@ -2105,12 +2112,13 @@ def _select_behavior(memory, emergence):
                     + _internal_drive
                     + _presence_bias
                     - _withdraw_penalty
-                    - _pain_penalty
-                    + _preplay_bias)
+                    - _pain_penalty)
     response_tendency = 1.0 / (1.0 + math.exp(-response_pre))
 
-    # ── 维度 1：5 档位离散选择（无 if-then，floor + 隐式 clamp via * 4.999）──
-    mode_idx = int(response_tendency * (_N_MODES - 0.001))
+    # ── 维度 1：5 档位离散选择（动态边界，随 preplay_fluctuation+internal_pain 漂移）──
+    _mode_raw = response_tendency * (_N_MODES - 0.001)
+    _mode_index_shifted = _mode_raw + _threshold_shift
+    mode_idx = max(0, min(4, int(_mode_index_shifted)))  # 连续 floor，无 if-then，隐式 clamp
     response_mode = _MODE_NAMES[mode_idx]
 
     # ── 维度 2：压力质量（rp_ema 直接，绕过 sigmoid）──
@@ -2152,6 +2160,9 @@ def _select_behavior(memory, emergence):
         "pain_penalty": round(_pain_penalty, 6),
         "preplay_fluctuation": round(_preplay_fluctuation, 6),
         "preplay_bias": round(_preplay_bias, 6),
+        "threshold_shift": round(_threshold_shift, 6),
+        "mode_idx_raw": round(_mode_raw, 6),
+        "mode_idx_shifted": round(_mode_index_shifted, 6),
         "preplay_path_summary": {
             "E_start": round(_preplay_E_path[0], 5),
             "E_end": round(_preplay_E_path[-1], 5),
