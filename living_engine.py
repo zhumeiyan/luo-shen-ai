@@ -1775,8 +1775,8 @@ _K_SHIFT = 0.35              # K_SHIFT = 0.35，先设
 
 # 身份锚点与关系温度参数
 _K_WARMTH = 0.4              # relationship_warmth 注入 response_pre 的系数
-_WARMTH_RATE = 0.02          # 每轮 warmth 增量上限（参与度驱动）
-_WARMTH_DECAY = 0.005        # 每轮自然衰减（无交互时缓慢回归 0）
+_WARMTH_RATE = 0.10          # 参与度→温度 放大系数（连续无阶梯）
+_WARMTH_DECAY = 0.001        # 每轮自然衰减（极小，让信号主导）
 
 
 def _preplay_simulate(memory, env, K):
@@ -1867,15 +1867,15 @@ def _compute_warmth_delta(user_input, tone_bias):
 
     输入信号:
       - tone_bias ∈ [-1, 1]：emergence 层输出的情感色调偏置（暖>0，冷<0）
-      - len(user_input)：参与度代理（长输入=高参与）
-
-    综合信号 = tone_bias * (0.5 + 0.5 * length_proxy) - WARMTH_DECAY
-    输出 delta ∈ [-0.03, +0.03] 近似范围
+      - len(user_input)：参与度代理
+        长输入 = 高参与（暖信号），极短输入 = 低参与（冷信号偏压）
+    公式: delta = WARMTH_RATE * (0.5*tone + 0.5*(len_proxy - 0.3)) - WARMTH_DECAY
+    典型值: 暖(~0.01~0.03/轮), 冷(~-0.01~-0.03/轮), 极冷短输入(~-0.04/轮)
     """
-    _len_proxy = min(len(user_input) / 30.0, 1.0)        # [0, 1]
-    # 参与度调制：高参与时暖色调更强，低参与时冷色调衰减更快 — 连续叠加
-    _engagement_signal = tone_bias * (0.5 + 0.5 * _len_proxy)
-    _delta = _WARMTH_RATE * _engagement_signal - _WARMTH_DECAY
+    _len_proxy = min(len(user_input) / 20.0, 1.0)        # [0, 1]，20 字 = 满参与
+    # 综合信号：tone 方向 + 长度参与偏置（连续叠加，无阶梯）
+    _signal = 0.5 * tone_bias + 0.5 * (_len_proxy - 0.3)
+    _delta = _WARMTH_RATE * _signal - _WARMTH_DECAY
     return _delta
 
 
@@ -2446,7 +2446,14 @@ def _generate_response_impl(user_input, source="living_engine", extra_context=No
         _new_facts = []
 
     # 13. 更新活记忆层
+    # ★ 关键：update_after_interaction 从磁盘重读 memory，会覆盖
+    #   内存中刚刚更新的 relations（含 relationship_warmth）。
+    #   保存 relations 快照 → 调用 update → 恢复快照 → 单独落盘。
+    _relations_snapshot = memory.get("relations", {})
     memory = update_after_interaction(user_input, reply, directive, feedback)
+    if _relations_snapshot:
+        memory["relations"] = _relations_snapshot
+        _save_json_atomic("active_memory/active_memory.json", memory)
 
     # 13b. 生病感知：计算 pain（仅在非 silent 模式下——silent 模式下无新行为可记录）
     if behavior["response_mode"] != "silent":
