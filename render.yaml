@@ -1,0 +1,17 @@
+# Render Blueprint — 洛神 AI
+# 文档: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: luoshen-ai
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python3 web_chat.py
+    healthCheckPath: /
+    envVars:
+      - key: ZHIPU_API_KEY
+        sync: false   # 在 Render 控制台手动设置，不在 blueprint 中暴露
+      - key: PYTHON_VERSION
+        value: 3.12.0

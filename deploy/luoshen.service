@@ -1,0 +1,18 @@
+[Unit]
+Description=Luoshen AI Web Service
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/luoshen-ai
+ExecStart=/usr/bin/python3 /home/ubuntu/luoshen-ai/web_chat.py
+Restart=always
+RestartSec=5
+Environment=PORT=8765
+Environment=ZHIPU_API_KEY=REPLACE_ME
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

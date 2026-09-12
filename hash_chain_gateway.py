@@ -16,16 +16,55 @@
   from hash_chain_gateway import append_only_append, verify_chain, recover_from_backup
   append_only_append("hash_chain_v2.log", "physical_state.jsonl")
 """
+import errno
+import fcntl
 import hashlib
 import json
+import logging
 import os
 import shutil
 import sys
 import time
 
+logger = logging.getLogger(__name__)
 
 CHAIN_FILE = "hash_chain_v2.log"
 BACKUP_FILE = "hash_chain_v2.backup.log"
+LOCK_TIMEOUT = 5.0  # seconds
+LOCK_POLL_INTERVAL = 0.01  # 10ms between retry attempts
+
+
+def _acquire_exclusive_lock(lock_path, timeout=LOCK_TIMEOUT):
+    """
+    获取链文件的排他锁。
+
+    使用独立锁文件 (<chain_file>.lock) 避免污染数据文件本身。
+    超时后抛出 TimeoutError。
+    """
+    lock_fd = open(lock_path, "w")
+    deadline = time.monotonic() + timeout
+    while True:
+        try:
+            fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            return lock_fd
+        except (IOError, OSError) as e:
+            if e.errno not in (errno.EAGAIN, errno.EACCES):
+                lock_fd.close()
+                raise
+            if time.monotonic() >= deadline:
+                lock_fd.close()
+                raise TimeoutError(
+                    "flock(%s) timeout after %.1fs" % (lock_path, timeout)
+                )
+            time.sleep(LOCK_POLL_INTERVAL)
+
+
+def _release_exclusive_lock(lock_fd):
+    """释放排他锁并关闭锁文件描述符。"""
+    try:
+        fcntl.flock(lock_fd, fcntl.LOCK_UN)
+    finally:
+        lock_fd.close()
 
 
 def _md5_of_file(path):
@@ -65,6 +104,9 @@ def append_only_append(chain_file, target_file, file_hash=None, extra_fields=Non
     """
     网关唯一的追加写入函数。
 
+    从"读取最后一行 prev_hash"到"写入新行并关闭文件"全程持POSIX排他锁
+    （fcntl.flock），避免并发写竞争产生的悬枝。
+
     参数：
       chain_file:  链文件路径（通常是 hash_chain_v2.log）
       target_file: 被记录的文件路径
@@ -72,48 +114,64 @@ def append_only_append(chain_file, target_file, file_hash=None, extra_fields=Non
       extra_fields: 可选 dict，附加字段（不计入 record_hash，仅补充语义信息）
 
     返回：
-      dict: chain_record
+      dict: chain_record （成功）
+      None: 锁超时，本次写入已放弃
 
     异常：
       FileNotFoundError: target_file 不存在且未传入 file_hash
       ValueError: 链文件损坏（无法解析）
     """
-    # 计算 file_hash
+    # ── 1. 计算 file_hash（无需锁，不涉及链文件）──
     if file_hash is None:
         file_hash = _md5_of_file(target_file)
         if file_hash is None:
             raise FileNotFoundError("target file not found: %s" % target_file)
 
-    # 读取链，计算 prev_hash
-    records = load_chain_records(chain_file)
-    prev_hash = None
-    if records:
-        last = records[-1]
-        prev_hash = last.get("record_hash")
+    # ── 2. 持锁执行读-计算-写（原子段）──
+    lock_path = chain_file + ".lock"
+    lock_fd = None
+    try:
+        try:
+            lock_fd = _acquire_exclusive_lock(lock_path)
+        except TimeoutError as e:
+            # 超时 → 放弃本次写入，记录错误
+            logger.error("[chain_lock] %s — append to %s abandoned", e, target_file)
+            return None
 
-    # 计算 record_hash
-    timestamp = time.time()
-    record_hash = _md5_hash(file_hash, prev_hash, timestamp)
+        # 读取链尾，计算 prev_hash
+        records = load_chain_records(chain_file)
+        prev_hash = None
+        if records:
+            last = records[-1]
+            prev_hash = last.get("record_hash")
 
-    # 组装记录
-    chain_record = {
-        "schema_version": 2,
-        "timestamp": timestamp,
-        "file": target_file,
-        "file_hash": file_hash,
-        "prev_hash": prev_hash,
-        "record_hash": record_hash,
-    }
-    if extra_fields and isinstance(extra_fields, dict):
-        for k, v in extra_fields.items():
-            if k not in chain_record:
-                chain_record[k] = v
+        # 计算 record_hash
+        timestamp = time.time()
+        record_hash = _md5_hash(file_hash, prev_hash, timestamp)
 
-    # 追加写入（仅此一处允许 open 链文件写入）
-    with open(chain_file, 'a', encoding='utf-8') as f:
-        f.write(json.dumps(chain_record, ensure_ascii=False) + '\n')
+        # 拼装记录
+        chain_record = {
+            "schema_version": 2,
+            "timestamp": timestamp,
+            "file": target_file,
+            "file_hash": file_hash,
+            "prev_hash": prev_hash,
+            "record_hash": record_hash,
+        }
+        if extra_fields and isinstance(extra_fields, dict):
+            for k, v in extra_fields.items():
+                if k not in chain_record:
+                    chain_record[k] = v
 
-    return chain_record
+        # 追加写入
+        with open(chain_file, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(chain_record, ensure_ascii=False) + '\n')
+
+        return chain_record
+    finally:
+        # ── 3. 无论成功还是异常，确保释放锁 ──
+        if lock_fd is not None:
+            _release_exclusive_lock(lock_fd)
 
 
 def verify_chain(chain_file=CHAIN_FILE):

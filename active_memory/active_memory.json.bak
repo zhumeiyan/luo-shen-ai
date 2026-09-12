@@ -1,0 +1,113 @@
+{
+  "__meta": {
+    "version": "2026.09.09-r1",
+    "initialized": true
+  },
+  "internal_climate": {
+    "energy": 0.5,
+    "tension": 0.2,
+    "emotion_intensity": 0.3,
+    "memory_pressure": 0.0,
+    "_phase": 0.0,
+    "arousal": 0.0,
+    "last_updated": "2026-09-09T00:00:00"
+  },
+  "user_model": {
+    "intimacy": {
+      "value": 0.5,
+      "confidence": 0.3
+    },
+    "emotional_patterns": [],
+    "preferences": [],
+    "known_facts": {},
+    "episodic_memory": [],
+    "current_emotion_hint": null,
+    "self_state_hint": null,
+    "total_interactions": 0,
+    "first_seen": "2026-09-09T00:00:00",
+    "last_seen": "2026-09-09T00:00:00"
+  },
+  "relations": {
+    "zhumeiyan": {
+      "relationship_warmth": 0.0,
+      "total_turns": 0,
+      "tone_sum": 0.0,
+      "_last_delta": 0.0
+    }
+  },
+  "self_model": {
+    "emotion": {
+      "primary": "平静",
+      "valence": 0.0,
+      "arousal": 0.2
+    },
+    "withdraw_tendency": 0.26485217189318017,
+    "internal_pain": 0.0,
+    "strategy_weights": {
+      "care": 0.16,
+      "curiosity": 0.14,
+      "play": 0.1,
+      "patience": 0.12,
+      "honesty": 0.14,
+      "boundaries": 0.14,
+      "self_disclosure": 0.1,
+      "letting_go": 0.1
+    },
+    "ring_state": {
+      "silent": 0.0,
+      "brief": 0.1,
+      "short": 0.2,
+      "normal": 0.4,
+      "engaged": 0.3
+    },
+    "self_stated_state": {
+      "last_stated": null,
+      "timestamp": null
+    },
+    "_recent_tokens": [],
+    "_lambda_self": 0.5,
+    "_pressure_ema": 0.0,
+    "_s_depth": 0.0,
+    "_presence_counter": 0,
+    "_arousal_history": [],
+    "_tone_history": [],
+    "_pain_tier_series": [],
+    "_last_pain_logged": null,
+    "_withdraw_logit": -0.020899777243517527
+  },
+  "active_context": {
+    "residue_phase": 0.0,
+    "attention_focus": null,
+    "memory_emergence": null,
+    "response_queue": [],
+    "pending_impulses": [],
+    "last_emotion_shift": null
+  },
+  "residue": {
+    "texture": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "ema_alpha": 0.1,
+    "num_updates": 0,
+    "t_snapshot": null
+  },
+  "emergence_log": [],
+  "episodic_memory": [],
+  "hash_chain_meta": {},
+  "behavior_log": []
+}

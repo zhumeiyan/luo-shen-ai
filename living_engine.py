@@ -328,6 +328,120 @@ def _read_chain_tail(chain_file):
     return tail.get("record_hash")
 
 
+def _read_chain_for_user(user_id, limit=30, memory=None):
+    """
+    从 user_input_log 中筛出 user_id 匹配的 user_input 原文记录。
+
+    FIX-1 (Architect seq=6)：只保留 user_input 类记录的逐字原文。
+    不再混入 luoshen_reply（洛神自己的回复）和 memory_update（md5 摘要）。
+    原因：洛神回复进入 recent_history 后会被 LLM 当作"已有判词"引用，
+    形成自引用 cascade — 她自己的嘴成为事实的入口，而非用户原话。
+    luoshen_reply 不进入 recent_history，切断 cascade 污染源。
+
+    返回：
+      list[dict]: 最近 limit 条，每项：
+        - timestamp: float
+        - event_type: "user_input"
+        - content_summary: str（原文，限 100 字）
+    """
+    results = []
+
+    # ── 从 user_input_log 筛选匹配行 ──
+    try:
+        with open("perception_input/user_input_log.jsonl", "r", encoding="utf-8") as f:
+            ui_lines = [l.strip() for l in f.readlines() if l.strip()]
+    except OSError:
+        ui_lines = []
+
+    earliest_ts = 0.0
+    for line in reversed(ui_lines):
+        try:
+            rec = json.loads(line)
+        except (json.JSONDecodeError, ValueError):
+            continue
+        ts = rec.get("timestamp", 0)
+        if isinstance(ts, str):
+            continue
+        # 必须在时间窗口内（且不是未来时间）
+        if ts < earliest_ts or ts > time.time() + 60:
+            continue
+        if user_id and rec.get("user_id", "") and rec.get("user_id") != user_id:
+            continue
+        content = rec.get("content", "")
+        if not content:
+            continue
+        results.append({
+            "timestamp": ts,
+            "event_type": "user_input",
+            "content_summary": content[:100],
+        })
+
+    # 按时间正序
+    results.sort(key=lambda x: x.get("timestamp", 0))
+
+    # ── 分层采样（替代粗暴的 [-limit:]）──
+    # 设计：时间越近，密度越高；时间越远，密度越低。
+    # 这样同样 limit=30，近期每轮 3 条全在，远期只留 user_input 锚点，
+    # 总条目数不变但时间跨度大幅延伸。
+    now_ts = time.time()
+    LAYER1_AGE = 120     # 2 分钟内：全密（每轮 ~3 条全保留）
+    LAYER2_AGE = 600     # 2-10 分钟：只取 user_input（每轮 1 条锚点）
+    # 更老：每 3 轮取 1 条 user_input 锚点
+
+    layer1, layer2, layer3 = [], [], []
+    for entry in results:
+        age = now_ts - entry.get("timestamp", now_ts)
+        etype = entry.get("event_type", "")
+        if age <= LAYER1_AGE:
+            layer1.append(entry)
+        elif age <= LAYER2_AGE:
+            if etype == "user_input":
+                layer2.append(entry)
+        else:
+            if etype == "user_input":
+                layer3.append(entry)
+
+    # layer3 降采样（每 3 条取 1 条）
+    layer3 = layer3[::3]
+
+    combined = layer1 + layer2 + layer3
+    combined.sort(key=lambda x: x.get("timestamp", 0))
+
+    # ── 重要性评分：先给每条 record 补上 dec_state_snapshot，再算分 ──
+    # 取当前状态（用于 relevance 计算）
+    state_now = _extract_current_state_from_memory(memory, user_id) if memory else None
+    for rec in combined:
+        snap = _lookup_state_snapshot(rec.get("timestamp", 0))
+        if snap:
+            rec["dec_state_snapshot"] = {
+                "energy": snap.get("energy"),
+                "pain": snap.get("pain"),
+                "warmth": snap.get("warmth"),
+                "withdraw": snap.get("withdraw"),
+            }
+        else:
+            rec["dec_state_snapshot"] = None
+
+    # 按重要性降序排列；分数相同则时间近的优先
+    if state_now:
+        combined.sort(
+            key=lambda r: (
+                memory_importance(r, user_id, state_now, combined),
+                r.get("timestamp", 0),
+            ),
+            reverse=True,
+        )
+        # 取 top limit，再按时间正序（让 LLM 看到自然时序）
+        combined = combined[:limit]
+        combined.sort(key=lambda x: x.get("timestamp", 0))
+    else:
+        # memory 不可用时回退到时间截断
+        if len(combined) > limit:
+            combined = combined[-limit:]
+
+    return combined
+
+
 from hash_chain_gateway import append_only_append
 
 
@@ -335,6 +449,110 @@ def append_hash_chain(chain_file, target_file, extra_entry=None):
     """按哈希链 v2 公式追加一条记录（委托给 hash_chain_gateway 网关）"""
     extra = {"extra": extra_entry} if extra_entry else None
     return append_only_append(chain_file, target_file, extra_fields=extra)
+
+
+def _append_state_snapshot(memory, user_id):
+    """旁路状态快照日志。与 append_hash_chain 并行写入，键 = ts。
+    不改动链格式、不重算哈希。"""
+    _climate = memory.get("internal_climate", {})
+    _ring = memory.get("self_model", {})
+    _rel = memory.get("relations", {}).get(user_id, {})
+    snap = {
+        "ts": time.time(),
+        "user_id": user_id,
+        "energy": float(_climate.get("energy", 0.5)),
+        "pain": float(_ring.get("internal_pain", 0.0)),
+        "warmth": float(_rel.get("relationship_warmth", 0.0)),
+        "withdraw": float(_ring.get("withdraw_tendency", 0.0)),
+    }
+    _append_jsonl("active_memory/state_snapshot_log.jsonl", snap)
+
+
+def _extract_current_state_from_memory(memory, user_id):
+    """从 memory dict 提取当前气候快照，供 importance 评分用。"""
+    _climate = memory.get("internal_climate", {})
+    _ring = memory.get("self_model", {})
+    _rel = memory.get("relations", {}).get(user_id, {})
+    return {
+        "energy": float(_climate.get("energy", 0.5)),
+        "pain": float(_ring.get("internal_pain", 0.0)),
+        "warmth": float(_rel.get("relationship_warmth", 0.0)),
+        "withdraw": float(_ring.get("withdraw_tendency", 0.0)),
+    }
+
+
+def _lookup_state_snapshot(ts):
+    """用 ts 查 state_snapshot_log，返回该时刻的气候快照。
+    二分查找：snapshot_log 按 ts 升序追加。找不到则返回 None。"""
+    try:
+        with open("active_memory/state_snapshot_log.jsonl", "r", encoding="utf-8") as f:
+            lines = [ln.strip() for ln in f if ln.strip()]
+    except FileNotFoundError:
+        return None
+    # 线性查找最近的 ts 匹配（snapshot_log 规模小，线性即可）
+    best = None
+    best_diff = float("inf")
+    for line in lines:
+        try:
+            rec = json.loads(line)
+            if abs(rec.get("ts", 0) - ts) < best_diff:
+                best_diff = abs(rec.get("ts", 0) - ts)
+                best = rec
+        except (json.JSONDecodeError, ValueError):
+            continue
+    return best
+
+
+def _emotional_weight(record):
+    """情绪重量：记录写下时她的情绪偏差幅度。
+    依赖 record['dec_state_snapshot']。缺失退化为 0.5。"""
+    ds = record.get("dec_state_snapshot")
+    if not ds:
+        return 0.5
+    energy_dev = abs(float(ds.get("energy", 0.5)) - 0.5) * 2.0
+    pain = float(ds.get("pain", 0.0))
+    warmth_dev = abs(float(ds.get("warmth", 0.0)))
+    return max(energy_dev, pain) * 0.6 + warmth_dev * 0.4
+
+
+def _repetition_score(record, all_records):
+    """重复次数：同一 user 的 user_input 中，话题指纹命中次数（亚线性）。"""
+    import math
+    content = record.get("content_summary", "")
+    if not content:
+        return 0.0
+    fingerprint = content[:20].strip()
+    if not fingerprint:
+        return 0.0
+    count = sum(
+        1 for r in all_records
+        if r.get("event_type") == "user_input"
+        and fingerprint in r.get("content_summary", "")
+    )
+    return max(0.1, 1.0 - math.exp(-0.5 * count))
+
+
+def _relevance_score(record, state_now):
+    """与当前问题的相关性：记录快照状态与当前状态的欧氏距离倒数。"""
+    ds = record.get("dec_state_snapshot")
+    if not ds:
+        return 0.5
+    e1 = float(ds.get("energy", 0.5))
+    p1 = float(ds.get("pain", 0.0))
+    w1 = float(ds.get("warmth", 0.0))
+    e2 = float(state_now.get("energy", 0.5))
+    p2 = float(state_now.get("pain", 0.0))
+    w2 = float(state_now.get("warmth", 0.0))
+    dist = ((e1 - e2) ** 2 + (p1 - p2) ** 2 + (w1 - w2) ** 2) ** 0.5
+    return max(0.0, 1.0 - dist / 1.73)
+
+
+def memory_importance(record, user_id, state_now, all_records):
+    """等权三分重要性分数，返回 0..1。"""
+    ew = _emotional_weight(record)
+    rs = _repetition_score(record, all_records)
+    rv = _relevance_score(record, state_now)
+    return (ew + rs + rv) / 3.0
 
 
 # -------------------------------------------------------------------------
@@ -640,6 +858,7 @@ def formulate_expression_intent(user_input, context_window, memory):
     包含三信号融合的状态推断（调用 LLM 作为信号1，但不作为表达出口）。
 
     返回: expression_directive 字典
+    注意：intent 字典中始终保留原始 user_input，供后续 LLM 调用时暴露给模型。
     """
     # A. 三信号融合状态推断
     state_result = infer_user_state_fused(user_input, context_window, memory)
@@ -650,6 +869,7 @@ def formulate_expression_intent(user_input, context_window, memory):
         "emotion_tone": "平静",
         "skill_to_use": None,
         "intent_text": None,
+        "user_input_actual": user_input,  # 保留原始输入，LLM 可见
         "state_result": state_result,  # 替代旧的 user_state_keyword
     }
     
@@ -1019,16 +1239,14 @@ def build_expression_directive(intent, memory, emergence=None):
         "intent": intent["intent_text"] or "回应",
         "emotion_tone": intent["emotion_tone"],
         "strategy_name": intent.get("strategy_name", "default"),
+        "user_input_actual": intent.get("user_input_actual", ""),
         "context_for_llm": {
-            "user_mood": describe_user_mood(memory),
-            "user_state": state if state != "unknown" else None,
-            "user_state_confidence": confidence,
-            "state_method": state_result.get("method", "none"),
-            "sarcasm_detected": sarcasm,
-            "relation_intimacy": memory["user_model"]["intimacy"]["value"],
-            "my_current_emotion": memory["self_model"]["emotion"]["primary"],
-            "self_stated_state": last_stated,  # 始终传递，作为上下文
-            "known_facts": known_facts,  # 已知个人事实，LLM 在场时可调取
+            # 数值状态：仅用于连续调制 LLM 元参数，不转文字注入 prompt
+            "warmth": memory.get("user_model", {}).get("intimacy", {}).get("value", 0.3),
+            "pain": memory.get("self_model", {}).get("internal_pain", 0.0),
+            "energy": memory.get("internal_climate", {}).get("energy", 0.5),
+            "withdraw": memory.get("self_model", {}).get("withdraw_tendency", 0.0),
+            "self_stated_state": last_stated,  # 仅作隐性参考，不直接进 prompt
         },
         "tone_preference": tone_pref,
         "constraints": {
@@ -1053,17 +1271,6 @@ def build_expression_directive(intent, memory, emergence=None):
         directive["skill_to_use"] = intent["skill_to_use"]
 
     return directive
-
-
-def describe_user_mood(memory):
-    """用一句话描述用户当前的推断状态"""
-    patterns = memory["user_model"].get("emotional_patterns", [])
-    recent_pattern = patterns[-1] if patterns else None
-    
-    if recent_pattern:
-        return recent_pattern.get("observed_meaning", "未知")
-    
-    return "平静"
 
 
 
@@ -1857,6 +2064,12 @@ def _ensure_relations(memory, user_id):
             "total_turns": 0,               # 与该用户的累计轮次
             "tone_sum": 0.0,                # tone_bias 累计（用于平均）
             "_last_delta": 0.0,             # 最近一轮的增量（调试/分析用）
+            "visit_count": 0,               # 来访次数（每次调用 +1）
+            "last_visit_time": None,        # 最近来访时间戳
+            "last_topics": [],              # 最近 N 个话题关键词（环状）
+            # ── 事实记忆层（事实优先原则）──
+            "conversation_history": [],     # 最近 N 轮对话 [{"role":"user"|"assistant", "content":"..."}]
+            "events": [],                   # 事实事件列表 ["用户说工作累", "第三次问'你认识我吗'"]
         }
         relations[user_id] = rel
     return rel
@@ -1893,6 +2106,148 @@ def _update_relationship_warmth(memory, user_id, user_input, tone_bias):
     rel["tone_sum"] = rel.get("tone_sum", 0.0) + tone_bias
     rel["_last_delta"] = round(delta, 6)
     return warmth_new
+
+
+def _accumulate_relation_trace(memory, user_id, user_input, directive):
+    """对话结束后累积关系痕迹：visit_count、last_topics。
+
+    不是简单 warmth 加减——留下可以让下次对话"认出"这个人的具体信息。
+    """
+    import time as _time
+    rel = _ensure_relations(memory, user_id)
+    rel["visit_count"] = rel.get("visit_count", 0) + 1
+    rel["last_visit_time"] = _time.time()
+
+    # 提取本轮话题关键词：从 directive.intent（抽象表达）中取前几个字 + 输入关键词
+    _intent_text = (directive.get("intent") or "")[:30]
+    _topics = rel.get("last_topics", [])
+
+    # 从 intent 文本中抽取 2-3 个字作为话题标签（避免过长）
+    if _intent_text:
+        # 摘取关键词：用意图分类输出本身作为话题标签
+        _label = _intent_text.replace("\n", " ")
+        if len(_label) > 20:
+            _label = _label[:20]
+        _topics.append(_label)
+
+    # 从 known_facts 里取最近添加到标签
+    _known = memory.get("user_model", {}).get("known_facts", {})
+    _new_facts = _known.get("added_this_round", [])
+    for f in _new_facts:
+        _fact_text = f.get("fact", "")
+        if _fact_text and len(_fact_text) <= 20:
+            _topics.append(f"fact:{_fact_text}")
+    _known["added_this_round"] = []  # 清空本轮
+
+    # 环状缓冲，最多保留 8 个话题
+    rel["last_topics"] = _topics[-8:]
+
+    return rel
+
+
+# ── 事实事件记录：每次交互结束时，把本轮对话存进 conversation_history ──
+_MAX_CONVERSATION_HISTORY = 12  # 最多保留 12 条 = 6 轮对话
+_MAX_EVENTS = 20               # 最多保留 20 个事实事件
+
+
+def _record_conversation_turn(memory, user_id, user_input, reply):
+    """记录本轮对话到 conversation_history，最多保留 _MAX_CONVERSATION_HISTORY 条"""
+    rel = _ensure_relations(memory, user_id)
+    _hist = rel.get("conversation_history", [])
+    # 只保留 factual 内容：用户说的 + 洛神回的
+    _hist.append({"role": "user", "content": user_input})
+    if reply:
+        _hist.append({"role": "assistant", "content": reply})
+    # 环状缓冲
+    if len(_hist) > _MAX_CONVERSATION_HISTORY:
+        _hist = _hist[-_MAX_CONVERSATION_HISTORY:]
+    rel["conversation_history"] = _hist
+    return _hist
+
+
+def _record_fact_event(memory, user_id, fact_text):
+    """记录一条事实事件（只记事实，不记判词）。
+
+    规则：
+    - 记："用户说工作很累"（fact）
+    - 不记："用户状态推断为疲惫"（judgment）
+    - 记："用户第三次问'你认识我吗'"（repetition count 是事实）
+    - 不记："用户不信任洛神"（interpretation）
+    """
+    if not fact_text or not isinstance(fact_text, str):
+        return
+    fact_text = fact_text.strip()
+    if len(fact_text) > 60:  # 事实过长则截断
+        fact_text = fact_text[:58] + "…"
+
+    rel = _ensure_relations(memory, user_id)
+    _events = rel.get("events", [])
+    # 去重：如果最近已有同样的事件，不重复记
+    if _events and _events[-1] == fact_text:
+        return
+    _events.append(fact_text)
+    if len(_events) > _MAX_EVENTS:
+        _events = _events[-_MAX_EVENTS:]
+    rel["events"] = _events
+
+
+def _extract_facts_from_turn(user_input, reply, directive):
+    """从单轮对话中提取事实事件。
+
+    只提取明确的、可验证的事实。
+    返回字符串列表。
+    """
+    import re
+    facts = []
+
+    # 用户明确说过的事（从已知事实里取）
+    _known = directive.get("_known_facts_this_round", [])
+    for f in _known:
+        if isinstance(f, str) and f.strip():
+            facts.append(f"用户提到：{f.strip()[:40]}")
+        elif isinstance(f, dict):
+            _t = f.get("fact", "")
+            if _t:
+                facts.append(f"用户提到：{_t.strip()[:40]}")
+
+    # 从用户输入中提取关键事实：直接引用原话的简短片段
+    # 只取包含具体信息的句子（不是虚问句）
+    if user_input and len(user_input) > 4:
+        # 如果输入不太长，直接记为"用户说：xxx"
+        if len(user_input) <= 30:
+            facts.append(f"用户说：「{user_input}」")
+        else:
+            # 长输入只取前 30 字作为事实锚点
+            facts.append(f"用户说：「{user_input[:30]}…」")
+
+    return facts
+
+
+def _get_recent_conversation_history(memory, user_id, max_turns=6):
+    """读取最近 N 轮对话，格式化为 conversation_history 列表"""
+    rel = _ensure_relations(memory, user_id)
+    _hist = rel.get("conversation_history", [])
+    # 只取最近的 N 轮（2N 条消息）
+    _max_msgs = max_turns * 2
+    if len(_hist) > _max_msgs:
+        _hist = _hist[-_max_msgs:]
+    return _hist
+
+
+def _select_relation_facts_for_context(memory, user_id):
+    """选择应该放进当前 LLM 上下文的事实事件。
+
+    规则：
+    - 只选事实，不选判词
+    - 最多选 5 条（防止 prompt 过长）
+    - 所有事件都已经是"只记事实"的，这里只做数量限制
+    """
+    rel = _ensure_relations(memory, user_id)
+    _events = rel.get("events", [])
+    if not _events:
+        return []
+    # 取最近的 5 条事实
+    return _events[-5:]
 
 
 def _emergence_log(memory):
@@ -2071,6 +2426,16 @@ _MODE_NAMES = ["silent", "brief", "short", "normal", "engaged"]
 _N_MODES = len(_MODE_NAMES)
 
 
+def anchor_distance(chain_length: int, window_size: int) -> float:
+    """锚距离：衡量链长超出可视窗口的信息隐藏量。
+    chain_length >> window_size → 返回接近 1.0（隐藏多）。
+    chain_length <= window_size → 接近 0.5 以下（几乎无隐藏）。
+    """
+    import math
+    hidden = max(0, chain_length - window_size)
+    return 1.0 / (1.0 + math.exp(-hidden / 100.0))
+
+
 def _select_behavior(memory, emergence, user_id="primary"):
     """
     行为选择层：在调用 LLM 之前，由内部状态确定性决定行为框架。
@@ -2177,7 +2542,16 @@ def _select_behavior(memory, emergence, user_id="primary"):
     _relationship_warmth = memory.get("relations", {}).get(user_id, {}).get("relationship_warmth", 0.0)
     _warmth_bias = _K_WARMTH * _relationship_warmth
 
-    # 连续叠加 - 退缩惩罚 - 内部疼痛惩罚 + 身份温度偏置（不再 + _preplay_bias）
+    # ── 锚点偏置：链长超窗越多，response_pre 修正越少（她因不可见过去而趋保守）──
+    try:
+        from hash_chain_gateway import load_chain_records as _load_chain
+        _chain_len = len(_load_chain())
+    except Exception:
+        _chain_len = 0
+    _anchor_dist = anchor_distance(_chain_len, window_size=30)
+    _anchor_bias = 0.3 * (1.0 - _anchor_dist)
+
+    # 连续叠加 - 退缩惩罚 - 内部疼痛惩罚 + 身份温度偏置 + 锚点偏置（不再 + _preplay_bias）
     response_pre = (arousal_bias + 0.5 * tone_bias
                     + _narr_boost * narrative_potential
                     + _phase_bias
@@ -2186,7 +2560,8 @@ def _select_behavior(memory, emergence, user_id="primary"):
                     + _presence_bias
                     - _withdraw_penalty
                     - _pain_penalty
-                    + _warmth_bias)
+                    + _warmth_bias
+                    + _anchor_bias)
     response_tendency = 1.0 / (1.0 + math.exp(-response_pre))
 
     # ── 维度 1：5 档位离散选择（动态边界，随 preplay_fluctuation+internal_pain 漂移）──
@@ -2307,7 +2682,9 @@ def _generate_response_impl(user_input, source="living_engine", extra_context=No
         "user_id": user_id,
     })
     append_hash_chain("hash_chain_v2.log", "perception_input/user_input_log.jsonl")
-    
+    # 旁路状态快照：记录这条 user_input 写入时的状态
+    _append_state_snapshot(memory, user_id)
+
     # 5. 检索相关记忆（并合并外部模块传入的额外上下文）
     context_window = retrieve_relevant_memory(user_input, memory)
     if extra_context:
@@ -2336,6 +2713,17 @@ def _generate_response_impl(user_input, source="living_engine", extra_context=No
 
     behavior = _select_behavior(memory, emergence_for_behavior, user_id)
 
+    # ── 关系上下文注入：让 LLM 知道"这个人是谁、来过多熟、上次聊了什么" ──
+    _rel = memory.get("relations", {}).get(user_id, {})
+    _relation_context = {
+        "warmth": _rel.get("relationship_warmth", 0.0),
+        "is_returning": _rel.get("visit_count", 0) >= 1 or _rel.get("total_turns", 0) > 0,
+        "visit_count": _rel.get("visit_count", 0),
+        "avg_tone": (_rel.get("tone_sum", 0.0) / max(1, _rel.get("total_turns", 0))),
+        "recent_topics": _rel.get("last_topics", [])[-3:],  # 最近 3 个话题
+    }
+    # 在 warmth 更新后立即注入，这样本次就能用最新值
+
     # ── Lambda-Self 历史序列更新（纯存储操作，不影响行为选择结果）──
     _update_lambda_histories(memory, behavior["max_tokens"], behavior["pressure_ema"])
 
@@ -2362,9 +2750,18 @@ def _generate_response_impl(user_input, source="living_engine", extra_context=No
     
     # 行为层指定 max_tokens 应用到所有档位
     directive["constraints"]["max_tokens"] = behavior["max_tokens"]
-    # brief 档位降低温度（更克制）
-    if behavior["response_mode"] == "brief":
-        directive["constraints"]["temperature"] = 0.3
+    # ── max_length 档位驱动（mode_idx） + 疼痛压缩 ──
+    _mode_max_len = {0: 0, 1: 40, 2: 120, 3: 250, 4: 400}
+    _mode_length = _mode_max_len.get(behavior["mode_idx"], 80)
+    _pain = memory.get("self_model", {}).get("internal_pain", 0.0)
+    _pain_factor = max(0.3, 1.0 - 0.3 * _pain)
+    directive["constraints"]["max_length"] = int(_mode_length * _pain_factor)
+    # 温度：brief 档基础更低，energy 正向、pain 负向（连续无阶梯）
+    _energy_val = memory.get("internal_climate", {}).get("energy", 0.5)
+    _base_temp = 0.3 if behavior["response_mode"] == "brief" else 0.6
+    directive["constraints"]["temperature"] = round(max(0.2, _base_temp + 0.15 * _energy_val - 0.1 * _pain), 2)
+    
+    # brief 档位不再单独覆盖温度（已在上方统一计算）
     
     # ── 浮现叙事：在最终 LLM 调用前注入来自历史的话头信号 ──
     narrative_final = _build_narrative_urgency(
@@ -2382,9 +2779,27 @@ def _generate_response_impl(user_input, source="living_engine", extra_context=No
             "resonance": round(resonance, 3),
         }
 
+    # ── 注入短期记忆 + 关系事实到 directive（事实优先原则）──
+    # 注意：在 LLM 调用前注入，这样本次回复就能看到最近几轮对话
+    _conversation_history = _get_recent_conversation_history(memory, user_id, max_turns=6)
+    if "_relation_context" in dir():
+        directive["relation_context"] = _relation_context
+    # 注入关系事实（engine 选择的最近事实，不是判词）
+    directive["relation_facts"] = _select_relation_facts_for_context(memory, user_id)
+
+    # ── 注入"这个人和我最近的事"（事实，不是判词；每条 ≤100 字）──
+    try:
+        _recent_chain_history = _read_chain_for_user(user_id, limit=30, memory=memory)
+        if _recent_chain_history and isinstance(directive.get("context_for_llm"), dict):
+            directive["context_for_llm"]["recent_history"] = _recent_chain_history
+    except Exception as _e_chain:
+        # 链读取失败不影响主流程
+        import logging
+        logging.error("[chain_read_error] %s", _e_chain)
+
     # 10. 调用大模型（在已确定的行为框架内生成语言）
     from llm_interface import call_llm
-    reply = call_llm(directive, memory)
+    reply = call_llm(directive, memory, conversation_history=_conversation_history)
     
     # 落链：沉默或空回复（记录为 withdraw_silent 事件）
     if not reply or reply.strip() == "":
@@ -2418,10 +2833,35 @@ def _generate_response_impl(user_input, source="living_engine", extra_context=No
         "content": reply,
         "directive": directive,
         "source": source,
+        "user_id": user_id,
         "llm_called": True,
     })
     append_hash_chain("hash_chain_v2.log", "perception_input/response_log.jsonl")
-    
+    # 旁路状态快照：记录这条 response 写入时的状态
+    _append_state_snapshot(memory, user_id)
+
+    # ── 事实优先：记录本轮对话到 conversation_history + 提取事实事件 ──
+    if reply and reply.strip():
+        _record_conversation_turn(memory, user_id, user_input, reply[:200])  # 回复截断存
+        # 从本次交互提取事实事件（只记事实，不记判词）
+        _turn_facts = _extract_facts_from_turn(user_input, reply, directive)
+        for _fact in _turn_facts:
+            _record_fact_event(memory, user_id, _fact)
+
+    # ── 自查系统：记录状态快照到 state_log.jsonl ──
+    try:
+        from self_check import append_snapshot
+        append_snapshot(memory, user_id=user_id)
+    except Exception:
+        pass  # 自查系统失败不影响主流程
+
+    # ── 整体行为观测：记录完整行为数据到 behavior_log.jsonl ──
+    try:
+        from self_check import record_tick
+        record_tick(memory, user_id, user_input, reply, behavior, llm_called=True)
+    except Exception:
+        pass  # 行为观测失败不影响主流程
+
     # 11. 采集反馈信号
     from feedback_collector import extract_feedback_signal, _is_self_state_statement
     feedback = extract_feedback_signal(user_input, reply, {
@@ -2444,6 +2884,10 @@ def _generate_response_impl(user_input, source="living_engine", extra_context=No
             _new_facts = []
     else:
         _new_facts = []
+
+    # 12b. 累积关系痕迹：在 update 前写入 visit_count / last_topics
+    #     这样 update_after_interaction 的快照里会包含最新关系信息
+    _accumulate_relation_trace(memory, user_id, user_input, directive)
 
     # 13. 更新活记忆层
     # ★ 关键：update_after_interaction 从磁盘重读 memory，会覆盖

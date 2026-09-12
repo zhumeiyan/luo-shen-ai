@@ -1,0 +1,25 @@
+{
+  "internal_climate": {
+    "emotion_intensity": 0.5,
+    "tension": 0.0,
+    "energy": 0.5,
+    "memory_pressure": 0.3
+  },
+  "relations": {
+    "clean_test_06": {
+      "relationship_warmth": 0.0,
+      "total_turns": 0,
+      "tone_sum": 0.0,
+      "_last_delta": 0.0,
+      "visit_count": 0,
+      "last_visit_time": null,
+      "last_topics": [],
+      "conversation_history": [],
+      "events": []
+    }
+  },
+  "self_model": {
+    "withdraw_tendency": 0.2689414213699951,
+    "_withdraw_logit": 0.0
+  }
+}

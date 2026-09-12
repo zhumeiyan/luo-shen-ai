@@ -1,0 +1,30 @@
+{
+  "module": "terms",
+  "version": 1,
+  "items": {
+    "event": {
+      "definition": "监测科采集到的原始数据或状态变化，未经过任何验证。",
+      "example": "文件哈希与链上记录不一致的原始观察。"
+    },
+    "suspected_issue": {
+      "definition": "由事件触发的疑似异常，等待用已知标准验证。",
+      "example": "链上最后一条 file_hash 与当前文件 md5 不一致，但尚未验证是否由运行顺序导致。"
+    },
+    "confirmed_issue": {
+      "definition": "经过已知标准验证，确认存在的异常。",
+      "example": "重新计算 record_hash 后与链上记录不一致，且排除运行顺序干扰。"
+    },
+    "prescription": {
+      "definition": "针对 confirmed_issue 的治疗动作，必须包含回滚点和执行条件。",
+      "example": "回滚到上一个稳定配置文件。"
+    },
+    "audit_record": {
+      "definition": "每一次写操作、验证操作、治疗操作的不可篡改记录，包含前后哈希。",
+      "example": "hash_chain_v2.log 中的一条记录。"
+    },
+    "rollback_point": {
+      "definition": "在执行任何治疗动作之前，自动保存的可恢复状态快照。",
+      "example": "修改配置文件前备份的副本。"
+    }
+  }
+}

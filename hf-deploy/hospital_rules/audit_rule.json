@@ -1,0 +1,9 @@
+{
+  "module": "audit_rule",
+  "version": 1,
+  "items": {
+    "rule": "所有写操作必须追加写入审计链，每条记录包含前后哈希，且不得修改已有记录。",
+    "current_chain_file": "hash_chain_v2.log",
+    "chain_version": 2
+  }
+}

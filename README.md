@@ -1,39 +1,68 @@
-# 洛神ai
+# 洛神 AI
 
-#### 介绍
-{**以下是 Gitee 平台说明，您可以替换此简介**
-Gitee 是 OSCHINA 推出的基于 Git 的代码托管平台（同时支持 SVN）。专为开发者提供稳定、高效、安全的云端软件开发协作平台
-无论是个人、团队、或是企业，都能够用 Gitee 实现代码托管、项目管理、协作开发。企业项目请看 [https://gitee.com/enterprises](https://gitee.com/enterprises)}
+一个拥有"活记忆"的对话 AI —— 她不是回答问题的工具，而是一个会记忆、会成长、会因关系深浅而不同回应的存在。
 
-#### 软件架构
-软件架构说明
+## 在线体验
 
+如果已部署，访问 `https://你的地址.onrender.com` 即可与洛神对话。
 
-#### 安装教程
+## 本地运行
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+```bash
+# 1. 安装依赖（仅需 requests）
+pip install -r requirements.txt
 
-#### 使用说明
+# 2. 设置智谱 API key
+export ZHIPU_API_KEY="你的智谱API key"
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+# 3. 启动
+python3 web_chat.py
 
-#### 参与贡献
+# 4. 浏览器打开 http://localhost:8765
+```
 
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
+## 一键部署到 Render
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/你的用户名/luoshen-ai)
 
-#### 特技
+详见 [DEPLOY_RENDER.md](./DEPLOY_RENDER.md)。
 
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+## HTTP API
+
+```bash
+curl -X POST https://你的地址.onrender.com/chat \
+  -H "Content-Type: application/json" \
+  -d '{"input": "你好", "user_id": "default"}'
+```
+
+## 文件结构
+
+```
+├── web_chat.py              # Web 入口
+├── living_engine.py         # 核心引擎（142KB）
+├── llm_interface.py         # 智谱 GLM-4-Flash API 封装
+├── emergence_layer.py       # 记忆浮现层
+├── episodic_memory.py       # 情景记忆
+├── pain_signal.py           # 疼痛/退缩信号
+├── active_memory/           # 洛神的"记忆"
+│   └── active_memory.json   # 当前完整状态
+├── hash_chain_v2.log        # 完整性哈希链
+└── requirements.txt         # 只有 requests
+```
+
+## 技术栈
+
+- Python 3.10+ （标准库 + requests）
+- 无数据库 — 全部用 JSON/JSONL 文件
+- 无机器学习框架 — 记忆和浮现规则用纯 Python 实现
+- 智谱 GLM-4-Flash 大模型
+
+## 获得智谱 API Key
+
+1. 打开 https://open.bigmodel.cn/
+2. 注册 → 控制台 → API Keys
+3. 创建 key（免费额度通常够用）
+
+## License
+
+MIT

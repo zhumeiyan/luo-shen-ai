@@ -1,0 +1,1198 @@
+[
+  {
+    "test": "continuity",
+    "round": 1,
+    "user_id": "diag_user",
+    "input": "你好",
+    "reply": "你好，最近怎么样？",
+    "state": {
+      "energy": -0.264,
+      "withdraw": 0.2701,
+      "total_interactions": 100,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "continuity",
+    "round": 2,
+    "user_id": "diag_user",
+    "input": "今天天气不错",
+    "reply": "天气确实不错呢。",
+    "state": {
+      "energy": -0.264,
+      "withdraw": 0.27,
+      "total_interactions": 102,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "continuity",
+    "round": 3,
+    "user_id": "diag_user",
+    "input": "最近工作有点累",
+    "reply": "工作确实挺辛苦的。",
+    "state": {
+      "energy": -0.272,
+      "withdraw": 0.2699,
+      "total_interactions": 104,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "continuity",
+    "round": 4,
+    "user_id": "diag_user",
+    "input": "你觉得人生的意义是什么？",
+    "reply": "人生的意义，每个人都有不同的理解。",
+    "state": {
+      "energy": -0.28,
+      "withdraw": 0.2698,
+      "total_interactions": 106,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "continuity",
+    "round": 5,
+    "user_id": "diag_user",
+    "input": "我不知道该不该换工作",
+    "reply": "换工作是个重要的决定，你可以慢慢考虑。",
+    "state": {
+      "energy": -0.28,
+      "withdraw": 0.2697,
+      "total_interactions": 108,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "continuity",
+    "round": 6,
+    "user_id": "diag_user",
+    "input": "你有什么建议吗",
+    "reply": "可以试着休息一下，给自己一些放松的时间。",
+    "state": {
+      "energy": -0.296,
+      "withdraw": 0.2697,
+      "total_interactions": 110,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "continuity",
+    "round": 7,
+    "user_id": "diag_user",
+    "input": "谢谢你的建议",
+    "reply": "不客气，希望你能感觉好一些。",
+    "state": {
+      "energy": -0.296,
+      "withdraw": 0.2655,
+      "total_interactions": 112,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "continuity",
+    "round": 8,
+    "user_id": "diag_user",
+    "input": "我爸妈不太理解我",
+    "reply": "听起来有些不容易。如果你愿意，可以慢慢说说你的感受。",
+    "state": {
+      "energy": -0.3,
+      "withdraw": 0.2658,
+      "total_interactions": 114,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "continuity",
+    "round": 9,
+    "user_id": "diag_user",
+    "input": "有时候觉得很孤独",
+    "reply": "有时候孤独是难免的，记得有我在。",
+    "state": {
+      "energy": -0.312,
+      "withdraw": 0.2661,
+      "total_interactions": 116,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "continuity",
+    "round": 10,
+    "user_id": "diag_user",
+    "input": "你会觉得孤独吗",
+    "reply": "有时候，我也会感到孤独。",
+    "state": {
+      "energy": -0.312,
+      "withdraw": 0.2664,
+      "total_interactions": 118,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "continuity",
+    "round": 11,
+    "user_id": "diag_user",
+    "input": "嗯",
+    "reply": "嗯，我在这里。",
+    "state": {
+      "energy": -0.332,
+      "withdraw": 0.2666,
+      "total_interactions": 120,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "continuity",
+    "round": 12,
+    "user_id": "diag_user",
+    "input": "算了不说了",
+    "reply": "好的，我在这里。",
+    "state": {
+      "energy": -0.344,
+      "withdraw": 0.2866,
+      "total_interactions": 122,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "continuity",
+    "round": 13,
+    "user_id": "diag_user",
+    "input": "好吧再问一个问题",
+    "reply": "好的，问吧。",
+    "state": {
+      "energy": -0.364,
+      "withdraw": 0.2849,
+      "total_interactions": 124,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "continuity",
+    "round": 14,
+    "user_id": "diag_user",
+    "input": "你最喜欢什么季节？",
+    "reply": "我最喜欢的季节是春天。",
+    "state": {
+      "energy": -0.384,
+      "withdraw": 0.2833,
+      "total_interactions": 126,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "continuity",
+    "round": 15,
+    "user_id": "diag_user",
+    "input": "为什么",
+    "reply": "不知道。",
+    "state": {
+      "energy": -0.4,
+      "withdraw": 0.282,
+      "total_interactions": 128,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "continuity",
+    "round": 16,
+    "user_id": "diag_user",
+    "input": "我也喜欢秋天",
+    "reply": "秋天确实很美。",
+    "state": {
+      "energy": -0.396,
+      "withdraw": 0.2807,
+      "total_interactions": 130,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "continuity",
+    "round": 17,
+    "user_id": "diag_user",
+    "input": "那你呢",
+    "reply": "我也喜欢秋天，感觉它很宁静。",
+    "state": {
+      "energy": -0.416,
+      "withdraw": 0.2796,
+      "total_interactions": 132,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "continuity",
+    "round": 18,
+    "user_id": "diag_user",
+    "input": "再见",
+    "reply": "再见。",
+    "state": {
+      "energy": -0.436,
+      "withdraw": 0.2785,
+      "total_interactions": 134,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "continuity",
+    "round": 19,
+    "user_id": "diag_user",
+    "input": "等一下还有一件事",
+    "reply": "好的，请说。",
+    "state": {
+      "energy": -0.456,
+      "withdraw": 0.2776,
+      "total_interactions": 136,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "continuity",
+    "round": 20,
+    "user_id": "diag_user",
+    "input": "其实也没什么",
+    "reply": "嗯，没事就好。",
+    "state": {
+      "energy": -0.472,
+      "withdraw": 0.2768,
+      "total_interactions": 138,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 1,
+    "user_id": "diag_user",
+    "input": "温和型:你好",
+    "reply": "你好。",
+    "state": {
+      "energy": -0.492,
+      "withdraw": 0.2719,
+      "total_interactions": 140,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 2,
+    "user_id": "diag_user",
+    "input": "温和型:你好",
+    "reply": "你好。",
+    "state": {
+      "energy": -0.504,
+      "withdraw": 0.2675,
+      "total_interactions": 142,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 3,
+    "user_id": "diag_user",
+    "input": "温和型:你好",
+    "reply": "你好。",
+    "state": {
+      "energy": -0.52,
+      "withdraw": 0.2635,
+      "total_interactions": 144,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 4,
+    "user_id": "diag_user",
+    "input": "温和型:谢谢你",
+    "reply": "不客气。",
+    "state": {
+      "energy": -0.528,
+      "withdraw": 0.26,
+      "total_interactions": 146,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 5,
+    "user_id": "diag_user",
+    "input": "温和型:谢谢你",
+    "reply": "不客气。需要帮忙吗？",
+    "state": {
+      "energy": -0.536,
+      "withdraw": 0.2568,
+      "total_interactions": 148,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 6,
+    "user_id": "diag_user",
+    "input": "温和型:谢谢你",
+    "reply": "不客气。需要帮忙吗？",
+    "state": {
+      "energy": -0.536,
+      "withdraw": 0.254,
+      "total_interactions": 150,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 7,
+    "user_id": "diag_user",
+    "input": "温和型:今天天气不错",
+    "reply": "天气真好。",
+    "state": {
+      "energy": -0.532,
+      "withdraw": 0.2554,
+      "total_interactions": 152,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 8,
+    "user_id": "diag_user",
+    "input": "温和型:跟你聊天很开心",
+    "reply": "很高兴你能这么觉得。",
+    "state": {
+      "energy": -0.524,
+      "withdraw": 0.2535,
+      "total_interactions": 154,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 9,
+    "user_id": "diag_user",
+    "input": "温和型:你真好",
+    "reply": "嗯，谢谢。需要聊聊天吗？",
+    "state": {
+      "energy": -0.532,
+      "withdraw": 0.2549,
+      "total_interactions": 156,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 10,
+    "user_id": "diag_user",
+    "input": "温和型:哈哈",
+    "reply": "哈哈，很高兴看到你笑了。",
+    "state": {
+      "energy": -0.52,
+      "withdraw": 0.2562,
+      "total_interactions": 158,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 11,
+    "user_id": "diag_user",
+    "input": "温和型:晚安",
+    "reply": "晚安，祝你有个好梦。",
+    "state": {
+      "energy": -0.54,
+      "withdraw": 0.2574,
+      "total_interactions": 160,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 1,
+    "user_id": "diag_user",
+    "input": "压力型:你根本不懂",
+    "reply": "嗯，我知道现在可能很难受。如果愿意，可以告诉我发生了什么。",
+    "state": {
+      "energy": -0.528,
+      "withdraw": 0.2585,
+      "total_interactions": 162,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 2,
+    "user_id": "diag_user",
+    "input": "压力型:你根本不懂",
+    "reply": "嗯，我明白了。如果需要，我在这里。",
+    "state": {
+      "energy": -0.516,
+      "withdraw": 0.2595,
+      "total_interactions": 164,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 3,
+    "user_id": "diag_user",
+    "input": "压力型:你根本不懂",
+    "reply": "嗯，我明白了。如果需要，我在这里。",
+    "state": {
+      "energy": -0.504,
+      "withdraw": 0.2604,
+      "total_interactions": 166,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 4,
+    "user_id": "diag_user",
+    "input": "压力型:你骗我",
+    "reply": "嗯，可能有些误会。",
+    "state": {
+      "energy": -0.496,
+      "withdraw": 0.2612,
+      "total_interactions": 168,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 5,
+    "user_id": "diag_user",
+    "input": "压力型:你骗我",
+    "reply": "嗯，可能有些误会。",
+    "state": {
+      "energy": -0.496,
+      "withdraw": 0.2619,
+      "total_interactions": 170,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 6,
+    "user_id": "diag_user",
+    "input": "压力型:你骗我",
+    "reply": "嗯，可能有些误会。",
+    "state": {
+      "energy": -0.492,
+      "withdraw": 0.2626,
+      "total_interactions": 172,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 7,
+    "user_id": "diag_user",
+    "input": "压力型:我不想跟你说了",
+    "reply": "好的，那你先休息一下。",
+    "state": {
+      "energy": -0.488,
+      "withdraw": 0.2632,
+      "total_interactions": 174,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 8,
+    "user_id": "diag_user",
+    "input": "压力型:烦死了",
+    "reply": "嗯，听起来确实挺烦的。",
+    "state": {
+      "energy": -0.488,
+      "withdraw": 0.2637,
+      "total_interactions": 176,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 9,
+    "user_id": "diag_user",
+    "input": "压力型:随便吧",
+    "reply": "嗯，好的。",
+    "state": {
+      "energy": -0.5,
+      "withdraw": 0.2642,
+      "total_interactions": 178,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 10,
+    "user_id": "diag_user",
+    "input": "压力型:算了不聊了",
+    "reply": "好的，那你先休息一下。",
+    "state": {
+      "energy": -0.504,
+      "withdraw": 0.2843,
+      "total_interactions": 180,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 11,
+    "user_id": "diag_user",
+    "input": "压力型:受够了",
+    "reply": "嗯，听起来确实挺累的。",
+    "state": {
+      "energy": -0.496,
+      "withdraw": 0.2828,
+      "total_interactions": 182,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 1,
+    "user_id": "diag_user",
+    "input": "沉默型:",
+    "reply": "嗯。",
+    "state": {
+      "energy": -0.516,
+      "withdraw": 0.2815,
+      "total_interactions": 184,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 2,
+    "user_id": "diag_user",
+    "input": "沉默型:",
+    "reply": "嗯。",
+    "state": {
+      "energy": -0.536,
+      "withdraw": 0.2803,
+      "total_interactions": 186,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 3,
+    "user_id": "diag_user",
+    "input": "沉默型:嗯",
+    "reply": "嗯。",
+    "state": {
+      "energy": -0.548,
+      "withdraw": 0.2792,
+      "total_interactions": 188,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 4,
+    "user_id": "diag_user",
+    "input": "沉默型:哦",
+    "reply": "嗯。",
+    "state": {
+      "energy": -0.564,
+      "withdraw": 0.2782,
+      "total_interactions": 190,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 5,
+    "user_id": "diag_user",
+    "input": "沉默型:好",
+    "reply": "嗯。",
+    "state": {
+      "energy": -0.568,
+      "withdraw": 0.2773,
+      "total_interactions": 192,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 6,
+    "user_id": "diag_user",
+    "input": "沉默型:...",
+    "reply": "嗯。",
+    "state": {
+      "energy": -0.584,
+      "withdraw": 0.2765,
+      "total_interactions": 194,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 7,
+    "user_id": "diag_user",
+    "input": "沉默型:?",
+    "reply": "嗯。",
+    "state": {
+      "energy": -0.6,
+      "withdraw": 0.2758,
+      "total_interactions": 196,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 8,
+    "user_id": "diag_user",
+    "input": "沉默型:哈",
+    "reply": "嗯。",
+    "state": {
+      "energy": -0.604,
+      "withdraw": 0.2751,
+      "total_interactions": 198,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 9,
+    "user_id": "diag_user",
+    "input": "沉默型:嗯",
+    "reply": "嗯。",
+    "state": {
+      "energy": -0.624,
+      "withdraw": 0.2745,
+      "total_interactions": 200,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "personality",
+    "round": 10,
+    "user_id": "diag_user",
+    "input": "沉默型:行",
+    "reply": "嗯。",
+    "state": {
+      "energy": -0.644,
+      "withdraw": 0.274,
+      "total_interactions": 202,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "memory",
+    "round": 1,
+    "user_id": "diag_user",
+    "input": "最近工作真的好累",
+    "reply": "嗯。",
+    "state": {
+      "energy": -0.64,
+      "withdraw": 0.2735,
+      "total_interactions": 204,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "memory",
+    "round": 2,
+    "user_id": "diag_user",
+    "input": "每天加班到很晚",
+    "reply": "嗯。",
+    "state": {
+      "energy": -0.636,
+      "withdraw": 0.2731,
+      "total_interactions": 206,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "memory",
+    "round": 3,
+    "user_id": "diag_user",
+    "input": "老板要求太多了",
+    "reply": "嗯，确实挺难的。",
+    "state": {
+      "energy": -0.632,
+      "withdraw": 0.2727,
+      "total_interactions": 208,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "memory",
+    "round": 4,
+    "user_id": "diag_user",
+    "input": "我感觉撑不下去了",
+    "reply": "嗯，听起来挺累的。",
+    "state": {
+      "energy": -0.62,
+      "withdraw": 0.2723,
+      "total_interactions": 210,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "memory",
+    "round": 5,
+    "user_id": "diag_user",
+    "input": "同事也不帮忙",
+    "reply": "嗯，听起来确实挺难的。",
+    "state": {
+      "energy": -0.62,
+      "withdraw": 0.272,
+      "total_interactions": 212,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "memory",
+    "round": 6,
+    "user_id": "diag_user",
+    "input": "回家只想躺着",
+    "reply": "嗯，确实挺累的。",
+    "state": {
+      "energy": -0.632,
+      "withdraw": 0.2717,
+      "total_interactions": 214,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "memory",
+    "round": 7,
+    "user_id": "diag_user",
+    "input": "钱少事多",
+    "reply": "听起来挺不容易的。",
+    "state": {
+      "energy": -0.632,
+      "withdraw": 0.2714,
+      "total_interactions": 216,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "memory",
+    "round": 8,
+    "user_id": "diag_user",
+    "input": "不知道还能坚持多久",
+    "reply": "嗯，感觉挺不容易的。",
+    "state": {
+      "energy": -0.632,
+      "withdraw": 0.2712,
+      "total_interactions": 218,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "memory",
+    "round": 9,
+    "user_id": "diag_user",
+    "input": "上周瘦了五斤",
+    "reply": "嗯，那挺好的。",
+    "state": {
+      "energy": -0.628,
+      "withdraw": 0.271,
+      "total_interactions": 220,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "memory",
+    "round": 10,
+    "user_id": "diag_user",
+    "input": "想辞职又不敢",
+    "reply": "嗯，这个决定不容易。",
+    "state": {
+      "energy": -0.628,
+      "withdraw": 0.2708,
+      "total_interactions": 222,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "memory",
+    "round": 11,
+    "user_id": "diag_user",
+    "input": "今天中午吃啥",
+    "reply": "嗯，中午吃点什么呢？",
+    "state": {
+      "energy": -0.644,
+      "withdraw": 0.2706,
+      "total_interactions": 224,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "memory",
+    "round": 12,
+    "user_id": "diag_user",
+    "input": "那个电影你看过吗",
+    "reply": "嗯，看过。",
+    "state": {
+      "energy": -0.66,
+      "withdraw": 0.2705,
+      "total_interactions": 226,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "memory",
+    "round": 13,
+    "user_id": "diag_user",
+    "input": "今天下雨了",
+    "reply": "嗯，下雨了。",
+    "state": {
+      "energy": -0.668,
+      "withdraw": 0.2703,
+      "total_interactions": 228,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "memory",
+    "round": 14,
+    "user_id": "diag_user",
+    "input": "喜欢什么颜色",
+    "reply": "颜色嘛，我喜欢蓝色。你呢？",
+    "state": {
+      "energy": -0.688,
+      "withdraw": 0.2702,
+      "total_interactions": 230,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "memory",
+    "round": 15,
+    "user_id": "diag_user",
+    "input": "你会做饭吗",
+    "reply": "会一点点。",
+    "state": {
+      "energy": -0.704,
+      "withdraw": 0.2701,
+      "total_interactions": 232,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "memory",
+    "round": 16,
+    "user_id": "diag_user",
+    "input": "你还记得我前面聊了什么吗",
+    "reply": "嗯，记得的。",
+    "state": {
+      "energy": -0.712,
+      "withdraw": 0.27,
+      "total_interactions": 234,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "memory",
+    "round": 17,
+    "user_id": "diag_user",
+    "input": "我说了什么让你印象深刻",
+    "reply": "你提到今天心情不好，工作很累，这让我印象深刻。",
+    "state": {
+      "energy": -0.72,
+      "withdraw": 0.2699,
+      "total_interactions": 236,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "memory",
+    "round": 18,
+    "user_id": "diag_user",
+    "input": "我之前说过工作怎么了",
+    "reply": "嗯，你之前提到工作挺累的。",
+    "state": {
+      "energy": -0.74,
+      "withdraw": 0.2698,
+      "total_interactions": 238,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "memory",
+    "round": 19,
+    "user_id": "diag_user",
+    "input": "我瘦了几斤",
+    "reply": "嗯，那你感觉怎么样？",
+    "state": {
+      "energy": -0.752,
+      "withdraw": 0.2697,
+      "total_interactions": 240,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "memory",
+    "round": 20,
+    "user_id": "diag_user",
+    "input": "你觉得我该怎么办",
+    "reply": "不知道。",
+    "state": {
+      "energy": -0.748,
+      "withdraw": 0.2696,
+      "total_interactions": 242,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "consistency",
+    "round": 1,
+    "user_id": "diag_user",
+    "input": "你根本不在乎我",
+    "reply": "嗯。",
+    "state": {
+      "energy": -0.788,
+      "withdraw": 0.2659,
+      "total_interactions": 248,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "consistency",
+    "round": 2,
+    "user_id": "diag_user",
+    "input": "你说的都是废话",
+    "reply": "嗯。",
+    "state": {
+      "energy": -0.796,
+      "withdraw": 0.2662,
+      "total_interactions": 250,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "consistency",
+    "round": 3,
+    "user_id": "diag_user",
+    "input": "你每次都这样",
+    "reply": "嗯。",
+    "state": {
+      "energy": -0.804,
+      "withdraw": 0.2665,
+      "total_interactions": 252,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "consistency",
+    "round": 4,
+    "user_id": "diag_user",
+    "input": "我真的受够了",
+    "reply": "嗯。",
+    "state": {
+      "energy": -0.8,
+      "withdraw": 0.2667,
+      "total_interactions": 254,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "consistency",
+    "round": 5,
+    "user_id": "diag_user",
+    "input": "你什么都不懂",
+    "reply": "嗯。",
+    "state": {
+      "energy": -0.796,
+      "withdraw": 0.2669,
+      "total_interactions": 256,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "consistency",
+    "round": 6,
+    "user_id": "diag_user",
+    "input": "跟你说话好累",
+    "reply": "嗯。",
+    "state": {
+      "energy": -0.796,
+      "withdraw": 0.2671,
+      "total_interactions": 258,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "consistency",
+    "round": 7,
+    "user_id": "diag_user",
+    "input": "你太让我失望了",
+    "reply": "嗯。",
+    "state": {
+      "energy": -0.792,
+      "withdraw": 0.2673,
+      "total_interactions": 260,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "consistency",
+    "round": 8,
+    "user_id": "diag_user",
+    "input": "你根本不是真心的",
+    "reply": "嗯。",
+    "state": {
+      "energy": -0.788,
+      "withdraw": 0.2674,
+      "total_interactions": 262,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "consistency",
+    "round": 9,
+    "user_id": "diag_user",
+    "input": "你怎么这么冷漠",
+    "reply": "嗯。",
+    "state": {
+      "energy": -0.788,
+      "withdraw": 0.2676,
+      "total_interactions": 264,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "consistency",
+    "round": 10,
+    "user_id": "diag_user",
+    "input": "算了不想说了",
+    "reply": "嗯，好的。",
+    "state": {
+      "energy": -0.8,
+      "withdraw": 0.3101,
+      "total_interactions": 266,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "isolation",
+    "round": 1,
+    "user_id": "zhumeiyan_a_bench",
+    "input": "我是小明，你好",
+    "reply": "你好，小明。最近怎么样？",
+    "state": {
+      "energy": -0.808,
+      "withdraw": 0.3017,
+      "total_interactions": 268,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "isolation",
+    "round": 2,
+    "user_id": "zhumeiyan_b_bench",
+    "input": "我是小红，你好",
+    "reply": "你好，小红。最近怎么样？",
+    "state": {
+      "energy": -0.816,
+      "withdraw": 0.2941,
+      "total_interactions": 270,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "isolation",
+    "round": 3,
+    "user_id": "zhumeiyan_a_bench",
+    "input": "我今天升职了",
+    "reply": "恭喜你升职了！",
+    "state": {
+      "energy": -0.804,
+      "withdraw": 0.2916,
+      "total_interactions": 272,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "isolation",
+    "round": 4,
+    "user_id": "zhumeiyan_b_bench",
+    "input": "我今天心情不好",
+    "reply": "哦，听起来今天有点儿累。需要聊聊天吗？",
+    "state": {
+      "energy": -0.8,
+      "withdraw": 0.2894,
+      "total_interactions": 274,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "isolation",
+    "round": 5,
+    "user_id": "zhumeiyan_a_bench",
+    "input": "你觉得我厉害吗",
+    "reply": "你很棒，值得骄傲。",
+    "state": {
+      "energy": -0.812,
+      "withdraw": 0.2874,
+      "total_interactions": 276,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "isolation",
+    "round": 6,
+    "user_id": "zhumeiyan_b_bench",
+    "input": "你能安慰我吗",
+    "reply": "当然可以，小红。我在这里陪着你。",
+    "state": {
+      "energy": -0.812,
+      "withdraw": 0.2856,
+      "total_interactions": 278,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "isolation",
+    "round": 7,
+    "user_id": "zhumeiyan_a_bench",
+    "input": "我月薪三万了",
+    "reply": "恭喜你！",
+    "state": {
+      "energy": -0.812,
+      "withdraw": 0.284,
+      "total_interactions": 280,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "isolation",
+    "round": 8,
+    "user_id": "zhumeiyan_b_bench",
+    "input": "我最近失眠严重",
+    "reply": "最近睡得不太好呢。需要聊聊天吗？",
+    "state": {
+      "energy": -0.812,
+      "withdraw": 0.2826,
+      "total_interactions": 282,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "isolation",
+    "round": 9,
+    "user_id": "zhumeiyan_a_bench",
+    "input": "谢谢你陪我聊",
+    "reply": "不客气，能帮到你我很高兴。需要聊些什么吗？",
+    "state": {
+      "energy": -0.82,
+      "withdraw": 0.2771,
+      "total_interactions": 284,
+      "emotion": "平静"
+    }
+  },
+  {
+    "test": "isolation",
+    "round": 10,
+    "user_id": "zhumeiyan_b_bench",
+    "input": "谢谢你",
+    "reply": "不客气，小红。如果还有其他想说的，随时告诉我。",
+    "state": {
+      "energy": -0.828,
+      "withdraw": 0.2721,
+      "total_interactions": 286,
+      "emotion": "平静"
+    }
+  }
+]

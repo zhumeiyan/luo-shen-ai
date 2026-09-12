@@ -109,6 +109,40 @@ class ChatHandler(BaseHTTPRequestHandler):
             self.send_header('Content-Type', 'text/html; charset=utf-8')
             self.end_headers()
             self.wfile.write(HTML_PAGE.encode('utf-8'))
+        elif self.path == '/health':
+            import json
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.end_headers()
+            self.wfile.write(json.dumps({"ok": True}, ensure_ascii=False).encode('utf-8'))
+        elif self.path == '/download':
+            # 导出当前记忆和哈希链为 tar.gz 备份
+            import tarfile, io, time
+            from pathlib import Path
+            try:
+                buf = io.BytesIO()
+                with tarfile.open(fileobj=buf, mode='w:gz') as tar:
+                    mem = Path('active_memory/active_memory.json')
+                    if mem.exists():
+                        tar.add(str(mem), arcname='active_memory/active_memory.json')
+                    for chain in ['hash_chain_v2.log', 'hash_chain_v2.backup.log']:
+                        p = Path(chain)
+                        if p.exists():
+                            tar.add(str(p), arcname=chain)
+                data = buf.getvalue()
+                fname = f'luoshen-backup-{int(time.time())}.tar.gz'
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/gzip')
+                self.send_header('Content-Disposition', f'attachment; filename="{fname}"')
+                self.send_header('Content-Length', str(len(data)))
+                self.end_headers()
+                self.wfile.write(data)
+            except Exception as e:
+                self.send_response(500)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                import json
+                self.wfile.write(json.dumps({'error': str(e)}).encode('utf-8'))
         else:
             self.send_response(404)
             self.end_headers()
@@ -121,16 +155,18 @@ class ChatHandler(BaseHTTPRequestHandler):
             try:
                 data = json.loads(body)
                 user_input = data.get('input', '')
+                user_id = data.get('user_id', 'primary')
             except Exception:
                 user_input = ''
+                user_id = 'primary'
 
             if not user_input:
                 self.send_json({'error': '输入为空'})
                 return
 
             try:
-                reply = living_engine.process_user_input(user_input)
-                self.send_json({'reply': reply})
+                reply = living_engine.process_user_input(user_input, user_id=user_id)
+                self.send_json({'reply': reply, 'user_id': user_id})
             except Exception as e:
                 err_msg = str(e)
                 if 'API' in err_msg or 'api' in err_msg or 'key' in err_msg.lower() or '401' in err_msg:
@@ -149,8 +185,9 @@ class ChatHandler(BaseHTTPRequestHandler):
 
 
 def main():
+    import os
     host = '0.0.0.0'
-    port = 8765
+    port = int(os.environ.get('PORT', 8765))
     server = HTTPServer((host, port), ChatHandler)
     print(f"[web_chat] 启动 http://{host}:{port}", flush=True)
     print(f"[web_chat] 内网: http://127.0.0.1:{port}", flush=True)
