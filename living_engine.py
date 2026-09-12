@@ -38,6 +38,9 @@ import tempfile
 # 生病感知信号模块（独立算法，不含行为副作用）
 import pain_signal
 
+# 认知核心（独立运行，不依赖 LLM）
+import cognitive_core
+
 # ── 寻址上下文 ──────────────────────────────────────────────────────────────
 # _current_source_id 是寻址键，不是行为键。
 # 它唯一的作用是：在检索 episodic_memory 时，只选 tags 包含该 source_id 的记忆。
@@ -3067,8 +3070,87 @@ def process_user_input(user_input, input_type="text", user_id="primary"):
     处理用户输入的主流程（兼容旧接口，委托给 generate_response）
     user_id: 身份锚点键，默认 "primary"。不同 user_id 的关系状态完全隔离。
     """
+    # ── 认知核心：接收输入 + 读取意图 + 渲染状态（不影响主流程） ──
+    try:
+        _core = cognitive_core.get_core()
+        _core.receive_input(text=user_input)
+        _core_intent = _core.read_intent()
+
+        # C1: 写意图日志（不改现有行为逻辑）
+        _log_core_intent(_core, _core_intent, user_input, user_id)
+
+        # C2: 观测 core vs loshen + per-user snapshot（只读不改）
+        import brain_observation
+        try:
+            _memory = cold_start_if_needed()
+            _obs_cl = brain_observation.observe_core_vs_loshen(_core, _memory, user_id)
+            _obs_pu = brain_observation.observe_per_user(_core, user_id)
+            _log_brain_observation(_obs_cl, _obs_pu)
+        except Exception:
+            pass  # 观测失败不影响主流程
+    except Exception:
+        pass  # 认知核心异常不影响洛神正常运行
+
     result = generate_response(user_input, source="process_user_input", user_id=user_id)
     return result["reply"]
+
+
+def _log_core_intent(core, intent, user_input, user_id):
+    """C1: 将 core 意图写入 cognitive_core_intent_log.jsonl"""
+    import os
+    try:
+        frame = core.frames[-1]
+        log_entry = {
+            "ts": round(time.time(), 3),
+            "tick": core.tick_count,
+            "user_id": user_id,
+            "user_input": user_input[:200],
+            "intent": {
+                "stance": round(intent.get("direction", 0.0), 6),
+                "stance_strength": round(abs(intent.get("direction", 0.0)), 6),
+                "certainty": round(min(1.0, intent.get("energy", 0.0) * 10), 6),
+                "register": intent.get("top_cells", [{}])[0].get("cell", "unknown").split(".")[0] if intent.get("top_cells") else "unknown",
+                "pace": round(float(np.mean(np.abs(frame - (core.frames[-2] if len(core.frames) >= 2 else frame)))), 6),
+                "valence": round(intent.get("direction", 0.0), 6),
+                "topic_ref": user_input[:30],
+            },
+            "core_state_summary": {
+                "mean": round(float(np.mean(frame)), 6),
+                "std": round(float(np.std(frame)), 6),
+                "abs_max": round(float(np.max(np.abs(frame))), 6),
+                "row_means": [round(float(np.mean(frame[r])), 6) for r in range(6)],
+            },
+        }
+        with open("cognitive_core_intent_log.jsonl", "a", encoding="utf-8") as f:
+            f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+
+
+def _log_brain_observation(obs_cl, obs_pu):
+    """C2: 将 brain 观测写入 brain_observation_log.jsonl"""
+    import os
+    try:
+        log_entry = {
+            "ts": round(time.time(), 3),
+            "core_vs_loshen": {
+                "correlation": obs_cl.get("correlation"),
+                "direction_consistency": obs_cl.get("direction_consistency"),
+                "core_vec": obs_cl.get("core_vec"),
+                "loshen_vec": obs_cl.get("loshen_vec"),
+            },
+            "per_user": {
+                "user_id": obs_pu.get("user_id"),
+                "tick": obs_pu.get("tick"),
+                "core_abs_max": obs_pu.get("core_abs_max"),
+                "core_mean": obs_pu.get("core_mean"),
+                "is_global_state": obs_pu.get("is_global_state"),
+            },
+        }
+        with open("brain_observation_log.jsonl", "a", encoding="utf-8") as f:
+            f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
 
 
 # -------------------------------------------------------------------------
