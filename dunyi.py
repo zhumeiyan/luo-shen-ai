@@ -4,27 +4,36 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 def norm(v): return math.sqrt(sum(x*x for x in v))
 
-STATE_FILE = "dunyi_state.json"
-
 A = [1.0, 0.0, 0.0]
 B = [-0.4, 0.5, 0.2]
 OT = []
 
 def load_state():
     global A, B, OT
-    if os.path.exists(STATE_FILE):
+    if os.path.exists("dunyi_state.json"):
         try:
-            with open(STATE_FILE, "r") as f:
+            with open("dunyi_state.json", "r") as f:
                 s = json.load(f)
             A = s["A"]
             B = s["B"]
-            OT = [tuple(e) for e in s["OT"]]
+        except:
+            pass
+    if os.path.exists("dunyi_ot.jsonl"):
+        try:
+            with open("dunyi_ot.jsonl") as f:
+                for line in f:
+                    d, s = json.loads(line)
+                    OT.append((d, s))
         except:
             pass
 
-def save_state():
-    with open(STATE_FILE, "w") as f:
-        json.dump({"A": A, "B": B, "OT": [list(e) for e in OT]}, f)
+def save_ab():
+    with open("dunyi_state.json", "w") as f:
+        json.dump({"A": A, "B": B}, f)
+
+def save_tick(d, s):
+    with open("dunyi_ot.jsonl", "a") as f:
+        f.write(json.dumps([d, s]) + "\n")
 
 load_state()
 
@@ -80,7 +89,8 @@ def tick(text):
         tone = "短" if abs(c) < 0.3 else ("沉" if c < 0 else "轻")
         reply = llm(text, tone)
     A, B = a2, b2
-    save_state()
+    save_ab()
+    save_tick(d, s)
     return {"r": r, "c": c, "tau": t, "reply": reply, "n": len(OT)}
 
 class H(BaseHTTPRequestHandler):
