@@ -69,15 +69,17 @@ class H(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(b"""<html><meta charset=utf-8><body>
 <h3>遁一</h3>
-<textarea id=q rows=3 cols=40></textarea><br>
-<button onclick=s()>say</button><pre id=o></pre>
+<textarea id=q rows=3 cols=40 placeholder="说点什么"></textarea><br>
+<button onclick=s()>说</button><pre id=o></pre>
 <script>async function s(){
  const t=document.getElementById('q').value;
  const r=await fetch('/say',{method:'POST',body:t});
  const j=await r.json();
  document.getElementById('o').textContent=
- 'r='+j.r.toFixed(6)+' c='+j.c.toFixed(6)+' tau='+j.tau.toFixed(6)+'\\n'+
- (j.reply===null?'[silence]':j.reply);
+ '差和比 = '+j.r.toFixed(6)+'\\n'+
+ '方向 = '+j.c.toFixed(6)+'\\n'+
+ '回声 = '+j.tau.toFixed(6)+'\\n'+
+ '她说：'+(j.reply===null?'（沉默）':j.reply);
 }</script></body></html>""")
     def do_POST(self):
         n = int(self.headers.get("Content-Length", 0))
