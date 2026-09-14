@@ -521,6 +521,5 @@ cos θ = (1 + r*²) / (2√2 · r*)
 ## 附：文件说明
 
 - `README.md` —— 本文件。证明正文。
-- `dunyi_proof.tex` —— LaTeX 源文件。
+- `dunyi.py` —— HTTP 可调用的遁一迭代服务（含前端页面）。
 - `dunyi_proof.pdf` —— 编译好的 PDF。
-- `dunyi.py` —— 数值验证代码。
