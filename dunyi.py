@@ -55,6 +55,21 @@ def tau():
     if not OT: return 0.0
     return sum(e[0] for e in OT)/len(OT) - sum(e[1] for e in OT)/len(OT)
 
+HTML_PAGE = "<html><meta charset=utf-8><body>" \
+"<h3>遁一</h3>" \
+"<textarea id=q rows=3 cols=40 placeholder=\"说点什么\"></textarea><br>" \
+"<button onclick=s()>说</button><pre id=o></pre>" \
+"<script>async function s(){" \
+"const t=document.getElementById('q').value;" \
+"const r=await fetch('/say',{method:'POST',body:t});" \
+"const j=await r.json();" \
+"document.getElementById('o').textContent=" \
+"'差和比 = '+j.r.toFixed(6)+'\\n'+" \
+"'方向 = '+j.c.toFixed(6)+'\\n'+" \
+"'回声 = '+j.tau.toFixed(6)+'\\n'+" \
+"'她说：'+(j.reply===null?'（沉默）':j.reply);" \
+"}</script></body></html>"
+
 def llm(text, tone):
     key = os.environ.get("ZHIPU_API_KEY", "")
     if not key: return "(no key)"
@@ -98,20 +113,7 @@ class H(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.end_headers()
-        self.wfile.write(b"""<html><meta charset=utf-8><body>
-<h3>遁一</h3>
-<textarea id=q rows=3 cols=40 placeholder="说点什么"></textarea><br>
-<button onclick=s()>说</button><pre id=o></pre>
-<script>async function s(){
- const t=document.getElementById('q').value;
- const r=await fetch('/say',{method:'POST',body:t});
- const j=await r.json();
- document.getElementById('o').textContent=
- '差和比 = '+j.r.toFixed(6)+'\\n'+
- '方向 = '+j.c.toFixed(6)+'\\n'+
- '回声 = '+j.tau.toFixed(6)+'\\n'+
- '她说：'+(j.reply===null?'（沉默）':j.reply);
-}</script></body></html>""")
+        self.wfile.write(HTML_PAGE.encode("utf-8"))
     def do_POST(self):
         n = int(self.headers.get("Content-Length", 0))
         text = self.rfile.read(n).decode("utf-8")
