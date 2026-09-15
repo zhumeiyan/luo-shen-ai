@@ -1,4 +1,4 @@
-import math, os, json, urllib.request, threading, time
+import math, os, json, urllib.request, threading, time, asyncio, edge_tts
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 def norm(v): return math.sqrt(sum(x*x for x in v))
@@ -56,35 +56,55 @@ def do_step(a, b):
     A, B = a2, b2
     N += 1
     save_ab()
-    return A, B, r, c, t
+    return r, c, t
 
 def background_tick():
     while True:
         time.sleep(1.0)
-        try:
-            with lock:
-                do_step(A, B[:])
-        except Exception as e:
-            print(f"BG ERR: {e}", flush=True)
+        with lock:
+            do_step(A, B[:])
 
-HTML_PAGE = "<html><meta charset=utf-8><body>" \
-"<h3>遁一</h3>" \
-"<textarea id=q rows=3 cols=40 placeholder=\"说点什么\"></textarea><br>" \
-"<button onclick=s()>说</button><pre id=o></pre>" \
-"<script>async function s(){" \
-"const t=document.getElementById('q').value;" \
-"const r=await fetch('/say',{method:'POST',body:t});" \
-"const j=await r.json();" \
-"document.getElementById('o').textContent=" \
-"'n = '+j.n+'\\n'+" \
-"'差和比 = '+j.r.toFixed(6)+'\\n'+" \
-"'方向 = '+j.c.toFixed(6)+'\\n'+" \
-"'回声 = '+j.tau.toFixed(6)+'\\n'+" \
-"'她说：'+(j.reply===null?'（沉默）':j.reply);" \
-"}</script></body></html>"
+def tts_generate(text):
+    async def _gen():
+        comm = edge_tts.Communicate(text, VOICE)
+        await comm.save(TMP_MP3)
+    asyncio.run(_gen())
+
+HTML_PAGE = """<html><meta charset=utf-8><body>
+<h3>遁一</h3>
+<button id=mic>🎤 按住说话</button><br>
+<textarea id=q rows=3 cols=40 placeholder="说点什么，或按住麦克风"></textarea><br>
+<button onclick=s()>发</button><pre id=o></pre>
+<script>
+var rec = null;
+function startRec(){
+  if(!('webkitSpeechRecognition' in window)){alert("此浏览器不支持语音，用Chrome");return;}
+  rec = new webkitSpeechRecognition();
+  rec.lang = "zh-CN";
+  rec.onresult = function(e){document.getElementById('q').value = e.results[0][0].transcript;};
+  rec.start();
+}
+document.getElementById('mic').onmousedown = startRec;
+document.getElementById('mic').onmouseup = function(){if(rec)rec.stop();};
+document.getElementById('mic').ontouchstart = startRec;
+document.getElementById('mic').ontouchend = function(){if(rec)rec.stop();};
+async function s(){
+  const t=document.getElementById('q').value;
+  const r=await fetch('/say',{method:'POST',body:t});
+  const j=await r.json();
+  document.getElementById('o').textContent='n = '+j.n+'\\n差和比 = '+j.r.toFixed(6)+'\\n方向 = '+j.c.toFixed(6)+'\\n回声 = '+j.tau.toFixed(6)+'\\n她说：'+(j.reply===null?'（沉默）':j.reply);
+  if(j.reply){
+    const a=new Audio('/tts?t='+encodeURIComponent(j.reply));
+    a.play();
+  }
+}
+</script></body></html>"""
+
+VOICE = "zh-CN-XiaoxiaoNeural"
+TMP_MP3 = "/tmp/dunyi_voice.mp3"
 
 def llm(text, tone):
-    key = os.environ.get("ZHIPU_API_KEY", "")
+    key = os.environ.get("ZHIPU_API_KEY", "3121fdd55f9340cba35f39fa2e312bc5.c4KrVxtLCPdCgARq")
     if not key: return "(no key)"
     body = json.dumps({
         "model": "glm-4-flash",
@@ -100,22 +120,40 @@ def llm(text, tone):
         return json.loads(r.read())["choices"][0]["message"]["content"]
 
 def tick(text):
+    global A, B
+    b_new = encode(text)
     with lock:
-        b_new = encode(text)
-        A, B, r, c, t = do_step(A, b_new)
+        r, c, t = do_step(A, b_new)
     if t < -1e-9:
         reply = None
     else:
         tone = "短" if abs(c) < 0.3 else ("沉" if c < 0 else "轻")
         reply = llm(text, tone)
+        if reply and reply != "(no key)":
+            tts_generate(reply)
     return {"n": N, "r": r, "c": c, "tau": t, "reply": reply}
 
 class H(BaseHTTPRequestHandler):
     def do_GET(self):
-        self.send_response(200)
-        self.send_header("Content-Type", "text/html; charset=utf-8")
-        self.end_headers()
-        self.wfile.write(HTML_PAGE.encode("utf-8"))
+        if self.path.startswith("/tts"):
+            from urllib.parse import urlparse, parse_qs
+            qs = parse_qs(urlparse(self.path).query)
+            text = qs.get("t", [""])[0]
+            if text:
+                tts_generate(text)
+                self.send_response(200)
+                self.send_header("Content-Type", "audio/mpeg")
+                self.end_headers()
+                with open(TMP_MP3, "rb") as f:
+                    self.wfile.write(f.read())
+            else:
+                self.send_response(400)
+                self.end_headers()
+        else:
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(HTML_PAGE.encode("utf-8"))
     def do_POST(self):
         n = int(self.headers.get("Content-Length", 0))
         text = self.rfile.read(n).decode("utf-8")
@@ -128,5 +166,5 @@ class H(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     threading.Thread(target=background_tick, daemon=True).start()
-    print("dunyi on :8000", flush=True)
+    print("dunyi on :8000")
     HTTPServer(("0.0.0.0", int(os.environ.get("PORT", 8000))), H).serve_forever()
