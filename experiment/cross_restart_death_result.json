@@ -1,0 +1,11 @@
+{
+  "test_A_normal_restart": {
+    "pass": true,
+    "expected_deceased": false
+  },
+  "test_B_death_restart": {
+    "pass": true,
+    "expected_deceased": true
+  },
+  "overall": true
+}

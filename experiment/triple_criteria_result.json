@@ -1,0 +1,78 @@
+{
+  "baseline": {
+    "detail": {
+      "D1.1_type_commitment": true,
+      "D1.2_functional_entropy": true,
+      "D2.1_preplay_variance": true,
+      "D2.2_narrative_variance": true,
+      "D2.3_phase_ICC": true,
+      "D3.1_multi_signal": false,
+      "D3.2_hub_coordination": true
+    },
+    "criterion_1_differentiation": true,
+    "criterion_2_organs": true,
+    "criterion_3_integration": false,
+    "total_score": 6,
+    "pass": true,
+    "raw": {
+      "entropy": 0.9065966880419547,
+      "var_preplay": 5.3453926458022974e-05,
+      "var_narrative": 6.548263653074106e-06,
+      "icc_phase": 0.9999616663362254,
+      "r_hub_mode": 0.799299958864246,
+      "bias_nonzero": {
+        "pressure_term": 1.0,
+        "internal_drive": 0.0,
+        "presence_bias": 0.0,
+        "warmth_bias": 0.0,
+        "death_modulation": 0.29213483146067415,
+        "r_intensity": 1.0
+      }
+    }
+  },
+  "long_window": {
+    "detail": {
+      "D1.1_type_commitment": true,
+      "D1.2_functional_entropy": true,
+      "D2.1_preplay_variance": true,
+      "D2.2_narrative_variance": true,
+      "D2.3_phase_ICC": true,
+      "D3.1_multi_signal": false,
+      "D3.2_hub_coordination": true
+    },
+    "criterion_1_differentiation": true,
+    "criterion_2_organs": true,
+    "criterion_3_integration": false,
+    "total_score": 6,
+    "pass": true,
+    "raw": {
+      "entropy": 0.9220164143616723,
+      "var_preplay": 0.0005957941159941415,
+      "var_narrative": 7.298437223044873e-05,
+      "icc_phase": 0.8306175396554859,
+      "r_hub_mode": 0.6361511563736436,
+      "bias_nonzero": {
+        "pressure_term": 1.0,
+        "internal_drive": 0.0,
+        "presence_bias": 0.0,
+        "warmth_bias": 0.0,
+        "death_modulation": 0.2964824120603015,
+        "r_intensity": 1.0
+      }
+    }
+  },
+  "analysis": {
+    "dm_baseline_pct": 29.213483146067414,
+    "dm_long_pct": 29.64824120603015,
+    "conclusion": "stable"
+  },
+  "D3_1_annotation": {
+    "mechanism_current": "计数器驱动（_DEATH_PROXIMITY_SLOW = 0.7），死亡机制首版实现",
+    "mechanism_current_purpose": "验证'死亡可被接入'，非验证'死亡是内生的'",
+    "paper_label": "计划死亡（planned death），非内生死亡（endogenous death）",
+    "D3_1_score_actual": "death_modulation=29.2%~29.6%，阈值 30%，保持未过",
+    "D3_1_score_policy": "不改阈值，不凑结果，6/7 就是 6/7",
+    "next_step": "v1.0 做状态驱动版本：能量耗尽、损伤不可逆 → 真正的内生死亡"
+  },
+  "run_timestamp": 1791889324.5540552
+}

@@ -1,0 +1,32 @@
+{
+  "γ=0.02": {
+    "mean": 0.5111,
+    "amp": 0.074,
+    "oscillating": true,
+    "period": 10.0
+  },
+  "γ=0.01": {
+    "mean": 0.6262,
+    "amp": 0.0954,
+    "oscillating": true,
+    "period": 10.9
+  },
+  "γ=0.005": {
+    "mean": 0.7318,
+    "amp": 0.1401,
+    "oscillating": true,
+    "period": 12.5
+  },
+  "γ=0.002": {
+    "mean": 0.8958,
+    "amp": 0.2706,
+    "oscillating": false,
+    "period": -1
+  },
+  "γ=0.001": {
+    "mean": 0.9305,
+    "amp": 0.2842,
+    "oscillating": false,
+    "period": -1
+  }
+}

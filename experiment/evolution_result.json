@@ -1,0 +1,3197 @@
+{
+  "meta": {
+    "genome_keys": [
+      "_K_WARMTH",
+      "_PRESSURE_K",
+      "_WITHDRAW_ACCUM_RATE",
+      "_NARRATIVE_TENDENCY_BOOST",
+      "_DEATH_PROXIMITY_SLOW",
+      "_DEATH_PROXIMITY_BRIGHT",
+      "_AGING_SLOW_THRESHOLD",
+      "_AGING_BRIGHT_THRESHOLD",
+      "_ENERGY_INPUT_RATE",
+      "_ENERGY_DRAIN_BASE",
+      "_DAMAGE_RATE",
+      "_REPAIR_RATE",
+      "_R_ALPHA_ENERGY",
+      "_R_ALPHA_HIST",
+      "_LAMBDA_SELF_ALPHA"
+    ],
+    "base_genome": {
+      "_K_WARMTH": 0.6120698289381064,
+      "_PRESSURE_K": 0.2251547317475227,
+      "_WITHDRAW_ACCUM_RATE": 0.37401198410860226,
+      "_NARRATIVE_TENDENCY_BOOST": 1.347122555789092,
+      "_DEATH_PROXIMITY_SLOW": 0.5376801176606316,
+      "_DEATH_PROXIMITY_BRIGHT": 1.0654807366503707,
+      "_AGING_SLOW_THRESHOLD": 1.1328065416709678,
+      "_AGING_BRIGHT_THRESHOLD": 0.4903007249815192,
+      "_ENERGY_INPUT_RATE": 0.002360065842576952,
+      "_ENERGY_DRAIN_BASE": 0.0015220970976399157,
+      "_DAMAGE_RATE": 0.0008048485178395938,
+      "_REPAIR_RATE": 0.0021956949016492264,
+      "_R_ALPHA_ENERGY": 0.00491417403756247,
+      "_R_ALPHA_HIST": 0.004506804521483132,
+      "_LAMBDA_SELF_ALPHA": 1.2812831068262733
+    },
+    "test_phases": [
+      [
+        "calm",
+        150,
+        0.0,
+        0.2
+      ],
+      [
+        "stress",
+        300,
+        -0.7,
+        0.9
+      ],
+      [
+        "recovery",
+        150,
+        0.0,
+        0.3
+      ],
+      [
+        "positive",
+        100,
+        0.6,
+        0.5
+      ]
+    ],
+    "weights": {
+      "survival": 0.5,
+      "stability": 0.3,
+      "response": 0.2
+    },
+    "total_test_ticks": 700,
+    "pop_size": 16,
+    "n_generations": 10,
+    "timestamp": 1792013761.12944
+  },
+  "history": [
+    {
+      "gen": 0,
+      "best_fitness": 0.5241246202923946,
+      "avg_fitness": 0.438795570192391,
+      "best_genome": {
+        "_K_WARMTH": 0.4352348679557556,
+        "_PRESSURE_K": 0.514111021823385,
+        "_WITHDRAW_ACCUM_RATE": 0.40025569361698865,
+        "_NARRATIVE_TENDENCY_BOOST": 3.863914198717602,
+        "_DEATH_PROXIMITY_SLOW": 0.8073293937876774,
+        "_DEATH_PROXIMITY_BRIGHT": 1.0289034348452804,
+        "_AGING_SLOW_THRESHOLD": 0.33452687129084285,
+        "_AGING_BRIGHT_THRESHOLD": 1.1116943983733392,
+        "_ENERGY_INPUT_RATE": 0.0017678264758504353,
+        "_ENERGY_DRAIN_BASE": 0.0028375080342260546,
+        "_DAMAGE_RATE": 0.0012286289431368469,
+        "_REPAIR_RATE": 0.0018042725782614565,
+        "_R_ALPHA_ENERGY": 0.00589635678678918,
+        "_R_ALPHA_HIST": 0.00679937646708454,
+        "_LAMBDA_SELF_ALPHA": 2.9570534116788227
+      },
+      "results": [
+        {
+          "survival": 0.7,
+          "stability": 0.0448265177602637,
+          "response": 0.04977933333333333,
+          "fitness": 0.37340382199474575,
+          "ticks": 490,
+          "alive_at_end": false
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360895866260243,
+          "response": 0.05094355555555555,
+          "fitness": 0.5232713987098918,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 0.8314285714285714,
+          "stability": 0.044445425427461605,
+          "response": 0.054562666666666634,
+          "fitness": 0.4399604466758575,
+          "ticks": 582,
+          "alive_at_end": false
+        },
+        {
+          "survival": 0.7371428571428571,
+          "stability": 0.045579505087191385,
+          "response": 0.05238955555555559,
+          "fitness": 0.3927231912086971,
+          "ticks": 516,
+          "alive_at_end": false
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360080900898553,
+          "response": 0.04863388888888894,
+          "fitness": 0.5228070204804734,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 0.9057142857142857,
+          "stability": 0.04480797225518792,
+          "response": 0.04901022222222218,
+          "fitness": 0.47610157897814365,
+          "ticks": 634,
+          "alive_at_end": false
+        },
+        {
+          "survival": 0.5657142857142857,
+          "stability": 0.047575088659025724,
+          "response": 0.02681738211382114,
+          "fitness": 0.30249314587761483,
+          "ticks": 396,
+          "alive_at_end": false
+        },
+        {
+          "survival": 0.6628571428571428,
+          "stability": 0.04631417375118039,
+          "response": 0.054460444444444416,
+          "fitness": 0.3562149124428144,
+          "ticks": 464,
+          "alive_at_end": false
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360596007160384,
+          "response": 0.05052655555555559,
+          "fitness": 0.5231870991325923,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 0.44142857142857145,
+          "stability": 0.05091960073984778,
+          "response": 0.18578604612159333,
+          "fitness": 0.2731473751605587,
+          "ticks": 309,
+          "alive_at_end": false
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360795185810112,
+          "response": 0.04975877777777776,
+          "fitness": 0.523034141112986,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04359680229863022,
+          "response": 0.046279333333333436,
+          "fitness": 0.5223349073562558,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 0.8257142857142857,
+          "stability": 0.04421049816929122,
+          "response": 0.04943411111111115,
+          "fitness": 0.4360071145301525,
+          "ticks": 578,
+          "alive_at_end": false
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04359080838205625,
+          "response": 0.05523688888888883,
+          "fitness": 0.5241246202923946,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 0.5128571428571429,
+          "stability": 0.04757226983444628,
+          "response": 0.18815335353535362,
+          "fitness": 0.30833092308597604,
+          "ticks": 359,
+          "alive_at_end": false
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04359823494515496,
+          "response": 0.052539777777777706,
+          "fitness": 0.523587426039102,
+          "ticks": 700,
+          "alive_at_end": true
+        }
+      ]
+    },
+    {
+      "gen": 1,
+      "best_fitness": 0.524096194721711,
+      "avg_fitness": 0.49799084474138117,
+      "best_genome": {
+        "_K_WARMTH": 0.5055100957882223,
+        "_PRESSURE_K": 0.16797289488509393,
+        "_WITHDRAW_ACCUM_RATE": 0.3182343611119305,
+        "_NARRATIVE_TENDENCY_BOOST": 1.9937081987028256,
+        "_DEATH_PROXIMITY_SLOW": 0.9353440229744739,
+        "_DEATH_PROXIMITY_BRIGHT": 0.7533487118846962,
+        "_AGING_SLOW_THRESHOLD": 0.492997164968691,
+        "_AGING_BRIGHT_THRESHOLD": 0.7089452899411671,
+        "_ENERGY_INPUT_RATE": 0.0024347887093939067,
+        "_ENERGY_DRAIN_BASE": 0.0037676772906378394,
+        "_DAMAGE_RATE": 0.0012757472688274887,
+        "_REPAIR_RATE": 0.0017340268429109323,
+        "_R_ALPHA_ENERGY": 0.004696894224128175,
+        "_R_ALPHA_HIST": 0.0043874695664467035,
+        "_LAMBDA_SELF_ALPHA": 1.8424799031762595
+      },
+      "results": [
+        {
+          "survival": 1.0,
+          "stability": 0.04360601446629416,
+          "response": 0.05149455555555553,
+          "fitness": 0.5233807154509994,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360333904425069,
+          "response": 0.050701555555555576,
+          "fitness": 0.5232213128243863,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.0436144128414643,
+          "response": 0.055002999999999955,
+          "fitness": 0.5240849238524393,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043597268657243796,
+          "response": 0.048197111111111204,
+          "fitness": 0.5227186028193954,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043607086855659366,
+          "response": 0.050950666666666665,
+          "fitness": 0.5232722593900311,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043587770289498944,
+          "response": 0.046250333333333296,
+          "fitness": 0.5223263977535163,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04358805647977748,
+          "response": 0.05509888888888893,
+          "fitness": 0.524096194721711,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 0.9057142857142857,
+          "stability": 0.04481026358340857,
+          "response": 0.04841922222222225,
+          "fitness": 0.47598406637660984,
+          "ticks": 634,
+          "alive_at_end": false
+        },
+        {
+          "survival": 0.6642857142857143,
+          "stability": 0.04642241167399749,
+          "response": 0.05729877777777777,
+          "fitness": 0.35752933620061195,
+          "ticks": 465,
+          "alive_at_end": false
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043598367963923,
+          "response": 0.0490301111111111,
+          "fitness": 0.5228855326113991,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360688729304703,
+          "response": 0.04613922222222215,
+          "fitness": 0.5223099106323585,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 0.5471428571428572,
+          "stability": 0.04787849354394095,
+          "response": 0.2265522002861231,
+          "fitness": 0.3332454166918355,
+          "ticks": 383,
+          "alive_at_end": false
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.0436087289927545,
+          "response": 0.0524872222222222,
+          "fitness": 0.5235800631422708,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04358325041764876,
+          "response": 0.05008644444444437,
+          "fitness": 0.5230922640141835,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360997643868399,
+          "response": 0.05094688888888884,
+          "fitness": 0.5232723707093829,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360175482915067,
+          "response": 0.04886811111111111,
+          "fitness": 0.5228541486709675,
+          "ticks": 700,
+          "alive_at_end": true
+        }
+      ]
+    },
+    {
+      "gen": 2,
+      "best_fitness": 0.5243958243948365,
+      "avg_fitness": 0.5106630597581695,
+      "best_genome": {
+        "_K_WARMTH": 0.45999498412762374,
+        "_PRESSURE_K": 0.38125130295310017,
+        "_WITHDRAW_ACCUM_RATE": 0.3077418269005226,
+        "_NARRATIVE_TENDENCY_BOOST": 1.1869726363425386,
+        "_DEATH_PROXIMITY_SLOW": 0.9416847833642854,
+        "_DEATH_PROXIMITY_BRIGHT": 0.6893176026400708,
+        "_AGING_SLOW_THRESHOLD": 0.32735159813228454,
+        "_AGING_BRIGHT_THRESHOLD": 1.014128736507032,
+        "_ENERGY_INPUT_RATE": 0.0037152863609616264,
+        "_ENERGY_DRAIN_BASE": 0.004622075074211617,
+        "_DAMAGE_RATE": 0.0009043620938549145,
+        "_REPAIR_RATE": 0.0020096808407401765,
+        "_R_ALPHA_ENERGY": 0.004757921789947002,
+        "_R_ALPHA_HIST": 0.005095631389363395,
+        "_LAMBDA_SELF_ALPHA": 1.4184561718545112
+      },
+      "results": [
+        {
+          "survival": 1.0,
+          "stability": 0.04361746887822851,
+          "response": 0.049337888888888876,
+          "fitness": 0.5229528184412463,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04359646330717712,
+          "response": 0.05052355555555559,
+          "fitness": 0.5231836501032643,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360153920698498,
+          "response": 0.04580244444444451,
+          "fitness": 0.5222409506509844,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360001084594367,
+          "response": 0.049704999999999985,
+          "fitness": 0.5230210032537831,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043593735274051394,
+          "response": 0.04721577777777773,
+          "fitness": 0.522521276137771,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043591367741079926,
+          "response": 0.05655611111111111,
+          "fitness": 0.5243886325445463,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04359714606143006,
+          "response": 0.05065744444444446,
+          "fitness": 0.5232106327073179,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04362160544626555,
+          "response": 0.04203788888888884,
+          "fitness": 0.5214940594116575,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360934057538086,
+          "response": 0.056565111111111094,
+          "fitness": 0.5243958243948365,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 0.9171428571428571,
+          "stability": 0.04424643850063796,
+          "response": 0.05186922222222223,
+          "fitness": 0.48221920456606443,
+          "ticks": 642,
+          "alive_at_end": false
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360797911650126,
+          "response": 0.05131988888888888,
+          "fitness": 0.5233463715127281,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04361506045386502,
+          "response": 0.05470422222222211,
+          "fitness": 0.524025362580604,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043612488630840794,
+          "response": 0.049223222222222196,
+          "fitness": 0.5229283910336967,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 0.6785714285714286,
+          "stability": 0.04636018313304836,
+          "response": 0.057100000000000026,
+          "fitness": 0.36461376922562877,
+          "ticks": 475,
+          "alive_at_end": false
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04359529510148439,
+          "response": 0.04652366666666662,
+          "fitness": 0.5223833218637787,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360088493527582,
+          "response": 0.05301711111111103,
+          "fitness": 0.5236836877028049,
+          "ticks": 700,
+          "alive_at_end": true
+        }
+      ]
+    },
+    {
+      "gen": 3,
+      "best_fitness": 0.5253473838053924,
+      "avg_fitness": 0.5052396585951491,
+      "best_genome": {
+        "_K_WARMTH": 0.5464718941521712,
+        "_PRESSURE_K": 0.12713567136900394,
+        "_WITHDRAW_ACCUM_RATE": 0.27290331831134346,
+        "_NARRATIVE_TENDENCY_BOOST": 1.8774832290531498,
+        "_DEATH_PROXIMITY_SLOW": 0.9299871794544747,
+        "_DEATH_PROXIMITY_BRIGHT": 0.9302335994005887,
+        "_AGING_SLOW_THRESHOLD": 0.3089417392060033,
+        "_AGING_BRIGHT_THRESHOLD": 1.0890092974044439,
+        "_ENERGY_INPUT_RATE": 0.004578045828617107,
+        "_ENERGY_DRAIN_BASE": 0.0029727944619278536,
+        "_DAMAGE_RATE": 0.0010449829323846084,
+        "_REPAIR_RATE": 0.0018654794837913635,
+        "_R_ALPHA_ENERGY": 0.006137342553484857,
+        "_R_ALPHA_HIST": 0.005678636101827577,
+        "_LAMBDA_SELF_ALPHA": 1.2160054528089757
+      },
+      "results": [
+        {
+          "survival": 1.0,
+          "stability": 0.043608734999252996,
+          "response": 0.05515033333333336,
+          "fitness": 0.5241126871664425,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043600589380362535,
+          "response": 0.04252366666666665,
+          "fitness": 0.5215849101474421,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360232981548413,
+          "response": 0.04619933333333331,
+          "fitness": 0.5223205656113119,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04358733151092174,
+          "response": 0.05128733333333339,
+          "fitness": 0.5233336661199433,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043600128204110015,
+          "response": 0.048367444444444484,
+          "fitness": 0.5227535273501218,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04361330007735528,
+          "response": 0.05208711111111111,
+          "fitness": 0.5235014122454288,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04361041179576655,
+          "response": 0.050468111111111096,
+          "fitness": 0.5231767457609522,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360932042900815,
+          "response": 0.059007555555555584,
+          "fitness": 0.5248843072398136,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04359490898093778,
+          "response": 0.06134455555555553,
+          "fitness": 0.5253473838053924,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04362112686071523,
+          "response": 0.05334688888888893,
+          "fitness": 0.5237557158359923,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 0.4685714285714286,
+          "stability": 0.04771255034804926,
+          "response": 0.5621743470661674,
+          "fitness": 0.3610343488033626,
+          "ticks": 328,
+          "alive_at_end": false
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04358281776005395,
+          "response": 0.04921088888888893,
+          "fitness": 0.5229170231057939,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 0.5885714285714285,
+          "stability": 0.046072401173807905,
+          "response": 0.43137849363867686,
+          "fitness": 0.394383133365592,
+          "ticks": 412,
+          "alive_at_end": false
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04361031527979128,
+          "response": 0.05095766666666668,
+          "fitness": 0.5232746279172708,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04359707034266043,
+          "response": 0.05669477777777779,
+          "fitness": 0.5244180766583536,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04359602129723783,
+          "response": 0.04978800000000001,
+          "fitness": 0.5230364063891714,
+          "ticks": 700,
+          "alive_at_end": true
+        }
+      ]
+    },
+    {
+      "gen": 4,
+      "best_fitness": 0.5241843521283052,
+      "avg_fitness": 0.507867222164919,
+      "best_genome": {
+        "_K_WARMTH": 0.5258815621898459,
+        "_PRESSURE_K": 0.14172137927856507,
+        "_WITHDRAW_ACCUM_RATE": 0.32674267813189184,
+        "_NARRATIVE_TENDENCY_BOOST": 3.339310118456572,
+        "_DEATH_PROXIMITY_SLOW": 0.7549825546898565,
+        "_DEATH_PROXIMITY_BRIGHT": 1.5783166203743535,
+        "_AGING_SLOW_THRESHOLD": 0.4009190972983134,
+        "_AGING_BRIGHT_THRESHOLD": 1.2559864719105713,
+        "_ENERGY_INPUT_RATE": 0.002892006601245099,
+        "_ENERGY_DRAIN_BASE": 0.001417804668864481,
+        "_DAMAGE_RATE": 0.0010795635516187238,
+        "_REPAIR_RATE": 0.0021492223735244402,
+        "_R_ALPHA_ENERGY": 0.005642840178602204,
+        "_R_ALPHA_HIST": 0.0068364901313527964,
+        "_LAMBDA_SELF_ALPHA": 1.1229600644996598
+      },
+      "results": [
+        {
+          "survival": 1.0,
+          "stability": 0.04361039962949288,
+          "response": 0.04873744444444453,
+          "fitness": 0.5228306087777368,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04358795007873826,
+          "response": 0.051490555555555595,
+          "fitness": 0.5233744961347326,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04356540172892441,
+          "response": 0.05378533333333334,
+          "fitness": 0.523826687185344,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04359884253012311,
+          "response": 0.05092344444444452,
+          "fitness": 0.5232643416479258,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04362138128634031,
+          "response": 0.051191222222222124,
+          "fitness": 0.5233246588303465,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04358141415038685,
+          "response": 0.05377733333333329,
+          "fitness": 0.5238298909117827,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04361949879386921,
+          "response": 0.05172144444444439,
+          "fitness": 0.5234301385270496,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043621986313843016,
+          "response": 0.051476666666666664,
+          "fitness": 0.5233819292274863,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043611470057313396,
+          "response": 0.055504555555555515,
+          "fitness": 0.5241843521283052,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043602131515174454,
+          "response": 0.04999888888888897,
+          "fitness": 0.5230804172323301,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04361377060216664,
+          "response": 0.048737999999999976,
+          "fitness": 0.52283173118065,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 0.8857142857142857,
+          "stability": 0.04416490688132017,
+          "response": 0.050842111111111116,
+          "fitness": 0.46627503714376106,
+          "ticks": 620,
+          "alive_at_end": false
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04362718034593245,
+          "response": 0.053955444444444375,
+          "fitness": 0.5238792429926686,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 0.47714285714285715,
+          "stability": 0.04802512224607888,
+          "response": 0.6806859347826087,
+          "fitness": 0.389116152201774,
+          "ticks": 334,
+          "alive_at_end": false
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04359440874605916,
+          "response": 0.04999444444444436,
+          "fitness": 0.5230772115127066,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 0.8842857142857142,
+          "stability": 0.04412200620415832,
+          "response": 0.05394600000000009,
+          "fitness": 0.4661686590041046,
+          "ticks": 619,
+          "alive_at_end": false
+        }
+      ]
+    },
+    {
+      "gen": 5,
+      "best_fitness": 0.5265764738202121,
+      "avg_fitness": 0.5213264893473095,
+      "best_genome": {
+        "_K_WARMTH": 0.2294051924802015,
+        "_PRESSURE_K": 0.3779418383473957,
+        "_WITHDRAW_ACCUM_RATE": 0.26831607833726845,
+        "_NARRATIVE_TENDENCY_BOOST": 1.9729581559592615,
+        "_DEATH_PROXIMITY_SLOW": 0.5726806434010591,
+        "_DEATH_PROXIMITY_BRIGHT": 1.2418240904911249,
+        "_AGING_SLOW_THRESHOLD": 0.735685530874987,
+        "_AGING_BRIGHT_THRESHOLD": 1.0026459056581565,
+        "_ENERGY_INPUT_RATE": 0.0023667048661956186,
+        "_ENERGY_DRAIN_BASE": 0.0023040272912731663,
+        "_DAMAGE_RATE": 0.0010782749035556179,
+        "_REPAIR_RATE": 0.0016078749093334289,
+        "_R_ALPHA_ENERGY": 0.0037035532392790792,
+        "_R_ALPHA_HIST": 0.006704244357371339,
+        "_LAMBDA_SELF_ALPHA": 1.729074796264806
+      },
+      "results": [
+        {
+          "survival": 1.0,
+          "stability": 0.04358894621559846,
+          "response": 0.05335666666666669,
+          "fitness": 0.5237480171980129,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04357606821117786,
+          "response": 0.049692777777777766,
+          "fitness": 0.5230113760189089,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043582773045207926,
+          "response": 0.04338655555555557,
+          "fitness": 0.5217521430246735,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.0436001426856198,
+          "response": 0.06053255555555558,
+          "fitness": 0.5251865539167971,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04362033938294264,
+          "response": 0.047347444444444484,
+          "fitness": 0.5225555907037717,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04363499659734054,
+          "response": 0.05105100000000001,
+          "fitness": 0.5233006989792022,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043576311950230075,
+          "response": 0.05401577777777787,
+          "fitness": 0.5238760491406246,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043576747036178684,
+          "response": 0.04970777777777773,
+          "fitness": 0.5230145796664092,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043601368085231414,
+          "response": 0.05828333333333334,
+          "fitness": 0.524737077092236,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 0.93,
+          "stability": 0.04360511537008251,
+          "response": 0.05053288888888892,
+          "fitness": 0.48818811238880255,
+          "ticks": 651,
+          "alive_at_end": false
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04358494676858182,
+          "response": 0.04741488888888877,
+          "fitness": 0.5225584618083523,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043586403461826274,
+          "response": 0.04407122222222217,
+          "fitness": 0.5218901654829924,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043617431252558715,
+          "response": 0.06745622222222225,
+          "fitness": 0.5265764738202121,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043622423444354914,
+          "response": 0.05446733333333338,
+          "fitness": 0.5239801936999732,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043617000127714765,
+          "response": 0.059620555555555496,
+          "fitness": 0.5250092111494256,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360219599963795,
+          "response": 0.04379233333333334,
+          "fitness": 0.5218391254665581,
+          "ticks": 700,
+          "alive_at_end": true
+        }
+      ]
+    },
+    {
+      "gen": 6,
+      "best_fitness": 0.5248963310637443,
+      "avg_fitness": 0.5233702311677038,
+      "best_genome": {
+        "_K_WARMTH": 0.5135922877530644,
+        "_PRESSURE_K": 0.3527215313372861,
+        "_WITHDRAW_ACCUM_RATE": 0.4190695145608177,
+        "_NARRATIVE_TENDENCY_BOOST": 1.5977962359446567,
+        "_DEATH_PROXIMITY_SLOW": 0.5514926232146329,
+        "_DEATH_PROXIMITY_BRIGHT": 1.2433865596321285,
+        "_AGING_SLOW_THRESHOLD": 0.5903989702043487,
+        "_AGING_BRIGHT_THRESHOLD": 0.6370526258892807,
+        "_ENERGY_INPUT_RATE": 0.002306637981143837,
+        "_ENERGY_DRAIN_BASE": 0.0028288054222023753,
+        "_DAMAGE_RATE": 0.0012553422381969426,
+        "_REPAIR_RATE": 0.0015107362990614585,
+        "_R_ALPHA_ENERGY": 0.0057037085027360455,
+        "_R_ALPHA_HIST": 0.006335994318917054,
+        "_LAMBDA_SELF_ALPHA": 1.4290067783862062
+      },
+      "results": [
+        {
+          "survival": 1.0,
+          "stability": 0.04361268646974883,
+          "response": 0.04672522222222225,
+          "fitness": 0.5224288503853691,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04357003734702772,
+          "response": 0.05676111111111118,
+          "fitness": 0.5244232334263306,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043648140582851505,
+          "response": 0.059009444444444496,
+          "fitness": 0.5248963310637443,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043621021673196654,
+          "response": 0.044946666666666704,
+          "fitness": 0.5220756398352923,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04359321635146553,
+          "response": 0.050246111111111144,
+          "fitness": 0.5231271871276619,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043610304056502694,
+          "response": 0.05126600000000005,
+          "fitness": 0.5233362912169508,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360571376537673,
+          "response": 0.050603333333333333,
+          "fitness": 0.5232023807962797,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043600402055887395,
+          "response": 0.050856999999999986,
+          "fitness": 0.5232515206167663,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043634318039479904,
+          "response": 0.04824533333333335,
+          "fitness": 0.5227393620785106,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360647720899801,
+          "response": 0.050086777777777716,
+          "fitness": 0.5230992987182549,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043597235612247515,
+          "response": 0.05820377777777779,
+          "fitness": 0.5247199262392298,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043606895273912705,
+          "response": 0.04328788888888879,
+          "fitness": 0.5217396463599515,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043593056048798894,
+          "response": 0.04914166666666664,
+          "fitness": 0.522906250147973,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043620898087075664,
+          "response": 0.05854111111111111,
+          "fitness": 0.5247944916483449,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360910320100704,
+          "response": 0.04776077777777776,
+          "fitness": 0.5226348865158577,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04361586020766297,
+          "response": 0.0573182222222222,
+          "fitness": 0.5245484025067434,
+          "ticks": 700,
+          "alive_at_end": true
+        }
+      ]
+    },
+    {
+      "gen": 7,
+      "best_fitness": 0.5256571616912225,
+      "avg_fitness": 0.5237410234369064,
+      "best_genome": {
+        "_K_WARMTH": 0.5258815621898459,
+        "_PRESSURE_K": 0.14172137927856507,
+        "_WITHDRAW_ACCUM_RATE": 0.32674267813189184,
+        "_NARRATIVE_TENDENCY_BOOST": 3.339310118456572,
+        "_DEATH_PROXIMITY_SLOW": 0.7549825546898565,
+        "_DEATH_PROXIMITY_BRIGHT": 1.5783166203743535,
+        "_AGING_SLOW_THRESHOLD": 0.4009190972983134,
+        "_AGING_BRIGHT_THRESHOLD": 1.2559864719105713,
+        "_ENERGY_INPUT_RATE": 0.002892006601245099,
+        "_ENERGY_DRAIN_BASE": 0.001417804668864481,
+        "_DAMAGE_RATE": 0.0010795635516187238,
+        "_REPAIR_RATE": 0.0021492223735244402,
+        "_R_ALPHA_ENERGY": 0.005642840178602204,
+        "_R_ALPHA_HIST": 0.0068364901313527964,
+        "_LAMBDA_SELF_ALPHA": 1.1229600644996598
+      },
+      "results": [
+        {
+          "survival": 1.0,
+          "stability": 0.04360915454414761,
+          "response": 0.04311511111111115,
+          "fitness": 0.5217057685854665,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360888858450818,
+          "response": 0.05156066666666663,
+          "fitness": 0.5233947999086859,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04358974264192545,
+          "response": 0.05507655555555556,
+          "fitness": 0.5240922339036888,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04363175437121477,
+          "response": 0.0547676666666667,
+          "fitness": 0.5240430596446978,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04361133061530821,
+          "response": 0.05966855555555553,
+          "fitness": 0.5250171102957035,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04361299699057369,
+          "response": 0.05408822222222225,
+          "fitness": 0.5239015435416166,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.0436180926457121,
+          "response": 0.05678188888888885,
+          "fitness": 0.5244418055714913,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043594538970741406,
+          "response": 0.062894,
+          "fitness": 0.5256571616912225,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360870235909463,
+          "response": 0.06187588888888892,
+          "fitness": 0.5254577884855062,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360426032601436,
+          "response": 0.0618531111111111,
+          "fitness": 0.5254519003200265,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043609575474101686,
+          "response": 0.04801899999999998,
+          "fitness": 0.5226866726422306,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04361171192006298,
+          "response": 0.05113788888888892,
+          "fitness": 0.5233110913537967,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360493003100616,
+          "response": 0.049978333333333264,
+          "fitness": 0.5230771456759685,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360782761147478,
+          "response": 0.05115600000000003,
+          "fitness": 0.5233135482834425,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043616723963625266,
+          "response": 0.047174000000000015,
+          "fitness": 0.5225198171890876,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04358798188179127,
+          "response": 0.04354266666666662,
+          "fitness": 0.5217849278978707,
+          "ticks": 700,
+          "alive_at_end": true
+        }
+      ]
+    },
+    {
+      "gen": 8,
+      "best_fitness": 0.5250577842314113,
+      "avg_fitness": 0.5236889126347164,
+      "best_genome": {
+        "_K_WARMTH": 0.7359572937622193,
+        "_PRESSURE_K": 0.2308643943957285,
+        "_WITHDRAW_ACCUM_RATE": 0.35115976873671984,
+        "_NARRATIVE_TENDENCY_BOOST": 2.2064757388283263,
+        "_DEATH_PROXIMITY_SLOW": 0.9364815570611008,
+        "_DEATH_PROXIMITY_BRIGHT": 1.361161232371478,
+        "_AGING_SLOW_THRESHOLD": 0.968337117306094,
+        "_AGING_BRIGHT_THRESHOLD": 0.6249116359840323,
+        "_ENERGY_INPUT_RATE": 0.002271169586638035,
+        "_ENERGY_DRAIN_BASE": 0.0018029211433191845,
+        "_DAMAGE_RATE": 0.0010807659573941189,
+        "_REPAIR_RATE": 0.0022767268672415366,
+        "_R_ALPHA_ENERGY": 0.005407096870677709,
+        "_R_ALPHA_HIST": 0.005492538160131999,
+        "_LAMBDA_SELF_ALPHA": 3.047873352282714
+      },
+      "results": [
+        {
+          "survival": 1.0,
+          "stability": 0.04358774663266857,
+          "response": 0.052069222222222156,
+          "fitness": 0.523490168434245,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04359067199225145,
+          "response": 0.05504466666666671,
+          "fitness": 0.5240861349310088,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360284522831937,
+          "response": 0.05115255555555555,
+          "fitness": 0.5233113646796069,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043594376159983406,
+          "response": 0.055506777777777724,
+          "fitness": 0.5241796684035506,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043595254216889506,
+          "response": 0.052009888888888876,
+          "fitness": 0.5234805540428445,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04361980331858242,
+          "response": 0.05690988888888887,
+          "fitness": 0.5244679187733525,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04362149309429354,
+          "response": 0.04774644444444444,
+          "fitness": 0.5226357368171769,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043562849674939216,
+          "response": 0.0508617777777777,
+          "fitness": 0.5232412104580373,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04358691040100036,
+          "response": 0.05990855555555559,
+          "fitness": 0.5250577842314113,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.0436218319840906,
+          "response": 0.0524017777777779,
+          "fitness": 0.5235669051507827,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04357082878802453,
+          "response": 0.05460666666666669,
+          "fitness": 0.5239925819697407,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04358628005862116,
+          "response": 0.05115933333333332,
+          "fitness": 0.523307750684253,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360441192594671,
+          "response": 0.05016666666666674,
+          "fitness": 0.5231146569111174,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360489056456915,
+          "response": 0.05470722222222229,
+          "fitness": 0.5240229116138152,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043604964488653586,
+          "response": 0.054198444444444514,
+          "fitness": 0.5239211782354849,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04358625606344588,
+          "response": 0.050351000000000104,
+          "fitness": 0.5231460768190338,
+          "ticks": 700,
+          "alive_at_end": true
+        }
+      ]
+    },
+    {
+      "gen": 9,
+      "best_fitness": 0.5251285720789605,
+      "avg_fitness": 0.5236682068109384,
+      "best_genome": {
+        "_K_WARMTH": 0.5001082459975478,
+        "_PRESSURE_K": 0.16478256045817966,
+        "_WITHDRAW_ACCUM_RATE": 0.30957633079560065,
+        "_NARRATIVE_TENDENCY_BOOST": 4.270115463975276,
+        "_DEATH_PROXIMITY_SLOW": 0.9488424488042789,
+        "_DEATH_PROXIMITY_BRIGHT": 1.0940890187237304,
+        "_AGING_SLOW_THRESHOLD": 0.900141904010722,
+        "_AGING_BRIGHT_THRESHOLD": 1.1705635540916606,
+        "_ENERGY_INPUT_RATE": 0.002819964111574401,
+        "_ENERGY_DRAIN_BASE": 0.00235835278552787,
+        "_DAMAGE_RATE": 0.0005757513291052195,
+        "_REPAIR_RATE": 0.002290169870048794,
+        "_R_ALPHA_ENERGY": 0.005835711457412691,
+        "_R_ALPHA_HIST": 0.003031235435328573,
+        "_LAMBDA_SELF_ALPHA": 1.1471000779830565
+      },
+      "results": [
+        {
+          "survival": 1.0,
+          "stability": 0.04358551687766759,
+          "response": 0.053256,
+          "fitness": 0.5237268550633003,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04355651630632313,
+          "response": 0.06009355555555559,
+          "fitness": 0.525085666003008,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04359968338210924,
+          "response": 0.06021255555555559,
+          "fitness": 0.5251224161257438,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04357885386110209,
+          "response": 0.04639400000000002,
+          "fitness": 0.5223524561583307,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043621124891871345,
+          "response": 0.05229711111111109,
+          "fitness": 0.5235457596897836,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360806483276676,
+          "response": 0.05443155555555551,
+          "fitness": 0.5239687305609411,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04359510182575395,
+          "response": 0.049352000000000056,
+          "fitness": 0.5229489305477263,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043620673429129446,
+          "response": 0.05350922222222226,
+          "fitness": 0.5237880464731832,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360686692044679,
+          "response": 0.04730022222222218,
+          "fitness": 0.5225421045205785,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043598725689029394,
+          "response": 0.05096933333333336,
+          "fitness": 0.5232734843733755,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04359516618912718,
+          "response": 0.06025011111111117,
+          "fitness": 0.5251285720789605,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360214082930149,
+          "response": 0.05093088888888889,
+          "fitness": 0.5232668200265682,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043581496365312576,
+          "response": 0.05199988888888882,
+          "fitness": 0.5234744266873715,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.043608415873622616,
+          "response": 0.05334266666666666,
+          "fitness": 0.5237510580954201,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04359396319220539,
+          "response": 0.04701844444444446,
+          "fitness": 0.5224818778465505,
+          "ticks": 700,
+          "alive_at_end": true
+        },
+        {
+          "survival": 1.0,
+          "stability": 0.04360605278428042,
+          "response": 0.055761444444444405,
+          "fitness": 0.524234104724173,
+          "ticks": 700,
+          "alive_at_end": true
+        }
+      ]
+    }
+  ],
+  "all_results": [
+    {
+      "gen": 0,
+      "idx": 0,
+      "survival": 0.7,
+      "stability": 0.0448265177602637,
+      "response": 0.04977933333333333,
+      "fitness": 0.37340382199474575,
+      "ticks": 490,
+      "alive_at_end": false
+    },
+    {
+      "gen": 0,
+      "idx": 1,
+      "survival": 1.0,
+      "stability": 0.04360895866260243,
+      "response": 0.05094355555555555,
+      "fitness": 0.5232713987098918,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 0,
+      "idx": 2,
+      "survival": 0.8314285714285714,
+      "stability": 0.044445425427461605,
+      "response": 0.054562666666666634,
+      "fitness": 0.4399604466758575,
+      "ticks": 582,
+      "alive_at_end": false
+    },
+    {
+      "gen": 0,
+      "idx": 3,
+      "survival": 0.7371428571428571,
+      "stability": 0.045579505087191385,
+      "response": 0.05238955555555559,
+      "fitness": 0.3927231912086971,
+      "ticks": 516,
+      "alive_at_end": false
+    },
+    {
+      "gen": 0,
+      "idx": 4,
+      "survival": 1.0,
+      "stability": 0.04360080900898553,
+      "response": 0.04863388888888894,
+      "fitness": 0.5228070204804734,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 0,
+      "idx": 5,
+      "survival": 0.9057142857142857,
+      "stability": 0.04480797225518792,
+      "response": 0.04901022222222218,
+      "fitness": 0.47610157897814365,
+      "ticks": 634,
+      "alive_at_end": false
+    },
+    {
+      "gen": 0,
+      "idx": 6,
+      "survival": 0.5657142857142857,
+      "stability": 0.047575088659025724,
+      "response": 0.02681738211382114,
+      "fitness": 0.30249314587761483,
+      "ticks": 396,
+      "alive_at_end": false
+    },
+    {
+      "gen": 0,
+      "idx": 7,
+      "survival": 0.6628571428571428,
+      "stability": 0.04631417375118039,
+      "response": 0.054460444444444416,
+      "fitness": 0.3562149124428144,
+      "ticks": 464,
+      "alive_at_end": false
+    },
+    {
+      "gen": 0,
+      "idx": 8,
+      "survival": 1.0,
+      "stability": 0.04360596007160384,
+      "response": 0.05052655555555559,
+      "fitness": 0.5231870991325923,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 0,
+      "idx": 9,
+      "survival": 0.44142857142857145,
+      "stability": 0.05091960073984778,
+      "response": 0.18578604612159333,
+      "fitness": 0.2731473751605587,
+      "ticks": 309,
+      "alive_at_end": false
+    },
+    {
+      "gen": 0,
+      "idx": 10,
+      "survival": 1.0,
+      "stability": 0.04360795185810112,
+      "response": 0.04975877777777776,
+      "fitness": 0.523034141112986,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 0,
+      "idx": 11,
+      "survival": 1.0,
+      "stability": 0.04359680229863022,
+      "response": 0.046279333333333436,
+      "fitness": 0.5223349073562558,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 0,
+      "idx": 12,
+      "survival": 0.8257142857142857,
+      "stability": 0.04421049816929122,
+      "response": 0.04943411111111115,
+      "fitness": 0.4360071145301525,
+      "ticks": 578,
+      "alive_at_end": false
+    },
+    {
+      "gen": 0,
+      "idx": 13,
+      "survival": 1.0,
+      "stability": 0.04359080838205625,
+      "response": 0.05523688888888883,
+      "fitness": 0.5241246202923946,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 0,
+      "idx": 14,
+      "survival": 0.5128571428571429,
+      "stability": 0.04757226983444628,
+      "response": 0.18815335353535362,
+      "fitness": 0.30833092308597604,
+      "ticks": 359,
+      "alive_at_end": false
+    },
+    {
+      "gen": 0,
+      "idx": 15,
+      "survival": 1.0,
+      "stability": 0.04359823494515496,
+      "response": 0.052539777777777706,
+      "fitness": 0.523587426039102,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 1,
+      "idx": 0,
+      "survival": 1.0,
+      "stability": 0.04360601446629416,
+      "response": 0.05149455555555553,
+      "fitness": 0.5233807154509994,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 1,
+      "idx": 1,
+      "survival": 1.0,
+      "stability": 0.04360333904425069,
+      "response": 0.050701555555555576,
+      "fitness": 0.5232213128243863,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 1,
+      "idx": 2,
+      "survival": 1.0,
+      "stability": 0.0436144128414643,
+      "response": 0.055002999999999955,
+      "fitness": 0.5240849238524393,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 1,
+      "idx": 3,
+      "survival": 1.0,
+      "stability": 0.043597268657243796,
+      "response": 0.048197111111111204,
+      "fitness": 0.5227186028193954,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 1,
+      "idx": 4,
+      "survival": 1.0,
+      "stability": 0.043607086855659366,
+      "response": 0.050950666666666665,
+      "fitness": 0.5232722593900311,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 1,
+      "idx": 5,
+      "survival": 1.0,
+      "stability": 0.043587770289498944,
+      "response": 0.046250333333333296,
+      "fitness": 0.5223263977535163,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 1,
+      "idx": 6,
+      "survival": 1.0,
+      "stability": 0.04358805647977748,
+      "response": 0.05509888888888893,
+      "fitness": 0.524096194721711,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 1,
+      "idx": 7,
+      "survival": 0.9057142857142857,
+      "stability": 0.04481026358340857,
+      "response": 0.04841922222222225,
+      "fitness": 0.47598406637660984,
+      "ticks": 634,
+      "alive_at_end": false
+    },
+    {
+      "gen": 1,
+      "idx": 8,
+      "survival": 0.6642857142857143,
+      "stability": 0.04642241167399749,
+      "response": 0.05729877777777777,
+      "fitness": 0.35752933620061195,
+      "ticks": 465,
+      "alive_at_end": false
+    },
+    {
+      "gen": 1,
+      "idx": 9,
+      "survival": 1.0,
+      "stability": 0.043598367963923,
+      "response": 0.0490301111111111,
+      "fitness": 0.5228855326113991,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 1,
+      "idx": 10,
+      "survival": 1.0,
+      "stability": 0.04360688729304703,
+      "response": 0.04613922222222215,
+      "fitness": 0.5223099106323585,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 1,
+      "idx": 11,
+      "survival": 0.5471428571428572,
+      "stability": 0.04787849354394095,
+      "response": 0.2265522002861231,
+      "fitness": 0.3332454166918355,
+      "ticks": 383,
+      "alive_at_end": false
+    },
+    {
+      "gen": 1,
+      "idx": 12,
+      "survival": 1.0,
+      "stability": 0.0436087289927545,
+      "response": 0.0524872222222222,
+      "fitness": 0.5235800631422708,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 1,
+      "idx": 13,
+      "survival": 1.0,
+      "stability": 0.04358325041764876,
+      "response": 0.05008644444444437,
+      "fitness": 0.5230922640141835,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 1,
+      "idx": 14,
+      "survival": 1.0,
+      "stability": 0.04360997643868399,
+      "response": 0.05094688888888884,
+      "fitness": 0.5232723707093829,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 1,
+      "idx": 15,
+      "survival": 1.0,
+      "stability": 0.04360175482915067,
+      "response": 0.04886811111111111,
+      "fitness": 0.5228541486709675,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 2,
+      "idx": 0,
+      "survival": 1.0,
+      "stability": 0.04361746887822851,
+      "response": 0.049337888888888876,
+      "fitness": 0.5229528184412463,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 2,
+      "idx": 1,
+      "survival": 1.0,
+      "stability": 0.04359646330717712,
+      "response": 0.05052355555555559,
+      "fitness": 0.5231836501032643,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 2,
+      "idx": 2,
+      "survival": 1.0,
+      "stability": 0.04360153920698498,
+      "response": 0.04580244444444451,
+      "fitness": 0.5222409506509844,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 2,
+      "idx": 3,
+      "survival": 1.0,
+      "stability": 0.04360001084594367,
+      "response": 0.049704999999999985,
+      "fitness": 0.5230210032537831,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 2,
+      "idx": 4,
+      "survival": 1.0,
+      "stability": 0.043593735274051394,
+      "response": 0.04721577777777773,
+      "fitness": 0.522521276137771,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 2,
+      "idx": 5,
+      "survival": 1.0,
+      "stability": 0.043591367741079926,
+      "response": 0.05655611111111111,
+      "fitness": 0.5243886325445463,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 2,
+      "idx": 6,
+      "survival": 1.0,
+      "stability": 0.04359714606143006,
+      "response": 0.05065744444444446,
+      "fitness": 0.5232106327073179,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 2,
+      "idx": 7,
+      "survival": 1.0,
+      "stability": 0.04362160544626555,
+      "response": 0.04203788888888884,
+      "fitness": 0.5214940594116575,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 2,
+      "idx": 8,
+      "survival": 1.0,
+      "stability": 0.04360934057538086,
+      "response": 0.056565111111111094,
+      "fitness": 0.5243958243948365,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 2,
+      "idx": 9,
+      "survival": 0.9171428571428571,
+      "stability": 0.04424643850063796,
+      "response": 0.05186922222222223,
+      "fitness": 0.48221920456606443,
+      "ticks": 642,
+      "alive_at_end": false
+    },
+    {
+      "gen": 2,
+      "idx": 10,
+      "survival": 1.0,
+      "stability": 0.04360797911650126,
+      "response": 0.05131988888888888,
+      "fitness": 0.5233463715127281,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 2,
+      "idx": 11,
+      "survival": 1.0,
+      "stability": 0.04361506045386502,
+      "response": 0.05470422222222211,
+      "fitness": 0.524025362580604,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 2,
+      "idx": 12,
+      "survival": 1.0,
+      "stability": 0.043612488630840794,
+      "response": 0.049223222222222196,
+      "fitness": 0.5229283910336967,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 2,
+      "idx": 13,
+      "survival": 0.6785714285714286,
+      "stability": 0.04636018313304836,
+      "response": 0.057100000000000026,
+      "fitness": 0.36461376922562877,
+      "ticks": 475,
+      "alive_at_end": false
+    },
+    {
+      "gen": 2,
+      "idx": 14,
+      "survival": 1.0,
+      "stability": 0.04359529510148439,
+      "response": 0.04652366666666662,
+      "fitness": 0.5223833218637787,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 2,
+      "idx": 15,
+      "survival": 1.0,
+      "stability": 0.04360088493527582,
+      "response": 0.05301711111111103,
+      "fitness": 0.5236836877028049,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 3,
+      "idx": 0,
+      "survival": 1.0,
+      "stability": 0.043608734999252996,
+      "response": 0.05515033333333336,
+      "fitness": 0.5241126871664425,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 3,
+      "idx": 1,
+      "survival": 1.0,
+      "stability": 0.043600589380362535,
+      "response": 0.04252366666666665,
+      "fitness": 0.5215849101474421,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 3,
+      "idx": 2,
+      "survival": 1.0,
+      "stability": 0.04360232981548413,
+      "response": 0.04619933333333331,
+      "fitness": 0.5223205656113119,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 3,
+      "idx": 3,
+      "survival": 1.0,
+      "stability": 0.04358733151092174,
+      "response": 0.05128733333333339,
+      "fitness": 0.5233336661199433,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 3,
+      "idx": 4,
+      "survival": 1.0,
+      "stability": 0.043600128204110015,
+      "response": 0.048367444444444484,
+      "fitness": 0.5227535273501218,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 3,
+      "idx": 5,
+      "survival": 1.0,
+      "stability": 0.04361330007735528,
+      "response": 0.05208711111111111,
+      "fitness": 0.5235014122454288,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 3,
+      "idx": 6,
+      "survival": 1.0,
+      "stability": 0.04361041179576655,
+      "response": 0.050468111111111096,
+      "fitness": 0.5231767457609522,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 3,
+      "idx": 7,
+      "survival": 1.0,
+      "stability": 0.04360932042900815,
+      "response": 0.059007555555555584,
+      "fitness": 0.5248843072398136,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 3,
+      "idx": 8,
+      "survival": 1.0,
+      "stability": 0.04359490898093778,
+      "response": 0.06134455555555553,
+      "fitness": 0.5253473838053924,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 3,
+      "idx": 9,
+      "survival": 1.0,
+      "stability": 0.04362112686071523,
+      "response": 0.05334688888888893,
+      "fitness": 0.5237557158359923,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 3,
+      "idx": 10,
+      "survival": 0.4685714285714286,
+      "stability": 0.04771255034804926,
+      "response": 0.5621743470661674,
+      "fitness": 0.3610343488033626,
+      "ticks": 328,
+      "alive_at_end": false
+    },
+    {
+      "gen": 3,
+      "idx": 11,
+      "survival": 1.0,
+      "stability": 0.04358281776005395,
+      "response": 0.04921088888888893,
+      "fitness": 0.5229170231057939,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 3,
+      "idx": 12,
+      "survival": 0.5885714285714285,
+      "stability": 0.046072401173807905,
+      "response": 0.43137849363867686,
+      "fitness": 0.394383133365592,
+      "ticks": 412,
+      "alive_at_end": false
+    },
+    {
+      "gen": 3,
+      "idx": 13,
+      "survival": 1.0,
+      "stability": 0.04361031527979128,
+      "response": 0.05095766666666668,
+      "fitness": 0.5232746279172708,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 3,
+      "idx": 14,
+      "survival": 1.0,
+      "stability": 0.04359707034266043,
+      "response": 0.05669477777777779,
+      "fitness": 0.5244180766583536,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 3,
+      "idx": 15,
+      "survival": 1.0,
+      "stability": 0.04359602129723783,
+      "response": 0.04978800000000001,
+      "fitness": 0.5230364063891714,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 4,
+      "idx": 0,
+      "survival": 1.0,
+      "stability": 0.04361039962949288,
+      "response": 0.04873744444444453,
+      "fitness": 0.5228306087777368,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 4,
+      "idx": 1,
+      "survival": 1.0,
+      "stability": 0.04358795007873826,
+      "response": 0.051490555555555595,
+      "fitness": 0.5233744961347326,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 4,
+      "idx": 2,
+      "survival": 1.0,
+      "stability": 0.04356540172892441,
+      "response": 0.05378533333333334,
+      "fitness": 0.523826687185344,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 4,
+      "idx": 3,
+      "survival": 1.0,
+      "stability": 0.04359884253012311,
+      "response": 0.05092344444444452,
+      "fitness": 0.5232643416479258,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 4,
+      "idx": 4,
+      "survival": 1.0,
+      "stability": 0.04362138128634031,
+      "response": 0.051191222222222124,
+      "fitness": 0.5233246588303465,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 4,
+      "idx": 5,
+      "survival": 1.0,
+      "stability": 0.04358141415038685,
+      "response": 0.05377733333333329,
+      "fitness": 0.5238298909117827,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 4,
+      "idx": 6,
+      "survival": 1.0,
+      "stability": 0.04361949879386921,
+      "response": 0.05172144444444439,
+      "fitness": 0.5234301385270496,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 4,
+      "idx": 7,
+      "survival": 1.0,
+      "stability": 0.043621986313843016,
+      "response": 0.051476666666666664,
+      "fitness": 0.5233819292274863,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 4,
+      "idx": 8,
+      "survival": 1.0,
+      "stability": 0.043611470057313396,
+      "response": 0.055504555555555515,
+      "fitness": 0.5241843521283052,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 4,
+      "idx": 9,
+      "survival": 1.0,
+      "stability": 0.043602131515174454,
+      "response": 0.04999888888888897,
+      "fitness": 0.5230804172323301,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 4,
+      "idx": 10,
+      "survival": 1.0,
+      "stability": 0.04361377060216664,
+      "response": 0.048737999999999976,
+      "fitness": 0.52283173118065,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 4,
+      "idx": 11,
+      "survival": 0.8857142857142857,
+      "stability": 0.04416490688132017,
+      "response": 0.050842111111111116,
+      "fitness": 0.46627503714376106,
+      "ticks": 620,
+      "alive_at_end": false
+    },
+    {
+      "gen": 4,
+      "idx": 12,
+      "survival": 1.0,
+      "stability": 0.04362718034593245,
+      "response": 0.053955444444444375,
+      "fitness": 0.5238792429926686,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 4,
+      "idx": 13,
+      "survival": 0.47714285714285715,
+      "stability": 0.04802512224607888,
+      "response": 0.6806859347826087,
+      "fitness": 0.389116152201774,
+      "ticks": 334,
+      "alive_at_end": false
+    },
+    {
+      "gen": 4,
+      "idx": 14,
+      "survival": 1.0,
+      "stability": 0.04359440874605916,
+      "response": 0.04999444444444436,
+      "fitness": 0.5230772115127066,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 4,
+      "idx": 15,
+      "survival": 0.8842857142857142,
+      "stability": 0.04412200620415832,
+      "response": 0.05394600000000009,
+      "fitness": 0.4661686590041046,
+      "ticks": 619,
+      "alive_at_end": false
+    },
+    {
+      "gen": 5,
+      "idx": 0,
+      "survival": 1.0,
+      "stability": 0.04358894621559846,
+      "response": 0.05335666666666669,
+      "fitness": 0.5237480171980129,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 5,
+      "idx": 1,
+      "survival": 1.0,
+      "stability": 0.04357606821117786,
+      "response": 0.049692777777777766,
+      "fitness": 0.5230113760189089,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 5,
+      "idx": 2,
+      "survival": 1.0,
+      "stability": 0.043582773045207926,
+      "response": 0.04338655555555557,
+      "fitness": 0.5217521430246735,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 5,
+      "idx": 3,
+      "survival": 1.0,
+      "stability": 0.0436001426856198,
+      "response": 0.06053255555555558,
+      "fitness": 0.5251865539167971,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 5,
+      "idx": 4,
+      "survival": 1.0,
+      "stability": 0.04362033938294264,
+      "response": 0.047347444444444484,
+      "fitness": 0.5225555907037717,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 5,
+      "idx": 5,
+      "survival": 1.0,
+      "stability": 0.04363499659734054,
+      "response": 0.05105100000000001,
+      "fitness": 0.5233006989792022,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 5,
+      "idx": 6,
+      "survival": 1.0,
+      "stability": 0.043576311950230075,
+      "response": 0.05401577777777787,
+      "fitness": 0.5238760491406246,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 5,
+      "idx": 7,
+      "survival": 1.0,
+      "stability": 0.043576747036178684,
+      "response": 0.04970777777777773,
+      "fitness": 0.5230145796664092,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 5,
+      "idx": 8,
+      "survival": 1.0,
+      "stability": 0.043601368085231414,
+      "response": 0.05828333333333334,
+      "fitness": 0.524737077092236,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 5,
+      "idx": 9,
+      "survival": 0.93,
+      "stability": 0.04360511537008251,
+      "response": 0.05053288888888892,
+      "fitness": 0.48818811238880255,
+      "ticks": 651,
+      "alive_at_end": false
+    },
+    {
+      "gen": 5,
+      "idx": 10,
+      "survival": 1.0,
+      "stability": 0.04358494676858182,
+      "response": 0.04741488888888877,
+      "fitness": 0.5225584618083523,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 5,
+      "idx": 11,
+      "survival": 1.0,
+      "stability": 0.043586403461826274,
+      "response": 0.04407122222222217,
+      "fitness": 0.5218901654829924,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 5,
+      "idx": 12,
+      "survival": 1.0,
+      "stability": 0.043617431252558715,
+      "response": 0.06745622222222225,
+      "fitness": 0.5265764738202121,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 5,
+      "idx": 13,
+      "survival": 1.0,
+      "stability": 0.043622423444354914,
+      "response": 0.05446733333333338,
+      "fitness": 0.5239801936999732,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 5,
+      "idx": 14,
+      "survival": 1.0,
+      "stability": 0.043617000127714765,
+      "response": 0.059620555555555496,
+      "fitness": 0.5250092111494256,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 5,
+      "idx": 15,
+      "survival": 1.0,
+      "stability": 0.04360219599963795,
+      "response": 0.04379233333333334,
+      "fitness": 0.5218391254665581,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 6,
+      "idx": 0,
+      "survival": 1.0,
+      "stability": 0.04361268646974883,
+      "response": 0.04672522222222225,
+      "fitness": 0.5224288503853691,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 6,
+      "idx": 1,
+      "survival": 1.0,
+      "stability": 0.04357003734702772,
+      "response": 0.05676111111111118,
+      "fitness": 0.5244232334263306,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 6,
+      "idx": 2,
+      "survival": 1.0,
+      "stability": 0.043648140582851505,
+      "response": 0.059009444444444496,
+      "fitness": 0.5248963310637443,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 6,
+      "idx": 3,
+      "survival": 1.0,
+      "stability": 0.043621021673196654,
+      "response": 0.044946666666666704,
+      "fitness": 0.5220756398352923,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 6,
+      "idx": 4,
+      "survival": 1.0,
+      "stability": 0.04359321635146553,
+      "response": 0.050246111111111144,
+      "fitness": 0.5231271871276619,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 6,
+      "idx": 5,
+      "survival": 1.0,
+      "stability": 0.043610304056502694,
+      "response": 0.05126600000000005,
+      "fitness": 0.5233362912169508,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 6,
+      "idx": 6,
+      "survival": 1.0,
+      "stability": 0.04360571376537673,
+      "response": 0.050603333333333333,
+      "fitness": 0.5232023807962797,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 6,
+      "idx": 7,
+      "survival": 1.0,
+      "stability": 0.043600402055887395,
+      "response": 0.050856999999999986,
+      "fitness": 0.5232515206167663,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 6,
+      "idx": 8,
+      "survival": 1.0,
+      "stability": 0.043634318039479904,
+      "response": 0.04824533333333335,
+      "fitness": 0.5227393620785106,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 6,
+      "idx": 9,
+      "survival": 1.0,
+      "stability": 0.04360647720899801,
+      "response": 0.050086777777777716,
+      "fitness": 0.5230992987182549,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 6,
+      "idx": 10,
+      "survival": 1.0,
+      "stability": 0.043597235612247515,
+      "response": 0.05820377777777779,
+      "fitness": 0.5247199262392298,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 6,
+      "idx": 11,
+      "survival": 1.0,
+      "stability": 0.043606895273912705,
+      "response": 0.04328788888888879,
+      "fitness": 0.5217396463599515,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 6,
+      "idx": 12,
+      "survival": 1.0,
+      "stability": 0.043593056048798894,
+      "response": 0.04914166666666664,
+      "fitness": 0.522906250147973,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 6,
+      "idx": 13,
+      "survival": 1.0,
+      "stability": 0.043620898087075664,
+      "response": 0.05854111111111111,
+      "fitness": 0.5247944916483449,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 6,
+      "idx": 14,
+      "survival": 1.0,
+      "stability": 0.04360910320100704,
+      "response": 0.04776077777777776,
+      "fitness": 0.5226348865158577,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 6,
+      "idx": 15,
+      "survival": 1.0,
+      "stability": 0.04361586020766297,
+      "response": 0.0573182222222222,
+      "fitness": 0.5245484025067434,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 7,
+      "idx": 0,
+      "survival": 1.0,
+      "stability": 0.04360915454414761,
+      "response": 0.04311511111111115,
+      "fitness": 0.5217057685854665,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 7,
+      "idx": 1,
+      "survival": 1.0,
+      "stability": 0.04360888858450818,
+      "response": 0.05156066666666663,
+      "fitness": 0.5233947999086859,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 7,
+      "idx": 2,
+      "survival": 1.0,
+      "stability": 0.04358974264192545,
+      "response": 0.05507655555555556,
+      "fitness": 0.5240922339036888,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 7,
+      "idx": 3,
+      "survival": 1.0,
+      "stability": 0.04363175437121477,
+      "response": 0.0547676666666667,
+      "fitness": 0.5240430596446978,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 7,
+      "idx": 4,
+      "survival": 1.0,
+      "stability": 0.04361133061530821,
+      "response": 0.05966855555555553,
+      "fitness": 0.5250171102957035,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 7,
+      "idx": 5,
+      "survival": 1.0,
+      "stability": 0.04361299699057369,
+      "response": 0.05408822222222225,
+      "fitness": 0.5239015435416166,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 7,
+      "idx": 6,
+      "survival": 1.0,
+      "stability": 0.0436180926457121,
+      "response": 0.05678188888888885,
+      "fitness": 0.5244418055714913,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 7,
+      "idx": 7,
+      "survival": 1.0,
+      "stability": 0.043594538970741406,
+      "response": 0.062894,
+      "fitness": 0.5256571616912225,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 7,
+      "idx": 8,
+      "survival": 1.0,
+      "stability": 0.04360870235909463,
+      "response": 0.06187588888888892,
+      "fitness": 0.5254577884855062,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 7,
+      "idx": 9,
+      "survival": 1.0,
+      "stability": 0.04360426032601436,
+      "response": 0.0618531111111111,
+      "fitness": 0.5254519003200265,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 7,
+      "idx": 10,
+      "survival": 1.0,
+      "stability": 0.043609575474101686,
+      "response": 0.04801899999999998,
+      "fitness": 0.5226866726422306,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 7,
+      "idx": 11,
+      "survival": 1.0,
+      "stability": 0.04361171192006298,
+      "response": 0.05113788888888892,
+      "fitness": 0.5233110913537967,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 7,
+      "idx": 12,
+      "survival": 1.0,
+      "stability": 0.04360493003100616,
+      "response": 0.049978333333333264,
+      "fitness": 0.5230771456759685,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 7,
+      "idx": 13,
+      "survival": 1.0,
+      "stability": 0.04360782761147478,
+      "response": 0.05115600000000003,
+      "fitness": 0.5233135482834425,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 7,
+      "idx": 14,
+      "survival": 1.0,
+      "stability": 0.043616723963625266,
+      "response": 0.047174000000000015,
+      "fitness": 0.5225198171890876,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 7,
+      "idx": 15,
+      "survival": 1.0,
+      "stability": 0.04358798188179127,
+      "response": 0.04354266666666662,
+      "fitness": 0.5217849278978707,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 8,
+      "idx": 0,
+      "survival": 1.0,
+      "stability": 0.04358774663266857,
+      "response": 0.052069222222222156,
+      "fitness": 0.523490168434245,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 8,
+      "idx": 1,
+      "survival": 1.0,
+      "stability": 0.04359067199225145,
+      "response": 0.05504466666666671,
+      "fitness": 0.5240861349310088,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 8,
+      "idx": 2,
+      "survival": 1.0,
+      "stability": 0.04360284522831937,
+      "response": 0.05115255555555555,
+      "fitness": 0.5233113646796069,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 8,
+      "idx": 3,
+      "survival": 1.0,
+      "stability": 0.043594376159983406,
+      "response": 0.055506777777777724,
+      "fitness": 0.5241796684035506,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 8,
+      "idx": 4,
+      "survival": 1.0,
+      "stability": 0.043595254216889506,
+      "response": 0.052009888888888876,
+      "fitness": 0.5234805540428445,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 8,
+      "idx": 5,
+      "survival": 1.0,
+      "stability": 0.04361980331858242,
+      "response": 0.05690988888888887,
+      "fitness": 0.5244679187733525,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 8,
+      "idx": 6,
+      "survival": 1.0,
+      "stability": 0.04362149309429354,
+      "response": 0.04774644444444444,
+      "fitness": 0.5226357368171769,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 8,
+      "idx": 7,
+      "survival": 1.0,
+      "stability": 0.043562849674939216,
+      "response": 0.0508617777777777,
+      "fitness": 0.5232412104580373,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 8,
+      "idx": 8,
+      "survival": 1.0,
+      "stability": 0.04358691040100036,
+      "response": 0.05990855555555559,
+      "fitness": 0.5250577842314113,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 8,
+      "idx": 9,
+      "survival": 1.0,
+      "stability": 0.0436218319840906,
+      "response": 0.0524017777777779,
+      "fitness": 0.5235669051507827,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 8,
+      "idx": 10,
+      "survival": 1.0,
+      "stability": 0.04357082878802453,
+      "response": 0.05460666666666669,
+      "fitness": 0.5239925819697407,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 8,
+      "idx": 11,
+      "survival": 1.0,
+      "stability": 0.04358628005862116,
+      "response": 0.05115933333333332,
+      "fitness": 0.523307750684253,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 8,
+      "idx": 12,
+      "survival": 1.0,
+      "stability": 0.04360441192594671,
+      "response": 0.05016666666666674,
+      "fitness": 0.5231146569111174,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 8,
+      "idx": 13,
+      "survival": 1.0,
+      "stability": 0.04360489056456915,
+      "response": 0.05470722222222229,
+      "fitness": 0.5240229116138152,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 8,
+      "idx": 14,
+      "survival": 1.0,
+      "stability": 0.043604964488653586,
+      "response": 0.054198444444444514,
+      "fitness": 0.5239211782354849,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 8,
+      "idx": 15,
+      "survival": 1.0,
+      "stability": 0.04358625606344588,
+      "response": 0.050351000000000104,
+      "fitness": 0.5231460768190338,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 9,
+      "idx": 0,
+      "survival": 1.0,
+      "stability": 0.04358551687766759,
+      "response": 0.053256,
+      "fitness": 0.5237268550633003,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 9,
+      "idx": 1,
+      "survival": 1.0,
+      "stability": 0.04355651630632313,
+      "response": 0.06009355555555559,
+      "fitness": 0.525085666003008,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 9,
+      "idx": 2,
+      "survival": 1.0,
+      "stability": 0.04359968338210924,
+      "response": 0.06021255555555559,
+      "fitness": 0.5251224161257438,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 9,
+      "idx": 3,
+      "survival": 1.0,
+      "stability": 0.04357885386110209,
+      "response": 0.04639400000000002,
+      "fitness": 0.5223524561583307,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 9,
+      "idx": 4,
+      "survival": 1.0,
+      "stability": 0.043621124891871345,
+      "response": 0.05229711111111109,
+      "fitness": 0.5235457596897836,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 9,
+      "idx": 5,
+      "survival": 1.0,
+      "stability": 0.04360806483276676,
+      "response": 0.05443155555555551,
+      "fitness": 0.5239687305609411,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 9,
+      "idx": 6,
+      "survival": 1.0,
+      "stability": 0.04359510182575395,
+      "response": 0.049352000000000056,
+      "fitness": 0.5229489305477263,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 9,
+      "idx": 7,
+      "survival": 1.0,
+      "stability": 0.043620673429129446,
+      "response": 0.05350922222222226,
+      "fitness": 0.5237880464731832,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 9,
+      "idx": 8,
+      "survival": 1.0,
+      "stability": 0.04360686692044679,
+      "response": 0.04730022222222218,
+      "fitness": 0.5225421045205785,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 9,
+      "idx": 9,
+      "survival": 1.0,
+      "stability": 0.043598725689029394,
+      "response": 0.05096933333333336,
+      "fitness": 0.5232734843733755,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 9,
+      "idx": 10,
+      "survival": 1.0,
+      "stability": 0.04359516618912718,
+      "response": 0.06025011111111117,
+      "fitness": 0.5251285720789605,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 9,
+      "idx": 11,
+      "survival": 1.0,
+      "stability": 0.04360214082930149,
+      "response": 0.05093088888888889,
+      "fitness": 0.5232668200265682,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 9,
+      "idx": 12,
+      "survival": 1.0,
+      "stability": 0.043581496365312576,
+      "response": 0.05199988888888882,
+      "fitness": 0.5234744266873715,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 9,
+      "idx": 13,
+      "survival": 1.0,
+      "stability": 0.043608415873622616,
+      "response": 0.05334266666666666,
+      "fitness": 0.5237510580954201,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 9,
+      "idx": 14,
+      "survival": 1.0,
+      "stability": 0.04359396319220539,
+      "response": 0.04701844444444446,
+      "fitness": 0.5224818778465505,
+      "ticks": 700,
+      "alive_at_end": true
+    },
+    {
+      "gen": 9,
+      "idx": 15,
+      "survival": 1.0,
+      "stability": 0.04360605278428042,
+      "response": 0.055761444444444405,
+      "fitness": 0.524234104724173,
+      "ticks": 700,
+      "alive_at_end": true
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "R=0.0": {
+    "mean": 0.7318,
+    "amp": 0.1401,
+    "period": 12.5,
+    "n_cross": 40,
+    "flips": 42,
+    "oscillating": true
+  },
+  "R=0.2": {
+    "mean": 0.7095,
+    "amp": 0.1539,
+    "period": 20.0,
+    "n_cross": 25,
+    "flips": 29,
+    "oscillating": true
+  },
+  "R=0.4": {
+    "mean": 0.6829,
+    "amp": 0.1688,
+    "period": 33.3,
+    "n_cross": 15,
+    "flips": 17,
+    "oscillating": true
+  },
+  "R=0.5": {
+    "mean": 0.6675,
+    "amp": 0.1764,
+    "period": 55.6,
+    "n_cross": 9,
+    "flips": 11,
+    "oscillating": true
+  },
+  "R=0.6": {
+    "mean": 0.6505,
+    "amp": 0.184,
+    "period": 125.0,
+    "n_cross": 4,
+    "flips": 5,
+    "oscillating": true
+  },
+  "R=0.8": {
+    "mean": 0.6103,
+    "amp": 0.1983,
+    "period": 125.0,
+    "n_cross": 4,
+    "flips": 7,
+    "oscillating": true
+  },
+  "R=1.0": {
+    "mean": 0.5589,
+    "amp": 0.209,
+    "period": 250.0,
+    "n_cross": 2,
+    "flips": 3,
+    "oscillating": false
+  }
+}
