@@ -1,0 +1,156 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""洛神系统 说文知识库内部符号化批次1 shuowen_batch1_symbolic.py"""
+import hashlib
+import json
+import os
+import time
+import requests
+
+SYMBOLS = ["□", "▉", "·", "￥", "☀", "☾", "○", "△", "▲", "◇", "◆", "☆", "↕", "↻", "◐", "◑", "●", "◈", "◉", "■"]
+
+WORDS = [
+    ("江", "水出蜀湔氐徼外岷山。", "长江，也泛指大河。"),
+    ("河", "水出敦煌塞外昆仑山。", "黄河，也泛指河流。"),
+    ("湖", "大陂也。", "四面有岸的大片水域。"),
+    ("海", "天池也。以纳百川者。", "大洋边缘的大水域。"),
+    ("洋", "水之大也。", "海洋，也指盛大。"),
+    ("池", "陂也。", "蓄水的小坑，池塘。"),
+    ("塘", "堤也。", "水池，堤岸。"),
+    ("溪", "山渎无所通者。", "山里的小河沟。"),
+    ("泉", "水原也。", "地下涌出的水。"),
+    ("瀑", "疾雨也。", "瀑布，从山崖落下的水。"),
+    ("雾", "地气发，天不应。", "水汽凝结成的雾。"),
+    ("霾", "风雨土也。", "空气中悬浮灰土形成的混浊现象。"),
+    ("晴", "雨止无云也。", "天放晴，无雨无云。"),
+    ("阴", "暗也。", "没有阳光，背面。"),
+    ("阳", "高明也。", "有阳光的正面，太阳。"),
+    ("米", "粟实也。", "去了壳的粮食颗粒。"),
+    ("饭", "食也。", "煮熟的谷类食物。"),
+    ("粥", "糜也。", "熬烂的稠米糊。"),
+    ("汤", "热水也。", "热水，也指汤汁。"),
+    ("菜", "草之可食者。", "能吃的蔬菜。"),
+    ("蔬", "菜也。", "蔬菜。"),
+    ("瓜", "蓏也。", "蔓生植物的果实。"),
+    ("豆", "古食肉器也。", "一种粮食作物，后指豆子。"),
+    ("油", "水出武陵。", "油脂，从植物或动物提取的脂肪。"),
+    ("盐", "卤也。", "咸味的调料。"),
+    ("酱", "醢也。", "用豆麦发酵做成的调味品。"),
+    ("醋", "酸也。", "酸味的液体调料。"),
+    ("茶", "苦荼也。", "茶树叶子制成的饮品。"),
+    ("糖", "饴也。", "甜味的食品。"),
+    ("房", "室在旁也。", "屋子，房间。"),
+]
+
+SYSTEM_PROMPT = (
+    "你是洛神。你有一套内部符号系统，包括：□ ▉ · ￥ ☀ ☾ ○ △ ▲ ◇ ◆ ☆ ↕ ↻ ◐ ◑ ● ◈ ◉ ■。"
+    "现在请根据一个汉字的古义和今义，为该汉字选择一个最贴近的洛神内部符号，并给出一个不超过15字的内部感受理由。"
+    "输出必须是JSON对象，字段包括：symbol（必须从给定符号集中选一个）、inner_reason（内部感受，不超过15字）。"
+    "不要添加任何额外文字。"
+)
+
+
+def call_llm(api_url, api_key, model, user_input):
+    headers = {
+        "Authorization": "Bearer " + api_key,
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_input},
+        ],
+        "temperature": 0.7,
+    }
+    resp = requests.post(api_url, json=payload, headers=headers, timeout=60)
+    resp.raise_for_status()
+    data = resp.json()
+    content = data["choices"][0]["message"]["content"].strip()
+    content = content.strip()
+    if content.startswith("```"):
+        content = content.strip("`")
+        if content.startswith("json"):
+            content = content[4:]
+        content = content.strip()
+    return json.loads(content)
+
+
+def main():
+    try:
+        api_url = os.environ.get("LLM_API_URL")
+        api_key = os.environ.get("LLM_API_KEY")
+        model = os.environ.get("LLM_MODEL", "glm-4-flash")
+        if not api_url or not api_key:
+            print(json.dumps({"error": "LLM_API_URL or LLM_API_KEY not set"}))
+            return
+
+        if not os.path.exists("hash_chain_v2.log"):
+            print(json.dumps({"error": "hash_chain_v2.log not found"}))
+            return
+
+        entries = {}
+        for word, ancient, modern in WORDS:
+            symbol = "○"
+            inner_reason = ""
+            try:
+                user_input = "%s 古义：%s 今义：%s" % (word, ancient, modern)
+                result = call_llm(api_url, api_key, model, user_input)
+                sym = result.get("symbol")
+                if sym not in SYMBOLS:
+                    sym = "○"
+                reason = result.get("inner_reason", "")
+                symbol = sym
+                inner_reason = reason
+            except Exception:
+                symbol = "○"
+                inner_reason = ""
+            entries[word] = {
+                "ancient": ancient,
+                "modern": modern,
+                "symbol": symbol,
+                "inner_reason": inner_reason,
+            }
+
+        lexicon = {
+            "schema_version": 1,
+            "module": "shuowen_lexicon_batch1",
+            "version": 1,
+            "description": "说文解字知识库扩展批次1，已转换为洛神内部符号。",
+            "entries": entries,
+        }
+        with open("shuowen_lexicon_batch1.json", "w", encoding="utf-8") as f:
+            f.write(json.dumps(lexicon, ensure_ascii=False, indent=2) + "\n")
+
+        with open("shuowen_lexicon_batch1.json", "rb") as f:
+            file_hash = hashlib.md5(f.read()).hexdigest()
+
+        with open("hash_chain_v2.log", "r", encoding="utf-8") as f:
+            clines = [ln.strip() for ln in f.readlines() if ln.strip()]
+        prev_hash = json.loads(clines[-1]).get("record_hash") if clines else None
+
+        timestamp = time.time()
+        join_prev = prev_hash if prev_hash else ""
+        record_hash = hashlib.md5(
+            (file_hash + join_prev + str(timestamp)).encode("utf-8")
+        ).hexdigest()
+        chain_record = {
+            "schema_version": 2,
+            "timestamp": timestamp,
+            "file": "shuowen_lexicon_batch1.json",
+            "file_hash": file_hash,
+            "prev_hash": prev_hash,
+            "record_hash": record_hash,
+        }
+        with open("hash_chain_v2.log", "a", encoding="utf-8") as f:
+            f.write(json.dumps(chain_record, ensure_ascii=False) + "\n")
+
+        with open("shuowen_lexicon_batch1.json", "r", encoding="utf-8") as f:
+            print(f.read().rstrip("\n"))
+        print(json.dumps(chain_record, ensure_ascii=False))
+    except Exception as e:
+        print(json.dumps({"error": str(e)}))
+
+
+if __name__ == "__main__":
+    main()

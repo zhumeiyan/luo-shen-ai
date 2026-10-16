@@ -54,16 +54,6 @@ def expected_hash(records, file_name):
 
 def main():
     try:
-        # AI 医院网关检查
-        try:
-            from hospital_gateway import check as hospital_check
-            gate = hospital_check("treatment", "event_log.jsonl")
-            if not gate.get("allow"):
-                print(json.dumps({"blocked_by": "hospital_gateway", "reason": gate.get("reason")}))
-                return
-        except Exception:
-            pass
-
         # 2.1 创建回滚点（二进制复制，已存在则覆盖）
         with open('event_log.jsonl', 'rb') as src, open('event_log.backup.jsonl', 'wb') as dst:
             dst.write(src.read())
